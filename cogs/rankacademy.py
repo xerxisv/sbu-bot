@@ -20,7 +20,7 @@ This Academy has two sections.
 After you are done reading, you will be tested with several open answer questions to make sure you understand what was covered. You may ask questions before testing.
 
 **Once you finish reading all sections of this academy, ping the Moderator role THEN clarify if you've pinged to ask questions OR if you're ready to be tested.**
-**Type done when finished reading**"""
+**Type the command -done when finished reading**"""
 senior1 = discord.Embed(
     title='Senior Rank',
     description='',
@@ -46,7 +46,7 @@ This list is not exhaustive, but should give you an idea of some of the things t
 If you find someone doing these actions in game you can report them to our moderation team by opening a “report a user” ticket in get-help. Please be sure to include screenshots of everything you are reporting.
 
 Our lack of knowledge of these situations happening may turn into people thinking we tolerate bad behavior. This is not our intention or what we wish to show new members. The more people report, the more aware we are of people who make everyone else unhappy, the faster we can remove excessively disruptive people and make our guilds and server more comfortable for everyone. You will be our front line in making our server safe for both current and new members.
-**Please say done when you finish reading**"""
+**Type the command -done when finished reading**"""
 reporte1 = discord.Embed(
     title='Reporting people',
     description='',
@@ -60,7 +60,7 @@ report1 = """
 Bobby531 recently joined the guild and is asking for a Hyperion for free, then saying they’re just kidding right afterwards. They have repeated this behavior a few times in the past.
 
 It’s never fun to be nagged by guild members for free things. We have “No Begging” in our rules and believe everyone should know that they can be in our guild without 10 people harassing them, asking for free things. Regardless if someone says “just kidding” right after, it’s still annoying to have to deal with on a regular basis, and we don’t want to have to force our members ignore these issues or /ignore add the beggar. Handling them right away by reporting them is the best and fastest way to get someone to stop doing an undesirable behavior.
-**Please say done when you finish reading**"""
+**Type the command -done when finished reading**"""
 reporte2 = discord.Embed(
     title='Example 1',
     description='',
@@ -72,7 +72,7 @@ report2 = """
 Georgina32 and Bobby555 have been talking about drugs for a few minutes, both of them are just simply naming drugs one after another. This started because Bobby555 said he needed more drugs for his dungeon runs(referring to Potions).
 
 Because Mojang’s ToS states the game is for ages 10 and above, we don’t allow talk of illicit substances or likewise, due to the player base being so young. These actions would warrant a report, even if Georgina32 and Bobby555 have already stopped talking about drugs. You will need to take and submit screenshots with your report.
-**Please say done when you finish reading**
+**Type the command -done when finished reading**
 """
 reporte2a = discord.Embed(
     title='Example 2',
@@ -85,7 +85,7 @@ report3 = """
 Sopheee, Randy67, and Bobby555 are all getting a bit rowdy. They start to turn to making “deez nuts” jokes to each other. Sopheee sets all the jokes up, and Bobby555 is saying the punchline to each joke.
 
 We don’t allow “deez nuts” jokes in our guilds or on our discord. Usually these jokes are harmful to the welcoming environment that we’re trying to create, plus they’re considered “Not Safe for Work” or NSFW and therefore not allowed. Everyone involved in making the jokes and egging others on to make these actions would warrant needing to be reported. You will need to take and submit screenshots with your report.
-**Please say done when you finish reading**"""
+**Type the command -done when finished reading**"""
 reporte3 = discord.Embed(
     title='Example 3',
     description='',
@@ -97,7 +97,7 @@ report4 = """
 Sopheee is upset you “told on” her by reporting her to staff. She’s DMing you telling you how horrible you are for ruining their fun.
 
 This is plain harassment and is not tolerated. Please let us know if you’re every harassed publicly or privately by another member in our server or guilds and we will be sure to handle them immediately. We want everyone to feel safe on our server. You will need to take and submit screenshots with your report.
-**Please say done when you finish reading**
+**Type the command -done when finished reading**
 """
 reporte4 = discord.Embed(
     title='Example 4',
@@ -119,7 +119,7 @@ body3 = """If you feel yourself getting short with someone, irritated or angry -
 """
 end1 = """"If you are helping someone that is just asking for free things from you over and over again, please be sure to report beggars to our mod team, so we may handle these situations individually.
 **This is the end of the course for seniors. Please ping <@&801634222577156097> role
-Instructors+ type done after finishing reading.
+Instructors+ type the comamnd -done after finishing reading.
 **
 """
 kindness1 = discord.Embed(
@@ -144,7 +144,7 @@ body4 = """
 > Be available to answer questions in tutoring tickets
 > Be generally helpful, kind, and welcoming to all.
 
-**This Academy has four sections.** Use these commands to access them:
+**This Academy has four sections.**:
 **Report Guide** - How and when to report someone to our staff that is breaking our rules
 **Kindness Academy** - How to be generally helpful, kind, and welcoming to all
 **Guild Checking Academy** - How to check if people are on our #banned-list or on a scammer list
@@ -153,7 +153,7 @@ body4 = """
 After you are done reading, you will be tested with several open answer questions to make sure you understand what was covered. You may ask questions before testing.
 
 Once you finish reading all sections of this academy, please ping the Moderator role THEN clarify if you've pinged to ask questions OR if you're ready to be tested.
-**Type done when you are finished reading**"""
+**Type the command -done when finished reading**"""
 instr1 = discord.Embed(
     title='Instructor+ Ranks',
     description='',
@@ -377,38 +377,18 @@ class RA(commands.Cog):
             channel = message.channel
 
             def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
+                return m.content.lower() == '-done' and m.channel == channel
 
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte1)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte2)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte2a)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte3)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte4)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=kindness1)
         elif rank.upper() == "INSTRUCTOR":
@@ -419,52 +399,24 @@ class RA(commands.Cog):
             channel = message.channel
 
             def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
+                return m.content.lower() == '-done' and m.channel == channel
 
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte1)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte2)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte2a)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte3)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=reporte4)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=kindness1)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             msg = await self.bot.wait_for('message', check=check)
             message = await ctx.send(embed=guildc)
             message = await ctx.send(embed=guildc1)
             message = await ctx.send(embed=guildc2)
-
-            def check(m):
-                return m.content == 'done' or m.content == 'Done' or m.content == 'DONE' and m.channel == channel
-
             message = await ctx.send(embed=tutoring1)
         else:
             await ctx.send("Recheck your command please")
