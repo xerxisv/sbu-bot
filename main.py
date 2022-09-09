@@ -5,6 +5,7 @@ import discord
 import discord.utils
 from discord.ext import commands
 from dotenv import load_dotenv
+
 from utils.constants import BOT_OWNER_ROLE
 
 intents = discord.Intents().all()
@@ -15,6 +16,11 @@ bot.remove_command('help')
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready")
+
+
+for filename in os.listdir('./cogs'):
+    if filename.endswith('.py'):
+        bot.load_extension(f'cogs.{filename[:-3]}')
 
 
 # bot.load_extension('jishaku')
