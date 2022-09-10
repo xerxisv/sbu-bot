@@ -2,3 +2,8 @@
 venv
 .env
 __pycache__
+qotd.json
+reputation.json
+starboard.db
+suggestions.json
+inactive.db
