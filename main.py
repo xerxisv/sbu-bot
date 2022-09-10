@@ -1,15 +1,13 @@
-import discord
-import discord.utils
 import os
 import random
-from discord.ext import commands
-from discord.ext import tasks
-from dotenv import load_dotenv
-import aiohttp
-import asyncio
-import json
 
-# noinspection SpellCheckingInspection
+import discord
+import discord.utils
+from discord.ext import commands
+from dotenv import load_dotenv
+
+from utils.constants import BOT_OWNER_ROLE
+
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="+", intents=intents)
 bot.remove_command('help')
@@ -17,14 +15,18 @@ bot.remove_command('help')
 
 @bot.event
 async def on_ready():
-	
     print(f"{bot.user} is ready")
-    
 
-#bot.load_extension('jishaku')
+
+for filename in os.listdir('./cogs'):
+    if filename.endswith('.py'):
+        bot.load_extension(f'cogs.{filename[:-3]}')
+
+
+# bot.load_extension('jishaku')
 @bot.command()
 async def load(ctx, extension):
-    if ctx.message.author.id in [462940637595959296, 438529479355400194, 397389995113185293, 665885831856128001]:
+    if ctx.message.author.id == BOT_OWNER_ROLE:
         bot.load_extension(f'cogs.{extension}')
         await ctx.reply("Loaded")
     else:
@@ -34,21 +36,16 @@ async def load(ctx, extension):
 @bot.command()
 @commands.has_permissions(ban_members=True)
 async def unload(ctx, extension):
-    if ctx.message.author.id in [462940637595959296, 438529479355400194, 397389995113185293, 665885831856128001]:
+    if ctx.message.author.id == BOT_OWNER_ROLE:
         bot.unload_extension(f'cogs.{extension}')
         await ctx.reply("Unloaded")
     else:
         await ctx.send("Insufficient permissions, only bot owners can run this command")
 
 
-for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
-        bot.load_extension(f'cogs.{filename[:-3]}')
-
-
 @bot.command()
 async def reload(ctx):
-    if ctx.message.author.id in [462940637595959296, 438529479355400194, 397389995113185293, 665885831856128001]:
+    if ctx.message.author.id == BOT_OWNER_ROLE:
         for filename1 in os.listdir('./cogs'):
             if filename1.endswith('.py'):
                 bot.unload_extension(f'cogs.{filename1[:-3]}')
@@ -82,7 +79,7 @@ async def help(ctx):
     embed.add_field(name="checkreq", value="Check if you meet reqs for SB Masters \n `+checkreq IGN`", inline=False)
     embed.add_field(name="repgive", value="Give a reputation for a carry \n `+repgive @mention Reason`", inline=False)
     embed.add_field(name="suggest", value="Suggest something \n `+suggest Suggestion`", inline=False)
-    embed.add_field(name="Inactive", value = "`+inactiveadd IGN Time`", inline=False)
+    embed.add_field(name="Inactive", value="`+inactiveadd IGN Time`", inline=False)
     await ctx.send(embed=embed)
 
 
@@ -105,13 +102,13 @@ async def modhelp(ctx):
     embed.add_field(name="Deactivate SBU's Crisis Mode", value="`+crisisend`", inline=False)
     embed.add_field(name="Check inactive kicks for a guild", value="`+inactive GUILDNAME`", inline=False)
     embed.add_field(name="QOTD", value="`+qotdadd QOTD`", inline=False)
-    embed.add_field(name="Inactives", value = "`+inactive GUILD`", inline=False)
+    embed.add_field(name="Inactives", value="`+inactive GUILD`", inline=False)
     await ctx.send(embed=embed)
 
 
 @bot.command()
 async def dm(ctx, member: discord.Member, *, message: str):
-    if ctx.message.author.id in [462940637595959296, 438529479355400194, 397389995113185293, 665885831856128001]:
+    if ctx.message.author.id == BOT_OWNER_ROLE:
         await member.send(message)
         await ctx.send("User Dmed")
     else:
@@ -121,30 +118,28 @@ async def dm(ctx, member: discord.Member, *, message: str):
 @bot.event
 async def on_message(message):
     if message.content.upper() == "MEOW":
-        if message.author.id in [397389995113185293, 462940637595959296, 438529479355400194]:
+        if message.author.id == 397389995113185293:
             await message.reply("Meow")
     elif message.content.upper() == "MEOWO":
         if message.author.id in [397389995113185293, 462940637595959296]:
             await message.reply("UwU meow")
     elif message.content.upper() == "FLOP":
         if message.author.id in [615987518890049555, 462940637595959296]:
-            list = ["<:turtlefire:945023173353697320>", "Fleee", "All hail King Flop"]
-            randommessage = random.sample(range(0, len(list)), 1)
-            await message.reply(list[randommessage[0]])
+            array = ["<:turtlefire:945023173353697320>", "Fleee", "All hail King Flop"]
+            random_message = random.sample(range(0, len(array)), 1)
+            await message.reply(array[random_message[0]])
     elif message.content.upper() == "PINGU":
         if message.author.id in [381494697073573899, 462940637595959296]:
-            list = ["<:poguin:933279319579561986>", "<a:pingupat:932962348908560417>", "UwU","https://tenor.com/view/noot-noot-apocalypse-gif-25788876"]
-            randommessage = random.sample(range(0, len(list)), 1)
-            await message.reply(list[randommessage[0]])
+            array = ["<:poguin:933279319579561986>", "<a:pingupat:932962348908560417>", "UwU",
+                     "https://tenor.com/view/noot-noot-apocalypse-gif-25788876"]
+            random_message = random.sample(range(0, len(array)), 1)
+            await message.reply(array[random_message[0]])
     elif message.content.upper() == "JACK":
         if message.author.id in [358670711109320705, 462940637595959296, 397389995113185293, 438529479355400194]:
             await message.reply("Go play <@909802667495268372> in <#910961553480765440>")
     elif message.content.upper() == "NEO":
         if message.author.id in [566329261535920175]:
             await message.reply("op")
-    elif message.content.upper() == "SLOGO":
-        if message.author.id in [354741702004703242]:
-            await message.reply("Op Ironman")
     elif message.content.upper() == "WINDOW":
         if message.author.id in [797274543042986024]:
             await message.reply("https://tenor.com/view/monkey-gif-8660294")
@@ -161,6 +156,7 @@ async def on_message(message):
         if message.author.id in [283326249735028736]:
             await message.reply("mhm")
     await bot.process_commands(message)
+
 
 load_dotenv()
 bot.run(os.getenv("TOKEN"))
