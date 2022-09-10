@@ -40,7 +40,7 @@ class Ban(commands.Cog):
                                              f"\nAction: Ban \nReason: {reason}")
         await ctx.send(embed=embedVar)
         channel = self.bot.get_channel(946591422616838264)
-        await channel.send(f"Ban command ran by <@{author}>")
+        await channel.send(f"Ban command ran by <@{author}> banning <@{user.id}>")
 
     @ban.error
     async def check_error(self, ctx, error):
@@ -65,7 +65,7 @@ class Ban(commands.Cog):
                                              f"\nAction: unban \nReason: {reason}")
         await ctx.send(embed=embedVar)
         channel = self.bot.get_channel(946591422616838264)
-        await channel.send(f"UnBan command ran by <@{author}>")
+        await channel.send(f"Unban command ran by <@{author}> unbanning <@{user.id>")
 
     @unban.error
     async def check_error(self, ctx, error):
@@ -127,7 +127,7 @@ class Ban(commands.Cog):
             f"Moderator: <@{author}> \n User: <@{member.id}> \n Action: Mute \n Time: {conversion} \n Reason: {reason}")
         await ctx.send("Log created")
         channel = self.bot.get_channel(946591422616838264)
-        await channel.send(f"Mute command ran by <@{author}>")
+        await channel.send(f"Mute command ran by <@{author}> muting <@{member.id}>")
 
     @mute.error
     async def check_error(self, ctx, error):
@@ -149,7 +149,7 @@ class Ban(commands.Cog):
         await channel.send(f"Moderator: <@{author}> \n User: <@{member.id}> \n Action: Unmute \n Reason: {reason}")
         await ctx.send("Log created")
         channel = self.bot.get_channel(946591422616838264)
-        await channel.send(f"Unmute command ran by <@{author}>")
+        await channel.send(f"Unmute command ran by <@{author}> unmuting <@{member.id}>")
 
     @unmute.error
     async def check_error(self, ctx, error):
