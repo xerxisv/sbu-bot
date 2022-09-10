@@ -62,7 +62,7 @@ class TasksCog(commands.Cog):
         channel = self.bot.get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID)
         await channel.send(f"Guild Stats VC Updated")
 
-    @tasks.loop(minutes=24)
+    @tasks.loop(hours=24)
     async def auto_qotd(self):
         channel = self.bot.get_channel(constants.QOTD_CHANNEL_ID)
         #
