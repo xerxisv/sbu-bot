@@ -11,10 +11,6 @@ class Ban(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def banping(self, ctx):
-        await ctx.send(f'Pong! {round(self.bot.latency * 1000)} ms')
-
-    @commands.command()
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx, member, *, reason=None):
         member = member.replace("<", "")
@@ -65,7 +61,7 @@ class Ban(commands.Cog):
                                              f"\nAction: unban \nReason: {reason}")
         await ctx.send(embed=embedVar)
         channel = self.bot.get_channel(946591422616838264)
-        await channel.send(f"Unban command ran by <@{author}> unbanning <@{user.id>")
+        await channel.send(f"Unban command ran by <@{author}> unbanning <@{user.id}>")
 
     @unban.error
     async def check_error(self, ctx, error):
