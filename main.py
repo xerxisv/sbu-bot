@@ -7,6 +7,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from utils.constants import BOT_OWNER_ROLE_ID, JR_MOD_ROLE_ID
+from utils.setup import run_setup
 
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="+", intents=intents)
@@ -84,7 +85,7 @@ async def ping(ctx):
 
 
 @bot.command()
-async def help(ctx):
+async def help(ctx: commands.Context):
 	embed = discord.Embed(
 		title='Help',
 		description='All the help commands are listed below',
@@ -99,12 +100,12 @@ async def help(ctx):
 	embed.add_field(name="repgive", value="Give a reputation for a carry \n `+repgive @mention Reason`", inline=False)
 	embed.add_field(name="suggest", value="Suggest something \n `+suggest Suggestion`", inline=False)
 	embed.add_field(name="Inactive", value="`+inactiveadd IGN Time`", inline=False)
-	await ctx.send(embed=embed)
+	await ctx.reply(embed=embed)
 
 
 @bot.command()
 @commands.has_role(JR_MOD_ROLE_ID)
-async def modhelp(ctx):
+async def modhelp(ctx: commands.Context):
 	embed = discord.Embed(
 		title='Moderation Commands',
 		description='All the moderation commands are listed below',
@@ -122,7 +123,7 @@ async def modhelp(ctx):
 	embed.add_field(name="Check inactive kicks for a guild", value="`+inactive GUILDNAME`", inline=False)
 	embed.add_field(name="QOTD", value="`+qotdadd QOTD`", inline=False)
 	embed.add_field(name="Inactives", value="`+inactive GUILD`", inline=False)
-	await ctx.send(embed=embed)
+	await ctx.reply(embed=embed)
 
 
 @bot.command()
@@ -134,26 +135,37 @@ async def dm(ctx: discord.ext.commands.Context, member: discord.Member, *, messa
 		await ctx.reply('User could not be DMed')
 		print(err)
 	else:
-		await ctx.send("User DMed")
-
-
-@load_all.error
-@load.error
-@unload.error
-@reload.error
-@modhelp.error
-@dm.error
-async def on_check_error(ctx: discord.ext.commands.Context, err: discord.ext.commands.CheckFailure):
-	if isinstance(err, discord.ext.commands.MissingRole):
-		await ctx.send(
-			f"Insufficient permissions, only member with **{ctx.message.guild.get_role(err.missing_role).name}** role can run "
-			f"this command")
-	else:
-		raise err
+		await ctx.reply("User DMed")
 
 
 @bot.event
-async def on_message(message):
+async def on_command_error(ctx: commands.Context, exception):
+	if isinstance(exception, commands.CommandOnCooldown):
+		embed = discord.Embed(
+			title='Error',
+			description='Command is on cooldown',
+			colour=0xFF0000
+		)
+		await ctx.reply(embed=embed)
+	elif isinstance(exception, commands.MissingRole):
+		embed = discord.Embed(
+			title='Error',
+			description=
+			f'Insufficient permissions, only member '
+			f'with **{ctx.message.guild.get_role(exception.missing_role).name}** role can run this command',
+			colour=0xFF0000
+		)
+		await ctx.reply(embed=embed)
+	elif isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+		pass
+	else:
+		raise exception
+
+
+@bot.event
+async def on_message(message: discord.Message):
+	if message.author.id == bot.user.id:
+		return
 	if message.content.upper() == "MEOW":
 		if message.author.id == 397389995113185293:
 			await message.reply("Meow")
@@ -206,5 +218,7 @@ async def on_message(message):
 	await bot.process_commands(message)
 
 
-load_dotenv()
-bot.run(os.getenv("TOKEN"))
+if __name__ == '__main__':
+	run_setup()
+	load_dotenv()
+	bot.run(os.getenv("TOKEN"))
