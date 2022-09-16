@@ -1,8 +1,8 @@
-import discord
-from discord.ext import commands
-import aiohttp
 import datetime
+
+import discord
 import humanfriendly
+from discord.ext import commands
 from discord.utils import get
 
 
@@ -68,35 +68,6 @@ class Ban(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("Insufficient Permissions")
 
-    @commands.command()
-    @commands.has_permissions(ban_members=True)
-    async def banlist(self, ctx, banned: str, *, reason: str):
-        channel = self.bot.get_channel(830188559964307526)
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f'https://api.slothpixel.me/api/players/{banned}') as resp:
-                    player = await resp.json()
-            uuid = player["uuid"]
-            log1 = discord.Embed(
-                title='Banned Member',
-                description='',
-                colour=discord.Colour.light_gray()
-            )
-            log1.set_footer(text='SBU Banned List')
-            log1.add_field(name="User", value=banned, inline=False)
-            log1.add_field(name="Reason", value=reason, inline=False)
-            log1.add_field(name="NameMC", value=f"https://namemc.com/profile/{uuid}", inline=False)
-            await channel.send(embed=log1)
-            await ctx.send("Added to banned list")
-        except:
-            await ctx.send("Error Adding to banned list. Recheck the Spelling of the IGN.")
-
-    @banlist.error
-    async def banlist_error(self, ctx, error):
-        if isinstance(error, commands.MissingRole):
-            await ctx.send("Insufficient Permissions")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Incorrect format. Use `+banlist IGN Reason`")
 
     @commands.command()
     @commands.has_role("Junior Moderator")
