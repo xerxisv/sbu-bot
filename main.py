@@ -214,6 +214,10 @@ async def on_message(message: discord.Message):
 	elif message.content.upper() == "HMM":
 		if message.author.id in [283326249735028736]:
 			await message.reply("mhm")
+			
+	elif message.content.upper() == "CHOMP":
+		 if message.author.id in [241589674131456000]:
+			await message.reply("https://tenor.com/view/cat-bite-funny-chomp-gif-16986241")	
 
 	await bot.process_commands(message)
 

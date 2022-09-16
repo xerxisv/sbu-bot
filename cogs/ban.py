@@ -68,7 +68,6 @@ class Ban(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("Insufficient Permissions")
 
-
     @commands.command()
     @commands.has_role("Junior Moderator")
     async def mute(self, ctx, member: discord.Member = None, time=None, *, reason: str):
