@@ -1,6 +1,11 @@
+import sqlite3
+
 import discord
 from discord.ext import commands
-import json
+
+from utils.constants import ADMIN_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, SBU_LOGO_URL
+from utils.error_utils import log_error
+from utils.schemas.RepCommandSchema import RepCommand
 
 
 class Reputations(commands.Cog):
@@ -8,86 +13,103 @@ class Reputations(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def repgive(self, ctx, member: discord.Member, *, reason):
-        if ctx.author.id == member.id:
+    @commands.cooldown(1, 5)
+    async def repgive(self, ctx: commands.Context, receiver: discord.Member, *, comments):
+        if ctx.author.id == receiver.id:
             await ctx.send("You can't rep yourself.")
             return
-        with open('reputation.json') as fp:
-            listObj = json.load(fp)
-        num1 = len(listObj) + 1
-        count = 0
 
-        for value in range(len(listObj)):
-            if listObj[value]["repgiven"] == member.id:
-                count = count + 1
-        count = count + 1
-        repembed = discord.Embed(
-            title=f'Reputation Given',
-            description=f'Reason: {reason}',
+        db = sqlite3.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db')
+        cursor = db.cursor()
+        cursor.execute(RepCommand.get_max_rep_id())
+        rep_id = cursor.fetchone()[0] + 1
+
+        rep = RepCommand(rep_id, receiver.id, ctx.author.id, comments)
+
+        insertion_query = rep.insert()
+        cursor.execute(insertion_query[0], insertion_query[1])
+        db.commit()
+
+        cursor.execute(RepCommand.count_rows())
+        global_reps = cursor.fetchone()[0]
+
+        rep_embed = discord.Embed(
+            title='Reputation Given',
             colour=0x8F49EA
         )
-        repembed.set_author(name=f'Reputation by {ctx.message.author}')
-        repembed.set_footer(text=f'Global reputation number {num1} | Reputation Number {count} for {member}')
-        repembed.set_thumbnail(
-            url="https://cdn.discordapp.com/avatars/937099605265485936/8a5d786e369fdda9f355f12eaf0487fb.png?size=4096")
-        channel = self.bot.get_channel(957773469431525396)
-        message = await channel.send(embed=repembed)
-        await ctx.send(f"Reputation added for {member}")
-        data = {
-            "number": num1,
-            "messageid": message.id,
-            "reason": reason,
-            "authorid": ctx.author.id,
-            "repgiven": member.id
-        }
-        listvar = list(listObj)
-        listvar.append(data)
 
-        with open('reputation.json', 'w') as json_file:
-            json.dump(listvar, json_file,
-                      indent=4,
-                      separators=(',', ': '))
+        rep_embed.set_author(name=f'Reputation by {ctx.message.author.name}')
+        rep_embed.add_field(name='Receiver', value=receiver.mention, inline=True)
+        rep_embed.add_field(name='Comments', value=comments, inline=False)
+        rep_embed.set_footer(text=f'Global reps given: {global_reps}| Rep ID: {rep_id}')
+        rep_embed.set_thumbnail(url=SBU_LOGO_URL)
+
+        message = await ctx.guild \
+            .get_channel(CARRY_SERVICE_REPS_CHANNEL_ID) \
+            .send(embed=rep_embed)
+
+        cursor.execute(rep.set_message(message.id))
+
+        db.commit()
+        db.close()
+        await ctx.reply(f"Reputation given to {receiver.name}")
 
     @repgive.error
-    async def repgive_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Incorrect format. Use `+repgive @mention Reason`")
+    async def repgive_error(self, ctx, exception):
+        if isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.MemberNotFound):
+            await ctx.send("Incorrect format. Use `+repgive <@mention> <comments>`")
+            return
+
+        raise exception
 
     @commands.command()
-    @commands.has_role("Administrator")
-    async def delrep(self, ctx, number: int):
-        with open('reputation.json', 'r') as f:
-            reputation = json.load(f)
-        check = False
-        for s in range(len(reputation)):
-            if reputation[s]["number"] == number:
-                check = True
-                var = s
+    @commands.has_role(ADMIN_ROLE_ID)
+    async def repdel(self, ctx: commands.Context, rep_id: int):
 
-        if not check:
-            embed = discord.Embed(title=f'Error', description=f'Reputation number {number} not found.',
+        db = sqlite3.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db')
+
+        cursor = db.cursor()
+        cursor.execute(RepCommand.select_row_with_id(rep_id))
+        rep_tuple = cursor.fetchone()
+
+        if rep_tuple is None:
+            embed = discord.Embed(title='Error',
+                                  description=f'Reputation with id {rep_id} not found.',
                                   colour=0xFF0000)
-            await ctx.reply(embed=embed)
+            await ctx.send(embed=embed, delete_after=15)
+            await ctx.message.delete(delay=15)
             return
-        message = self.bot.get_channel(957773469431525396).get_partial_message(reputation[var]["messageid"])
-        await message.delete()
-        for i in range(len(reputation)):
-            if reputation[i]["number"] == number:
-                reputation.pop(i)
-                break
-        with open('reputation.json', 'w') as f:
-            json.dump(reputation, f, indent=4)
-        embed = discord.Embed(title=f'Completed Successfully', description=f'Reputation number {number} removed.',
-                              colour=0xFF0000)
-        await ctx.reply(embed=embed)
-        return
 
-    @delrep.error
-    async def check_error(self, ctx, error):
-        if isinstance(error, commands.MissingRole):
-            await ctx.send("Insufficient Permissions, only administrators can remove reputations.")
+        rep = RepCommand.dict_from_tuple(rep_tuple)
+
+        cursor.execute(RepCommand.delete_row_with_id(rep_id))
+
+        try:
+            await ctx.guild \
+                .get_channel(CARRY_SERVICE_REPS_CHANNEL_ID) \
+                .get_partial_message(rep['message']) \
+                .delete()
+        except discord.NotFound as exception:
+            await log_error(ctx, 'repdel', exception)
+
+        embed = discord.Embed(title=f'Successful Deletion', description=f'Reputation with id {rep_id} removed.',
+                              colour=0xFF0000)
+        await ctx.send(embed=embed, delete_after=15)
+        await ctx.message.delete(delay=15)
+
+        db.commit()
+        db.close()
+
+    @repdel.error
+    async def repgive_error(self, ctx: commands.Context, exception):
+        if isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.BadArgument):
+            message = await ctx.send("Incorrect format. Use `+repdel <rep_id: integer>`")
+            await message.delete(delay=15)
+            await ctx.message.delete(delay=15)
+            return
+
+        raise exception
 
 
 def setup(bot):
     bot.add_cog(Reputations(bot))
-
