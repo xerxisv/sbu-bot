@@ -1,10 +1,10 @@
 import json
 
 import aiohttp
-from discord.ext import commands
-from discord.ext import tasks
+from discord.ext import commands, tasks
 
 from utils import constants
+from utils.error_utils import exception_to_string
 
 
 class TasksCog(commands.Cog):
@@ -16,11 +16,6 @@ class TasksCog(commands.Cog):
     def cog_unload(self):
         self.update_member.cancel()
         self.auto_qotd.cancel()
-
-    # @commands.Cog.listener()
-    # async def on_ready(self):
-    #
-    #     print('wtf')
 
     @tasks.loop(hours=1)
     async def update_member(self):
@@ -50,10 +45,10 @@ class TasksCog(commands.Cog):
                     .get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID) \
                     .send(f'Guild info fetch with id `{guild}` did not return a 200.')
 
-            except Exception as error:
+            except Exception as exception:
                 await self.bot \
                     .get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID) \
-                    .send(f"Error Raised: {error}\n <@&{constants.BOT_OWNER_ROLE_ID}>")
+                    .send(exception_to_string('update_member task', exception))
 
         total_member_vc = self.bot.get_channel(constants.TOTAL_MEMBER_COUNT_VC_ID)
         new_name = "Guild members: " + str(total_members)
@@ -73,10 +68,10 @@ class TasksCog(commands.Cog):
         qotd_list = list(qotd_obj)
 
         if len(qotd_list) < 1:
-            channel = self.bot.get_channel(constants.MOD_CHAT_ID)
+            channel = self.bot.get_channel(constants.MOD_CHAT_CHANNEL_ID)
             await channel.send(
-                f"<@&{constants.JR_MOD_ROLE_ID}> no QOTD's left in the archive. Automatic qotd canceled. \n "
-                f"Please add more using `+qotdadd`")
+                f"<@&{constants.JR_MOD_ROLE_ID}> no QOTD's left in the archive. Automatic qotd canceled.\n"
+                f"Please add more using `+qotdadd`.")
             return
 
         message = await channel.send(qotd_list[0]["qotd"] + f" <@&{constants.QOTD_ROLE_ID}>")
@@ -88,10 +83,10 @@ class TasksCog(commands.Cog):
                       separators=(',', ': '))
         num1 = len(qotd_list)
         if num1 < 3:
-            channel = self.bot.get_channel(constants.MOD_CHAT_ID)
+            channel = self.bot.get_channel(constants.MOD_CHAT_CHANNEL_ID)
             await channel.send(
-                f"<@&{constants.JR_MOD_ROLE_ID}> QOTD's Running Low. Only {num1} remain. \n Please add more "
-                f"using `+qotdadd`")
+                f"<@&{constants.JR_MOD_ROLE_ID}> QOTD's Running Low. Only {num1} remain.\n"
+                f"Please add more using `+qotdadd`.")
 
 
 def setup(bot):
