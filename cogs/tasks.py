@@ -1,5 +1,8 @@
 import json
 
+from asyncio import sleep
+import datetime
+
 import aiohttp
 from discord.ext import commands, tasks
 
@@ -62,7 +65,7 @@ class TasksCog(commands.Cog):
         channel = self.bot.get_channel(constants.QOTD_CHANNEL_ID)
         #
 
-        with open('qotd.json') as f:
+        with open('./data/qotd.json') as f:
             qotd_obj = json.load(f)
 
         qotd_list = list(qotd_obj)
@@ -87,6 +90,12 @@ class TasksCog(commands.Cog):
             await channel.send(
                 f"<@&{constants.JR_MOD_ROLE_ID}> QOTD's Running Low. Only {num1} remain.\n"
                 f"Please add more using `+qotdadd`.")
+
+    @auto_qotd.before_loop
+    async def wait_until_next(self):
+        next_midnight = datetime.datetime.now().timestamp() - (datetime.datetime.now().timestamp() % 86400) + 86400
+        seconds_until_next = next_midnight - datetime.datetime.now().timestamp()
+        await sleep(seconds_until_next)
 
 
 def setup(bot):

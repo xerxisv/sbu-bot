@@ -23,7 +23,7 @@ class QOTD(commands.Cog):
         list_var = list(list_obj)
         list_var.append(data)
 
-        with open('qotd.json', 'w') as json_file:
+        with open('./data/qotd.json', 'w') as json_file:
             json.dump(list_var, json_file,
                       indent=4,
                       separators=(',', ': '))
@@ -39,7 +39,7 @@ class QOTD(commands.Cog):
     @commands.command()
     @commands.has_role(JR_MOD_ROLE_ID)
     async def qotdlist(self, ctx):
-        with open('qotd.json') as fp:
+        with open('./data/qotd.json') as fp:
             list_obj = json.load(fp)
         if len(list_obj) >= 24:
             qotd_embed = discord.Embed(
