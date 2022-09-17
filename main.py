@@ -150,8 +150,7 @@ async def on_command_error(ctx: commands.Context, exception):
 	elif isinstance(exception, commands.MissingRole):
 		embed = discord.Embed(
 			title='Error',
-			description=
-			f'Insufficient permissions, only member '
+			description=f'Insufficient permissions, only member '
 			f'with **{ctx.message.guild.get_role(exception.missing_role).name}** role can run this command',
 			colour=0xFF0000
 		)
@@ -182,8 +181,9 @@ async def on_message(message: discord.Message):
 
 	elif message.content.upper() == "PINGU":
 		if message.author.id in [381494697073573899, 462940637595959296]:
-			array = ["<:poguin:933279319579561986>", "<a:pingupat:932962348908560417>", "UwU",
-					 "https://tenor.com/view/noot-noot-apocalypse-gif-25788876"]
+			array = [
+				"<:poguin:933279319579561986>", "<a:pingupat:932962348908560417>", "UwU",
+				"https://tenor.com/view/noot-noot-apocalypse-gif-25788876"]
 			random_message = random.sample(range(0, len(array)), 1)
 			await message.reply(array[random_message[0]])
 
@@ -216,8 +216,11 @@ async def on_message(message: discord.Message):
 			await message.reply("mhm")
 			
 	elif message.content.upper() == "CHOMP":
-		 if message.author.id in [241589674131456000]:
-			await message.reply("https://tenor.com/view/cat-bite-funny-chomp-gif-16986241")	
+		if message.author.id in [241589674131456000]:
+			await message.reply("https://tenor.com/view/cat-bite-funny-chomp-gif-16986241")
+	elif message.content.upper() == "ACCEPTED":  # pleb shush, I need to have my fun as well :)
+		if message.author.id == 309231901212672001:
+			await message.reply("https://tenor.com/view/metal-gear-rising-gif-25913914")
 
 	await bot.process_commands(message)
 
