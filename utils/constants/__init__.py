@@ -121,7 +121,7 @@ GUILD_MEMBER_ROLES_IDS = [SB_UNI_MEMBER_ROLE_ID, SB_ALPHA_MEMBER_ROLE_ID, SB_DEL
 GUILDS_INFO = {
     "SB UNIVERSITY": {
         "role_id": SB_UNI_MEMBER_ROLE_ID,
-        "guild_uuid": '600846008ea8c9e004b0396f',
+        "guild_uuid": '6111fcb48ea8c95240436c57',
         "bridge_uuid": 'e3020a41a5c24597ad11a2348c46f815'
     },
     "SB ALPHA PSI": {
