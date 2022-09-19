@@ -22,17 +22,12 @@ class TasksCog(commands.Cog):
 
     @tasks.loop(hours=1)
     async def update_member(self):
-        # noinspection SpellCheckingInspection
-        guilds = ["6111fcb48ea8c95240436c57", "604a765e8ea8c962f2bb3b7a",
-                  "607a0d7c8ea8c9c0ff983976", "608d91e98ea8c9925cdb91b7",
-                  "60a16b088ea8c9bb7f6d9052", "60b923478ea8c9a3aefbf3dd",
-                  "6125800e8ea8c92e1833e851", "570940fb0cf2d37483e106b3"]
-
         total_members = 0  # Stores the member count of all the guilds combined
-        for idx, guild in enumerate(guilds):
+        for idx, guild in enumerate(constants.GUILDS_INFO.keys()):
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(f'https://api.slothpixel.me/api/guilds/id/{guild}') as resp:
+                    async with session.get(f'https://api.slothpixel.me/api/guilds/id/'
+                                           f'{constants.GUILDS_INFO[guild]["guild_uuid"]}') as resp:
                         assert resp.status == 200  # Unless a guild gets deleted this will never raise
 
                         guild_info = await resp.json()
@@ -56,9 +51,6 @@ class TasksCog(commands.Cog):
         total_member_vc = self.bot.get_channel(constants.TOTAL_MEMBER_COUNT_VC_ID)
         new_name = "Guild members: " + str(total_members)
         await total_member_vc.edit(name=new_name)
-
-        channel = self.bot.get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID)
-        await channel.send(f"Guild Stats VC Updated")
 
     @tasks.loop(hours=24)
     async def auto_qotd(self):
