@@ -3,149 +3,205 @@ import datetime
 import discord
 import humanfriendly
 from discord.ext import commands
-from discord.utils import get
+
+from random import choice
+
+from utils.constants import JR_MOD_ROLE_ID, MODERATOR_ROLE_ID, MOD_ACTION_LOG_CHANNEL_ID
+from utils.error_utils import log_error
 
 
 class Ban(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command()
-    @commands.has_permissions(ban_members=True)
-    async def ban(self, ctx, member, *, reason=None):
-        member = member.replace("<", "")
-        member = member.replace("@", "")
-        member = member.replace(">", "")
-        user = await self.bot.get_or_fetch_user(member)
-        try:
-            await user.send("You have been banned from SBU for " + reason)
-            await user.send(r"Appeal at https://discord.gg/mn6kJrJuVB")
-        except:
-            await ctx.send("User cannot be dmed")
-        try:
-            await ctx.guild.ban(user=user, delete_message_days=0, reason=reason)
-        except:
-            embedVar = discord.Embed(description=":x: Bot does not have permission to ban this member.")
-            await ctx.reply(embed=embedVar)
+    @commands.has_role(MODERATOR_ROLE_ID)
+    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason=None):
+        try:  # Check for any permission errors
+            await ctx.guild.ban(user=member, delete_message_days=0, reason=reason)
+        except discord.Forbidden:
+            embed = discord.Embed(
+                title='Error',
+                description='Bot does not have permission to ban this member.',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
             return
-        channel = self.bot.get_channel(823938991345893417)
-        author = str(ctx.message.author.id)
-        message = f"Moderator: <@{author}> \n User: <@{user.id}> | {user} \n Action: Ban \n Reason: {reason}"
+
+        try:  # DM user if banning was successful
+            await member.send("You have been banned from SBU for " + reason)
+            await member.send(r"Appeal at https://discord.gg/mn6kJrJuVB")
+        except discord.HTTPException:
+            await ctx.send("User cannot be dmed")
+        except Exception as exception:
+            await log_error(ctx, exception)
+
+        # Send to action log
+        channel = ctx.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID)
+        author = ctx.message.author.id
+
+        message = f"Moderator: <@{author}> \n User: <@{member.id}> | {member} \n Action: Ban \n Reason: {reason}"
         await channel.send(message)
-        embedVar = discord.Embed(description=f"Moderator: <@{author}> \nUser: {user} "
-                                             f"\nAction: Ban \nReason: {reason}")
-        await ctx.send(embed=embedVar)
-        channel = self.bot.get_channel(946591422616838264)
-        await channel.send(f"Ban command ran by <@{author}> banning <@{user.id}>")
+
+        # Send confirmation
+        embed = discord.Embed(description=f"Moderator: <@{author}> \nUser: {member} "
+                                          f"\nAction: Ban \nReason: {reason}")
+        await ctx.reply(embed=embed)
+        # channel = self.bot.get_channel(946591422616838264)
+        # await channel.send(f"Ban command ran by <@{author}> banning <@{user.id}>")
 
     @ban.error
-    async def check_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("Insufficient Permissions")
+    async def ban_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+ban <@mention | ID> [reason]`',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(ban_members=True)
-    async def unban(self, ctx, member, *, reason=None):
-        user = await self.bot.get_or_fetch_user(member)
-        author = str(ctx.author.id)
-        channel = self.bot.get_channel(823938991345893417)
+    @commands.has_role(MODERATOR_ROLE_ID)
+    async def unban(self, ctx: commands.Context, user: discord.User, *, reason=None):
         try:
             await ctx.guild.unban(user=user, reason=reason)
-        except:
-            embedVar = discord.Embed(description=":x: Bot does not have permission to unban this member.")
-            await ctx.reply(embed=embedVar)
+        except discord.HTTPException:
+            embed = discord.Embed(
+                title='Error',
+                description="Bot does not have permission to unban this member.",
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
             return
-        message = f"Moderator: <@{author}> \n User: <@{user.id}> | {user} \n Action: unban \n Reason: {reason}"
-        await channel.send(message)
-        embedVar = discord.Embed(description=f"Moderator: <@{author}> \nUser: {user} "
-                                             f"\nAction: unban \nReason: {reason}")
-        await ctx.send(embed=embedVar)
-        channel = self.bot.get_channel(946591422616838264)
-        await channel.send(f"Unban command ran by <@{author}> unbanning <@{user.id}>")
+
+        message = f"Moderator: <@{ctx.author.id}> \n User: <@{user.id}> | {user} \n Action: unban \n Reason: {reason}"
+        await ctx.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(message)
+        embed = discord.Embed(description=f"Moderator: <@{ctx.author.id}> \nUser: {user} "
+                                          f"\nAction: unban \nReason: {reason}")
+        await ctx.send(embed=embed)
+        # channel = self.bot.get_channel(946591422616838264)
+        # await channel.send(f"Unban command ran by <@{ctx.author.id}> unbanning <@{member.id}>")
 
     @unban.error
-    async def check_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("Insufficient Permissions")
+    async def unban_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+unban <@mention | ID> [reason]`',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
 
     @commands.command()
-    @commands.has_role("Junior Moderator")
-    async def mute(self, ctx, member: discord.Member = None, time=None, *, reason: str):
-        time = humanfriendly.parse_timespan(time)
-        if member.id == ctx.author.id:
-            await ctx.send("You can't mute yourself potato.")
+    @commands.has_role(JR_MOD_ROLE_ID)
+    async def mute(self, ctx: commands.Context, member: discord.Member, time: str, *, reason: str):
+        # Convert time inputted to seconds
+        try:
+            time = humanfriendly.parse_timespan(time)
+        except humanfriendly.InvalidTimespan:
+            raise commands.BadArgument
+
+        if time > (28 * 86400):
+            embed = discord.Embed(
+                title='Error',
+                description='Max mute duration is 28 days'
+            )
+            await ctx.reply(embed=embed)
             return
-        if member.id in [462940637595959296, 438529479355400194, 397389995113185293, 665885831856128001]:
-            await ctx.send("You can't mute bot owners.")
-            return
-        if reason is None:
-            await ctx.send("Please specify a reason `+mute @mention Time Reason`")
-            return
-        if member is None:
-            await ctx.send("Please specify a user to mute `+mute @mention Time Reason`")
-            return
-        await member.timeout(until=discord.utils.utcnow() + datetime.timedelta(seconds=time), reason=reason)
-        conversion = datetime.timedelta(seconds=time)
-        await ctx.send(f"{member.mention} has been muted for {conversion} | Reason {reason}")
-        channel = self.bot.get_channel(823938991345893417)
-        author = str(ctx.message.author.id)
-        await channel.send(
-            f"Moderator: <@{author}> \n User: <@{member.id}> \n Action: Mute \n Time: {conversion} \n Reason: {reason}")
-        await ctx.send("Log created")
-        channel = self.bot.get_channel(946591422616838264)
-        await channel.send(f"Mute command ran by <@{author}> muting <@{member.id}>")
+
+        duration = datetime.timedelta(seconds=time)
+
+        await member.timeout_for(duration=duration, reason=reason)
+        await ctx.reply(f"{member.mention} has been muted for {duration} | Reason {reason}")
+
+        await ctx.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
+            f"Moderator: <@{ctx.message.author.id}> \n"
+            f"User: <@{member.id}> \n"
+            f"Action: Mute \n"
+            f"Duration: {duration} \n"
+            f"Reason: {reason}")
+
+        # channel = self.bot.get_channel(946591422616838264)
+        # await channel.send(f"Mute command ran by <@{author}> muting <@{member.id}>")
 
     @mute.error
-    async def check_error(self, ctx, error):
-        if isinstance(error, commands.MissingRole):
-            await ctx.send("Insufficient Permissions")
-
-    @mute.error
-    async def check_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Incorrect syntax `+mute @mention Time Reason`")
+    async def mute_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+mute <@mention | ID> <time> <reason>`',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
 
     @commands.command()
-    @commands.has_role("Junior Moderator")
-    async def unmute(self, ctx, member: discord.Member = None, *, reason: str = None):
-        await member.timeout(until=None, reason=reason)
+    @commands.has_role(JR_MOD_ROLE_ID)
+    async def unmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
+        await member.remove_timeout(reason=reason)
         await ctx.send(f"{member.mention} has been unmuted.")
-        channel = self.bot.get_channel(823938991345893417)
-        author = str(ctx.message.author.id)
-        await channel.send(f"Moderator: <@{author}> \n User: <@{member.id}> \n Action: Unmute \n Reason: {reason}")
-        await ctx.send("Log created")
-        channel = self.bot.get_channel(946591422616838264)
-        await channel.send(f"Unmute command ran by <@{author}> unmuting <@{member.id}>")
+
+        await ctx.guild\
+            .get_channel(MOD_ACTION_LOG_CHANNEL_ID)\
+            .send(f"Moderator: {ctx.message.author.mention} \n"
+                  f"User: {member.mention} \n"
+                  f"Action: Unmute \n"
+                  f"Reason: {reason}")
+
+        # channel = self.bot.get_channel(946591422616838264)
+        # await channel.send(f"Unmute command ran by {ctx.message.author.mention} unmuting {member.mention}")
 
     @unmute.error
-    async def check_error(self, ctx, error):
-        if isinstance(error, commands.MissingRole):
-            await ctx.send("Insufficient Permissions")
-
-    @unmute.error
-    async def check_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Incorrect syntax `+unmute @mention Reason`")
+    async def check_error(self, ctx, exception):
+        if isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+unmute <@mention | ID> [reason]`',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         if message.content.startswith("!warn"):
-            role = get(message.guild.roles, name="Junior Moderator")
-            if role in message.author.roles:
-                try:
-                    channel = self.bot.get_channel(823938991345893417)
-                    user = str(message.mentions[0].id)
-                    content = str(message.content)
-                    reason = ' '.join(content.split()[2:])
-                    author = str(message.author.id)
-                    await channel.send(
-                        f"Moderator: <@{author}> \n User: <@{user}> \n Action: Warn \n Reason: {reason}")
+            # ( ͡° ͜ʖ ͡°)
+            if message.author.get_role(JR_MOD_ROLE_ID) is None:
+                clown_fiesta = [
+                    'https://tenor.com/view/clown-pennywise-ten-10-gif-25962140',
+                    'https://tenor.com/view/clown-nose-joker-funny-dropped-gif-23619188',
+                    'https://tenor.com/view/'
+                    'clown-detector-bitcoin-rd_btc-my-clown-detector-is-off-the-charts-strike_memes-gif-22298893',
+                    'https://tenor.com/view/mr-rogers-nightmare-clown-gif-5401671'
+                ]
 
-                    await message.channel.send("Log created")
-                except:
-                    await message.channel.send("Unable to create automatic log. Please create manually.")
-            else:
+                await message.reply(content=choice(clown_fiesta))
                 return
+
+            # Split the message on every space character
+            split_msg = message.content.split(' ')
+            # If the message is less than 2 words long then it's an invalid warn command, return
+            if len(split_msg) < 2:
+                return
+
+            # Else remove the discord formatting characters from the ID
+            user_id = split_msg[1].replace('<', '').replace('@', '').replace('>', '')
+
+            # And check if it is indeed a Snowflake
+            if not user_id.isnumeric():
+                return
+
+            # Fetch the user with the specified ID
+            user = await self.bot.get_or_fetch_user(int(user_id))
+
+            if user is None:
+                return
+
+            await message.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
+                f"Moderator: {message.author.mention} \n"
+                f"User: {user.mention} \n"
+                f"Action: Warn \n"
+                f"Reason: {' '.join(split_msg[2:])}")
+
+            await message.channel.send("Log created")
 
 
 def setup(bot):
