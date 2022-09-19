@@ -48,7 +48,7 @@ class Verify(commands.Cog):
             await ctx.reply(embed=embed)
             return
         except Exception as exception:  # In case of anything else
-            await log_error(ctx, 'verify', exception)
+            await log_error(ctx, exception)
 
             await ctx.reply(embed=error_embed)
             return
@@ -72,7 +72,7 @@ class Verify(commands.Cog):
             guild = response.json()['guild']
 
         except Exception as exception:  # Log any errors that might araise
-            await log_error(ctx, 'verify', exception)
+            await log_error(ctx, exception)
 
             await ctx.reply(embed=error_embed)
             return
@@ -94,7 +94,7 @@ class Verify(commands.Cog):
             await ctx.reply(embed=embed)
             return
         except Exception as exception:
-            await log_error(ctx, 'verify', exception)
+            await log_error(ctx, exception)
 
             await ctx.reply(embed=error_embed)
             return
@@ -144,7 +144,7 @@ class Verify(commands.Cog):
         except Exception as exception:
             embed.add_field(name="Nickname:", value="Unable to edit nickname.")
 
-            await log_error(ctx, 'verify', exception)
+            await log_error(ctx, exception)
 
         await ctx.reply(embed=embed)
 

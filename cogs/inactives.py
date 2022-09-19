@@ -154,7 +154,7 @@ class InactiveList(commands.Cog):
                 data3 = requests.get(url=f"https://api.mojang.com/user/profile/{player['uuid']}").json()
 
             except Exception as exception:  # If there is an exception, log it and add the uuid in the embed
-                await log_error(ctx, 'inactive', exception)
+                await log_error(ctx, exception)
                 embed_msg += f'{player["uuid"]}\n'
 
             else:  # If no error, add IGN in embed instead

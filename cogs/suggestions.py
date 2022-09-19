@@ -114,7 +114,7 @@ class Suggestions(commands.Cog):
         except Exception as exception:
             # Any other error will be sent to the logs
             approved_embed.add_field(name="Direct Message", value=f"User could not be dmed", inline=False)
-            await log_error(ctx, 'approve', exception)
+            await log_error(ctx, exception)
         else:
             # If no errors occurred send successful message
             approved_embed \
@@ -188,7 +188,7 @@ class Suggestions(commands.Cog):
         except Exception as exception:
             # Any other error will be sent to the logs
             approved_embed.add_field(name="Direct Message", value=f"User could not be dmed", inline=False)
-            await log_error(ctx, 'deny', exception)
+            await log_error(ctx, exception)
 
         else:
             # If no errors occurred send successful message

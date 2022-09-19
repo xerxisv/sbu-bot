@@ -6,6 +6,7 @@ import discord.utils
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from utils.error_utils import log_error
 from utils.constants import BOT_OWNER_ROLE_ID, JR_MOD_ROLE_ID
 from utils.setup import run_setup
 
@@ -31,7 +32,6 @@ async def load_all(ctx: discord.ext.commands.Context):
 	await ctx.reply('Cogs loaded successfully')
 
 
-# bot.load_extension('jishaku')
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
 async def load(ctx: discord.ext.commands.Context, extension):
@@ -150,21 +150,26 @@ async def on_command_error(ctx: commands.Context, exception):
 	elif isinstance(exception, commands.MissingRole):
 		embed = discord.Embed(
 			title='Error',
-			description=f'Insufficient permissions, only member '
-			f'with **{ctx.message.guild.get_role(exception.missing_role).name}** role can run this command',
+			description=f'Insufficient permissions, only members '
+			f'with **{ctx.guild.get_role(exception.missing_role).name}** role can run this command',
+			colour=0xFF0000
+		)
+		await ctx.reply(embed=embed)
+	elif isinstance(exception, discord.Forbidden):
+		embed = discord.Embed(
+			title='Error',
+			description='Bot does not have permissions to do this.',
 			colour=0xFF0000
 		)
 		await ctx.reply(embed=embed)
 	elif isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
 		pass
 	else:
-		raise exception
+		await log_error(ctx, exception)
 
 
 @bot.event
 async def on_message(message: discord.Message):
-	if message.author.id == bot.user.id:
-		return
 	if message.content.upper() == "MEOW":
 		if message.author.id == 397389995113185293:
 			await message.reply("Meow")

@@ -12,7 +12,7 @@ def exception_to_string(command: str, exception: Exception):
     return ERROR_MESSAGE.format(command, ''.join(pretty) + '\n  {} {}'.format(exception.__class__, exception))
 
 
-async def log_error(ctx: Context, command: str, exception: Exception):
+async def log_error(ctx: Context, exception: Exception):
     await ctx.guild\
         .get_channel(SBU_BOT_LOGS_CHANNEL_ID)\
-        .send(exception_to_string(command, exception))
+        .send(exception_to_string(ctx.command.name, exception))

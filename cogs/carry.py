@@ -90,7 +90,7 @@ class Reputations(commands.Cog):
                 .get_partial_message(rep['message']) \
                 .delete()
         except discord.NotFound as exception:
-            await log_error(ctx, 'repdel', exception)
+            await log_error(ctx, exception)
 
         embed = discord.Embed(title=f'Successful Deletion', description=f'Reputation with id {rep_id} removed.',
                               colour=0xFF0000)
