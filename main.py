@@ -140,6 +140,10 @@ async def dm(ctx: discord.ext.commands.Context, member: discord.Member, *, messa
 
 @bot.event
 async def on_command_error(ctx: commands.Context, exception):
+	if ctx is None:
+		print(exception)
+		return
+
 	if isinstance(exception, commands.CommandOnCooldown):
 		embed = discord.Embed(
 			title='Error',
@@ -147,6 +151,7 @@ async def on_command_error(ctx: commands.Context, exception):
 			colour=0xFF0000
 		)
 		await ctx.reply(embed=embed)
+
 	elif isinstance(exception, commands.MissingRole):
 		embed = discord.Embed(
 			title='Error',
@@ -155,6 +160,7 @@ async def on_command_error(ctx: commands.Context, exception):
 			colour=0xFF0000
 		)
 		await ctx.reply(embed=embed)
+
 	elif isinstance(exception, discord.Forbidden):
 		embed = discord.Embed(
 			title='Error',
@@ -162,8 +168,10 @@ async def on_command_error(ctx: commands.Context, exception):
 			colour=0xFF0000
 		)
 		await ctx.reply(embed=embed)
+
 	elif isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
 		pass
+
 	else:
 		await log_error(ctx, exception)
 
