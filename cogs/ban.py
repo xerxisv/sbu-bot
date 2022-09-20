@@ -5,9 +5,22 @@ import humanfriendly
 from discord.ext import commands
 
 from random import choice
+import time
 
 from utils.constants import JR_MOD_ROLE_ID, MODERATOR_ROLE_ID, MOD_ACTION_LOG_CHANNEL_ID
 from utils.error_utils import log_error
+
+
+COOLDOWN_AMOUNT = 60.0
+last_executed = time.time()
+
+
+def assert_cooldown():
+    global last_executed
+    if last_executed + COOLDOWN_AMOUNT < time.time():
+        last_executed = time.time()
+        return True
+    return False
 
 
 class Ban(commands.Cog):
@@ -94,14 +107,14 @@ class Ban(commands.Cog):
 
     @commands.command()
     @commands.has_role(JR_MOD_ROLE_ID)
-    async def mute(self, ctx: commands.Context, member: discord.Member, time: str, *, reason: str):
+    async def mute(self, ctx: commands.Context, member: discord.Member, timespan: str, *, reason: str):
         # Convert time inputted to seconds
         try:
-            time = humanfriendly.parse_timespan(time)
+            timespan = humanfriendly.parse_timespan(timespan)
         except humanfriendly.InvalidTimespan:
             raise commands.BadArgument
 
-        if time > (28 * 86400):
+        if timespan > (28 * 86400):
             embed = discord.Embed(
                 title='Error',
                 description='Max mute duration is 28 days'
@@ -109,7 +122,7 @@ class Ban(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        duration = datetime.timedelta(seconds=time)
+        duration = datetime.timedelta(seconds=timespan)
 
         await member.timeout_for(duration=duration, reason=reason)
         await ctx.reply(f"{member.mention} has been muted for {duration} | Reason {reason}")
@@ -162,46 +175,51 @@ class Ban(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.content.startswith("!warn"):
-            # ( ͡° ͜ʖ ͡°)
-            if message.author.get_role(JR_MOD_ROLE_ID) is None:
-                clown_fiesta = [
-                    'https://tenor.com/view/clown-pennywise-ten-10-gif-25962140',
-                    'https://tenor.com/view/clown-nose-joker-funny-dropped-gif-23619188',
-                    'https://tenor.com/view/'
-                    'clown-detector-bitcoin-rd_btc-my-clown-detector-is-off-the-charts-strike_memes-gif-22298893',
-                    'https://tenor.com/view/mr-rogers-nightmare-clown-gif-5401671'
-                ]
+        if not message.content.startswith("!warn"):
+            return
 
-                await message.reply(content=choice(clown_fiesta))
+        # ( ͡° ͜ʖ ͡°)
+        if message.author.get_role(JR_MOD_ROLE_ID) is None:
+            if not assert_cooldown():
                 return
 
-            # Split the message on every space character
-            split_msg = message.content.split(' ')
-            # If the message is less than 2 words long then it's an invalid warn command, return
-            if len(split_msg) < 3:
-                return
+            clown_fiesta = [
+                'https://tenor.com/view/clown-pennywise-ten-10-gif-25962140',
+                'https://tenor.com/view/clown-nose-joker-funny-dropped-gif-23619188',
+                'https://tenor.com/view/'
+                'clown-detector-bitcoin-rd_btc-my-clown-detector-is-off-the-charts-strike_memes-gif-22298893',
+                'https://tenor.com/view/mr-rogers-nightmare-clown-gif-5401671'
+            ]
 
-            # Else remove the discord formatting characters from the ID
-            user_id = split_msg[1].replace('<', '').replace('@', '').replace('>', '')
+            await message.reply(content=choice(clown_fiesta))
+            return
 
-            # And check if it is indeed a Snowflake
-            if not user_id.isnumeric():
-                return
+        # Split the message on every space character
+        split_msg = message.content.split(' ')
+        # If the message is less than 2 words long then it's an invalid warn command, return
+        if len(split_msg) < 3:
+            return
 
-            # Fetch the member with the specified ID
-            member: discord.Member = message.guild.get_member(int(user_id))
+        # Else remove the discord formatting characters from the ID
+        user_id = split_msg[1].replace('<', '').replace('@', '').replace('>', '')
 
-            if member is None or member.get_role(JR_MOD_ROLE_ID) is not None:
-                return
+        # And check if it is indeed a Snowflake
+        if not user_id.isnumeric():
+            return
 
-            await message.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
-                f"Moderator: {message.author.mention} \n"
-                f"User: {member.mention} \n"
-                f"Action: Warn \n"
-                f"Reason: {' '.join(split_msg[2:])}")
+        # Fetch the member with the specified ID
+        member: discord.Member = message.guild.get_member(int(user_id))
 
-            await message.channel.send("Log created")
+        if member is None or member.get_role(JR_MOD_ROLE_ID) is not None:
+            return
+
+        await message.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
+            f"Moderator: {message.author.mention} \n"
+            f"User: {member.mention} \n"
+            f"Action: Warn \n"
+            f"Reason: {' '.join(split_msg[2:])}")
+
+        await message.channel.send("Log created")
 
 
 def setup(bot):
