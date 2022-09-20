@@ -237,6 +237,13 @@ async def on_message(message: discord.Message):
     elif message.content.upper() == "AGREED":  # pleb shush, I need to have my fun as well :)
         if message.author.id == 309231901212672001:
             await message.reply("https://tenor.com/view/metal-gear-rising-gif-25913914")
+            
+    elif message.content.upper() == "CANNIBALISM": 
+        if message.author.id in [606917358438580224, 241589674131456000]:
+            array = [
+                "Pog!", "Noses!", "Toes!", "Fungus!"]
+            random_message = random.sample(range(0, len(array)), 1)
+            await message.reply(array[random_message[0]])
 
     await bot.process_commands(message)
 
