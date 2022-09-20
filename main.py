@@ -240,8 +240,7 @@ async def on_message(message: discord.Message):
             
     elif message.content.upper() == "CANNIBALISM": 
         if message.author.id in [606917358438580224, 241589674131456000]:
-            array = [
-                "Pog!", "Noses!", "Toes!", "Fungus!"]
+            array = ["Pog!", "Noses!", "Toes!", "Fungus!"]
             random_message = random.sample(range(0, len(array)), 1)
             await message.reply(array[random_message[0]])
 
