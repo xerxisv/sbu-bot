@@ -13,15 +13,15 @@ from utils.error_utils import exception_to_string
 class TasksCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.update_member.start()
+        self.update_members.start()
         self.auto_qotd.start()
 
     def cog_unload(self):
-        self.update_member.cancel()
+        self.update_members.cancel()
         self.auto_qotd.cancel()
 
     @tasks.loop(hours=1)
-    async def update_member(self):
+    async def update_members(self):
         total_members = 0  # Stores the member count of all the guilds combined
         for idx, guild in enumerate(constants.GUILDS_INFO.keys()):
             try:
@@ -32,21 +32,24 @@ class TasksCog(commands.Cog):
 
                         guild_info = await resp.json()
 
-                new_name = f'{guild_info["name"]}: {str(len(guild_info["members"]))}'
-                total_members += int(len(guild_info["members"]))
-
-                vc = self.bot.get_channel(constants.MEMBER_COUNT_VC_IDS[idx])
-
-                await vc.edit(name=new_name)
             except AssertionError:
                 await self.bot \
                     .get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID) \
-                    .send(f'Guild info fetch with id `{guild}` did not return a 200.')
+                    .send(f'Guild info fetch with id `{constants.GUILDS_INFO[guild]["guild_uuid"]}` '
+                          'did not return a 200.')
 
             except Exception as exception:
                 await self.bot \
                     .get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID) \
                     .send(exception_to_string('update_member task', exception))
+
+            else:
+                new_name = f'{guild_info["name"]}: {str(len(guild_info["members"]))}'
+                total_members += int(len(guild_info["members"]))
+
+                vc = self.bot.get_channel(constants.GUILDS_INFO[guild]['vc_id'])
+
+                await vc.edit(name=new_name)
 
         total_member_vc = self.bot.get_channel(constants.TOTAL_MEMBER_COUNT_VC_ID)
         new_name = "Guild members: " + str(total_members)
