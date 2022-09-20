@@ -179,7 +179,7 @@ class Ban(commands.Cog):
             # Split the message on every space character
             split_msg = message.content.split(' ')
             # If the message is less than 2 words long then it's an invalid warn command, return
-            if len(split_msg) < 2:
+            if len(split_msg) < 3:
                 return
 
             # Else remove the discord formatting characters from the ID
@@ -189,15 +189,15 @@ class Ban(commands.Cog):
             if not user_id.isnumeric():
                 return
 
-            # Fetch the user with the specified ID
-            user = await self.bot.get_or_fetch_user(int(user_id))
+            # Fetch the member with the specified ID
+            member: discord.Member = message.guild.get_member(int(user_id))
 
-            if user is None:
+            if member is None or member.get_role(JR_MOD_ROLE_ID) is not None:
                 return
 
             await message.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
                 f"Moderator: {message.author.mention} \n"
-                f"User: {user.mention} \n"
+                f"User: {member.mention} \n"
                 f"Action: Warn \n"
                 f"Reason: {' '.join(split_msg[2:])}")
 
