@@ -9,7 +9,7 @@ from utils.schemas.BannedMember import BannedMember
 
 
 class BanList(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: discord.Bot):
         self.bot = bot
 
     @commands.command()
@@ -56,9 +56,9 @@ class BanList(commands.Cog):
         )
 
         banned_embed.set_footer(text='SBU Banned List')
-        banned_embed.add_field(name='User UUID', value=banned_ign, inline=False)
+        banned_embed.add_field(name='User IGN', value=f'`{banned_ign}`', inline=False)
         banned_embed.add_field(name='Reason', value=reason, inline=False)
-        banned_embed.add_field(name='UUID Converter', value=f'https://mcuuid.net/?q={banned_ign}', inline=False)
+        banned_embed.add_field(name='UUID Converter', value=f'https://mcuuid.net/?q={banned_id}', inline=False)
 
         await ctx.guild \
             .get_channel(BANNED_LIST_CHANNEL_ID) \
@@ -66,7 +66,7 @@ class BanList(commands.Cog):
 
         response_embed = discord.Embed(
             title='Success',
-            description=f'User *{banned_ign}* added to <#{BANNED_LIST_CHANNEL_ID}>',
+            description=f'User `{banned_ign}` added to <#{BANNED_LIST_CHANNEL_ID}>',
             colour=0x00FF00
         )
 
@@ -109,13 +109,15 @@ class BanList(commands.Cog):
             )
         else:
             banned = BannedMember.dict_from_tuple(banned)
+            mod = await self.bot.get_or_fetch_user(banned['moderator'])
+
             embed = discord.Embed(
                 title='User found',
                 description='User is present in our banned list',
                 colour=0xFF0000
             )
             embed.add_field(name='Reason', value=f'{banned["reason"]}', inline=False)
-            embed.set_footer(text=f'Banned by <@{banned["moderator"]}>')
+            embed.set_footer(text=f'Banned by {mod if mod is not None else banned["moderator"]}')
 
         await ctx.reply(embed=embed)
 
@@ -128,6 +130,60 @@ class BanList(commands.Cog):
                 colour=0xFF0000
             )
             await ctx.reply(embed=embed)
+
+    @commands.command()
+    @commands.has_role(MODERATOR_ROLE_ID)
+    async def bandel(self, ctx: commands.Context, ign: str, *, reason: str = 'None'):
+        banned_uuid = BanList.extract_id(ign)
+
+        if banned_uuid is None:
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid IGN',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        db = sqlite3.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
+        cursor = db.cursor()
+
+        cursor.execute(BannedMember.select_row_with_id(banned_uuid))
+
+        if cursor.fetchone() is None:
+            embed = discord.Embed(
+                title='Error',
+                description='User is not present in our database',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        cursor.execute(BannedMember.delete_row_with_id(banned_uuid))
+
+        embed = discord.Embed(
+            title='Unbanned Member',
+            description='',
+            colour=discord.Colour.brand_green()
+        )
+
+        embed.set_footer(text='SBU Banned List')
+        embed.add_field(name='User IGN', value=f'`{ign}`', inline=False)
+        embed.add_field(name='Reason', value=reason, inline=False)
+        embed.add_field(name='UUID Converter', value=f'https://mcuuid.net/?q={banned_uuid}', inline=False)
+
+        await ctx.guild.get_channel(BANNED_LIST_CHANNEL_ID).send(embed=embed)
+
+        embed = discord.Embed(
+            title='Success',
+            description=f'User `{ign}` was removed from the banned database',
+            colour=0x00FF00
+        )
+
+        db.commit()
+        db.close()
+
+        await ctx.reply(embed=embed)
 
     @staticmethod
     def extract_id(ign: str):

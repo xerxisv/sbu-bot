@@ -52,6 +52,14 @@ class BannedMember(Schema):
         '''
 
     @staticmethod
+    def delete_row_with_id(_id: str) -> str:
+        return f'''
+            DELETE
+            FROM BANNED
+            WHERE uuid='{_id}'
+        '''
+
+    @staticmethod
     def dict_from_tuple(query_res) -> BannedMemberInfo:
         return {
             "uuid": query_res[0],
