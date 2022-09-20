@@ -118,6 +118,7 @@ async def modhelp(ctx: commands.Context):
     embed.add_field(name="Lookup section for Rank Academy ", value="`+lookupsection`", inline=False)
     embed.add_field(name="Shortened questions for promo for Instr and higher", value="`+ras`", inline=False)
     embed.add_field(name="Add a banned member to banned list", value="`+banlist IGN`", inline=False)
+    embed.add_field(name="Check if user is banned", value="`+bancheck IGN`", inline=False)
     embed.add_field(name="Activate SBU's Crisis Mode", value="`+crisis`", inline=False)
     embed.add_field(name="Deactivate SBU's Crisis Mode", value="`+crisisend`", inline=False)
     embed.add_field(name="Check inactive kicks for a guild", value="`+inactive GUILDNAME`", inline=False)
@@ -140,10 +141,6 @@ async def dm(ctx: discord.ext.commands.Context, member: discord.Member, *, messa
 
 @bot.event
 async def on_command_error(ctx: commands.Context, exception):
-    if ctx is None:
-        print(exception)
-        return
-
     if isinstance(exception, commands.CommandOnCooldown):
         embed = discord.Embed(
             title='Error',
@@ -173,12 +170,12 @@ async def on_command_error(ctx: commands.Context, exception):
         pass
 
     else:
-        if ctx is None:
+        try:
+            await log_error(ctx, exception)
+        except AttributeError:
             await bot.get_channel(SBU_BOT_LOGS_CHANNEL_ID).send('Exception passed to main:\n' +
                                                                 exception_to_string("main", exception))
             return
-
-        await log_error(ctx, exception)
 
 
 @bot.event
@@ -193,14 +190,14 @@ async def on_message(message: discord.Message):
 
     elif message.content.upper() == "FLOP":
         if message.author.id in [615987518890049555, 462940637595959296]:
-            array = ["<:turtlefire:945023173353697320>", "Fleee", "All hail King Flop"]
+            array = ["<:turtleonfire:1021834121347084309>", "Fleee", "All hail King Flop"]
             random_message = random.sample(range(0, len(array)), 1)
             await message.reply(array[random_message[0]])
 
     elif message.content.upper() == "PINGU":
         if message.author.id in [381494697073573899, 462940637595959296]:
             array = [
-                "<:poguin:933279319579561986>", "<a:pingupat:932962348908560417>", "UwU",
+                "<a:poguin:933279319579561986>", "<a:pingupat:932962348908560417>", "UwU",
                 "https://tenor.com/view/noot-noot-apocalypse-gif-25788876"]
             random_message = random.sample(range(0, len(array)), 1)
             await message.reply(array[random_message[0]])
@@ -236,7 +233,8 @@ async def on_message(message: discord.Message):
     elif message.content.upper() == "CHOMP":
         if message.author.id in [241589674131456000]:
             await message.reply("https://tenor.com/view/cat-bite-funny-chomp-gif-16986241")
-    elif message.content.upper() == "ACCEPTED":  # pleb shush, I need to have my fun as well :)
+
+    elif message.content.upper() == "AGREED":  # pleb shush, I need to have my fun as well :)
         if message.author.id == 309231901212672001:
             await message.reply("https://tenor.com/view/metal-gear-rising-gif-25913914")
 
