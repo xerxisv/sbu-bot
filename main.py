@@ -18,7 +18,8 @@ bot.remove_command('help')
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready")
-
+    channel = bot.get_channel(946591422616838264)
+    await channel.send("<@&1015989853202169877> The Bot has been recently rebooted. Please enable all the necessary cogs.\nhttps://tenor.com/view/hacker-gif-19246062")
 
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
