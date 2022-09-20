@@ -169,14 +169,10 @@ guildchecking1 = """Check if they are on <@797974550834053203> scammer/irl trade
 You can see and example below of someone who is not flagged and someone who is flagged.
 
 Link to gif if you're having trouble loading: https://i.imgur.com/DzRRdk5.mp4"""
-guildchecking2 = """Search:
-`in: banned-list [ign]`
+guildchecking2 = """use:
+`+bancheck [ign]`
 
-See below to get an idea of where to look for the search bar.
-
-This searches our <#830188559964307526> channel to ensure this person was not previously banned from our guilds or a scammer.
-
-Link to gif if you're having trouble loading: https://i.imgur.com/Mt3wcIM.gif"""
+This command searches our <#830188559964307526> channel to ensure this person was not previously banned from our guilds or a scammer."""
 guildchecking3 = """
 You can use this command to bring up a cheat-sheet on how to look up people in our guilds at any time in the future:
 
