@@ -10,16 +10,20 @@ from discord.ext import commands, tasks
 from utils import constants
 from utils.error_utils import exception_to_string
 
+import os
+
 
 class TasksCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.update_members.start()
         self.auto_qotd.start()
+        self.backup_db.start()
 
     def cog_unload(self):
         self.update_members.cancel()
         self.auto_qotd.cancel()
+        self.backup_db.cancel()
 
     @tasks.loop(hours=1)
     async def update_members(self):
@@ -95,12 +99,11 @@ class TasksCog(commands.Cog):
 
     @tasks.loop(hours=24)
     async def backup_db(self):
-        with tarfile.open("backup.tar.gz", "w:gz") as tar_handle:
+        with tarfile.open("./backup/backup.tar.gz", "w:gz") as tar_handle:
             for root, dirs, files in os.walk("./data"):
                 for file in files:
                     if file.endswith(".db"):
-                        tar_handle.add(os.path.join(root, file))
-        os.rename("backup.tar.gz", "backup/backup.tar.gz")
+                        tar_handle.add(os.path.join(root, file), arcname=file)
 
 
 def setup(bot):
