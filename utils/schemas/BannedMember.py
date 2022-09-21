@@ -9,6 +9,7 @@ class BannedMemberInfo(TypedDict):
     uuid: str
     reason: str
     moderator: int
+    message: int
 
 
 class BannedMember(Schema):
@@ -23,7 +24,7 @@ class BannedMember(Schema):
     def insert(self) -> (str, dict):
         return '''
             INSERT
-            INTO BANNED
+            INTO BANNED (uuid, reason, moderator, created_at)
             VALUES (:uuid, :reason, :moderator, :created_at)
         ''', {
             "uuid": self.uuid,
@@ -32,6 +33,13 @@ class BannedMember(Schema):
             "created_at": int(time.time())
         }
 
+    def insert_msg(self, msg: int) -> str:
+        return f'''
+            UPDATE BANNED
+            SET "message"={msg}
+            WHERE uuid='{self.uuid}'
+        '''
+
     @staticmethod
     def create() -> str:
         return '''
@@ -39,7 +47,8 @@ class BannedMember(Schema):
                 "uuid" TEXT PRIMARY KEY ,
                 "reason" TEXT DEFAULT 'None',
                 "moderator" INTEGER NOT NULL,
-                "created_at" INTEGER NOT NULL 
+                "created_at" INTEGER NOT NULL,
+                "message" INTEGER DEFAULT NULL
             )
         '''
 
@@ -65,4 +74,5 @@ class BannedMember(Schema):
             "uuid": query_res[0],
             "reason": query_res[1],
             "moderator": query_res[2],
+            "message": query_res[4]
         }
