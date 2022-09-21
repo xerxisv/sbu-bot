@@ -60,7 +60,7 @@ class TasksCog(commands.Cog):
         channel = self.bot.get_channel(constants.QOTD_CHANNEL_ID)
         #
 
-        with open('./data/qotd.json') as f:
+        with open(constants.QOTD_PATH) as f:
             qotd_obj = json.load(f)
 
         qotd_list = list(qotd_obj)
@@ -75,7 +75,7 @@ class TasksCog(commands.Cog):
         message = await channel.send(qotd_list[0]["qotd"] + f" <@&{constants.QOTD_ROLE_ID}>")
         await message.create_thread(name="QOTD")
         qotd_list.pop(0)
-        with open('qotd.json', 'w') as json_file:
+        with open(constants.QOTD_PATH, 'w') as json_file:
             json.dump(qotd_list, json_file,
                       indent=4,
                       separators=(',', ': '))

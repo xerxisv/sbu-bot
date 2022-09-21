@@ -5,6 +5,7 @@ import dotenv
 dotenv.load_dotenv()
 
 SBU_LOGO_URL = 'https://cdn.discordapp.com/avatars/937099605265485936/8a5d786e369fdda9f355f12eaf0487fb.png?size=4096'
+QOTD_PATH = './data/qotd.json'
 
 # Pseudo constants
 GUILD_ID = 0

@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import json
-from utils.constants import SBU_LOGO_URL, JR_MOD_ROLE_ID
+from utils.constants import SBU_LOGO_URL, JR_MOD_ROLE_ID, QOTD_PATH
 
 
 class QOTD(commands.Cog):
@@ -14,7 +14,7 @@ class QOTD(commands.Cog):
         if ctx.author.id == 0:
             await ctx.send("Banned from qotd")
             return
-        with open('qotd.json') as fp:
+        with open(QOTD_PATH) as fp:
             list_obj = json.load(fp)
 
         data = {
@@ -23,7 +23,7 @@ class QOTD(commands.Cog):
         list_var = list(list_obj)
         list_var.append(data)
 
-        with open('./data/qotd.json', 'w') as json_file:
+        with open(QOTD_PATH, 'w') as json_file:
             json.dump(list_var, json_file,
                       indent=4,
                       separators=(',', ': '))
@@ -39,7 +39,7 @@ class QOTD(commands.Cog):
     @commands.command()
     @commands.has_role(JR_MOD_ROLE_ID)
     async def qotdlist(self, ctx):
-        with open('./data/qotd.json') as fp:
+        with open(QOTD_PATH) as fp:
             list_obj = json.load(fp)
         if len(list_obj) >= 24:
             qotd_embed = discord.Embed(
