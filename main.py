@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import discord
@@ -245,6 +246,6 @@ async def on_message(message: discord.Message):
 
 
 if __name__ == '__main__':
-    run_setup()
+    asyncio.run(run_setup())
     load_dotenv()
     bot.run(os.getenv("TOKEN"))

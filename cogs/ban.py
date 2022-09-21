@@ -1,15 +1,13 @@
 import datetime
+import time
+from random import choice
 
 import discord
 import humanfriendly
 from discord.ext import commands
 
-from random import choice
-import time
-
 from utils.constants import JR_MOD_ROLE_ID, MODERATOR_ROLE_ID, MOD_ACTION_LOG_CHANNEL_ID
 from utils.error_utils import log_error
-
 
 COOLDOWN_AMOUNT = 60.0
 last_executed = time.time()
@@ -153,8 +151,8 @@ class Ban(commands.Cog):
         await member.remove_timeout(reason=reason)
         await ctx.send(f"{member.mention} has been unmuted.")
 
-        await ctx.guild\
-            .get_channel(MOD_ACTION_LOG_CHANNEL_ID)\
+        await ctx.guild \
+            .get_channel(MOD_ACTION_LOG_CHANNEL_ID) \
             .send(f"Moderator: {ctx.message.author.mention} \n"
                   f"User: {member.mention} \n"
                   f"Action: Unmute \n"

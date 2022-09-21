@@ -1,5 +1,4 @@
-import sqlite3
-
+import aiosqlite
 import discord
 import requests
 from discord.ext import commands
@@ -26,13 +25,13 @@ class BanList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        db = sqlite3.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
-        cursor = db.cursor()
+        db = await aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
+        cursor = await db.cursor()
 
         # Check if user is already banned
-        cursor.execute(BannedMember.select_row_with_id(banned_id))
+        await cursor.execute(BannedMember.select_row_with_id(banned_id))
 
-        if cursor.fetchone() is not None:
+        if await cursor.fetchone() is not None:
             embed = discord.Embed(
                 title='Operation Canceled',
                 description='User is already banned',
@@ -44,9 +43,9 @@ class BanList(commands.Cog):
         banned_member = BannedMember(banned_id, reason, ctx.author.id)  # Create banned member instance
 
         # Save banned member to database
-        cursor.execute(*(banned_member.insert()))
-        db.commit()
-        db.close()
+        await cursor.execute(*(banned_member.insert()))
+        await db.commit()
+        await db.close()
 
         # Send response
         banned_embed = discord.Embed(
@@ -93,11 +92,11 @@ class BanList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        db = sqlite3.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
-        cursor = db.cursor()
-        cursor.execute(BannedMember.select_row_with_id(banned_id))
-        banned = cursor.fetchone()
-        db.close()
+        db = await aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
+        cursor = await db.cursor()
+        await cursor.execute(BannedMember.select_row_with_id(banned_id))
+        banned = await cursor.fetchone()
+        await db.close()
 
         embed: discord.Embed
 
@@ -145,12 +144,12 @@ class BanList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        db = sqlite3.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
-        cursor = db.cursor()
+        db = await aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
+        cursor = await db.cursor()
 
-        cursor.execute(BannedMember.select_row_with_id(banned_uuid))
+        await cursor.execute(BannedMember.select_row_with_id(banned_uuid))
 
-        if cursor.fetchone() is None:
+        if await cursor.fetchone() is None:
             embed = discord.Embed(
                 title='Error',
                 description='User is not present in our database',
@@ -159,7 +158,7 @@ class BanList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        cursor.execute(BannedMember.delete_row_with_id(banned_uuid))
+        await cursor.execute(BannedMember.delete_row_with_id(banned_uuid))
 
         embed = discord.Embed(
             title='Unbanned Member',
@@ -180,8 +179,8 @@ class BanList(commands.Cog):
             colour=0x00FF00
         )
 
-        db.commit()
-        db.close()
+        await db.commit()
+        await db.close()
 
         await ctx.reply(embed=embed)
 

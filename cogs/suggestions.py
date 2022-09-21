@@ -1,7 +1,7 @@
 import datetime
-from sqlite3 import connect
 
 import discord
+import aiosqlite
 from discord.ext import commands
 
 from utils.constants import ADMIN_ROLE_ID, SBU_LOGO_URL, SUGGESTIONS_CHANNEL_ID
@@ -17,10 +17,10 @@ class Suggestions(commands.Cog):
     @commands.cooldown(1, 5)
     async def suggest(self, ctx: commands.Context, *, suggestion_str: str):
         # Fetch new suggestion ID
-        db = connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
-        cursor = db.cursor()
-        cursor.execute(Suggestion.get_next_id())
-        suggestion_num = cursor.fetchone()[0] + 1
+        db = await aiosqlite.connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
+        cursor = await db.cursor()
+        await cursor.execute(Suggestion.get_next_id())
+        suggestion_num = (await cursor.fetchone())[0] + 1
 
         # Create embed
         suggestion_embed = discord.Embed(
@@ -48,11 +48,10 @@ class Suggestions(commands.Cog):
 
         suggestion = Suggestion(suggestion_num, message.id, suggestion_str, ctx.author.id)
 
-        insertion_tuple = suggestion.insert()
-        cursor.execute(insertion_tuple[0], insertion_tuple[1])
+        await cursor.execute(*(suggestion.insert()))
 
-        db.commit()
-        db.close()
+        await db.commit()
+        await db.close()
 
     @suggest.error
     async def on_suggest_error(self, ctx: commands.Context, exception):
@@ -66,11 +65,11 @@ class Suggestions(commands.Cog):
     @commands.has_role(ADMIN_ROLE_ID)
     async def approve(self, ctx: commands.Context, suggestion_id: int, *, reason=None):
 
-        db = connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
-        cursor = db.cursor()
+        db = await aiosqlite.connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
+        cursor = await db.cursor()
 
-        cursor.execute(Suggestion.select_row_with_id(suggestion_id))
-        suggestion_tuple = cursor.fetchone()
+        await cursor.execute(Suggestion.select_row_with_id(suggestion_id))
+        suggestion_tuple = await cursor.fetchone()
 
         if suggestion_tuple is None:
             await ctx.reply("Suggestion not found.")
@@ -121,15 +120,15 @@ class Suggestions(commands.Cog):
                 .add_field(name="Direct Message", value=f"{suggestion_author} dmed successfully", inline=False)
         finally:
             # Send the embed regardless of errors
-            await ctx.send(embed=approved_embed)
+            await ctx.send(embed=approved_embed, delete_after=10)
 
             set_approved_tuple = Suggestion.set_approved(suggestion_id, True, ctx.author.id, reason)
 
-            cursor.execute(set_approved_tuple[0], set_approved_tuple[1])
-            db.commit()
+            await cursor.execute(set_approved_tuple[0], set_approved_tuple[1])
+            await db.commit()
 
-        db.close()
-        await ctx.message.delete()
+        await db.close()
+        await ctx.message.delete(delay=10)
 
     @approve.error
     async def on_approve_error(self, ctx: commands.Context, exception):
@@ -142,11 +141,11 @@ class Suggestions(commands.Cog):
     @commands.command()
     @commands.has_role(ADMIN_ROLE_ID)
     async def deny(self, ctx, suggestion_id: int, *, reason=None):
-        db = connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
-        cursor = db.cursor()
+        db = await aiosqlite.connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
+        cursor = await db.cursor()
 
-        cursor.execute(Suggestion.select_row_with_id(suggestion_id))
-        suggestion_tuple = cursor.fetchone()
+        await cursor.execute(Suggestion.select_row_with_id(suggestion_id))
+        suggestion_tuple = await cursor.fetchone()
 
         if suggestion_tuple is None:
             await ctx.reply("Suggestion not found.")
@@ -196,15 +195,15 @@ class Suggestions(commands.Cog):
                                      inline=False)
         finally:
             # Send the embed regardless of errors
-            await ctx.send(embed=approved_embed)
+            await ctx.reply(embed=approved_embed, delete_after=10)
 
             set_approved_tuple = Suggestion.set_approved(suggestion_id, True, ctx.author.id, reason)
 
-            cursor.execute(set_approved_tuple[0], set_approved_tuple[1])
-            db.commit()
+            await cursor.execute(set_approved_tuple[0], set_approved_tuple[1])
+            await db.commit()
 
-        db.close()
-        await ctx.message.delete()
+        await db.close()
+        await ctx.message.delete(delay=10)
 
     @deny.error
     async def on_deny_error(self, ctx: commands.Context, exception):

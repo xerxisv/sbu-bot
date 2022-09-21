@@ -1,8 +1,8 @@
 import datetime
 import os
-import sqlite3
 import time
 
+import aiosqlite
 import discord
 import humanfriendly
 import requests
@@ -28,18 +28,18 @@ class InactiveList(commands.Cog):
 
     @tasks.loop(hours=12)
     async def inactives_check(self):
-        db = sqlite3.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
-        cursor = db.cursor()
+        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
+        cursor = await db.cursor()
 
         try:
-            cursor.execute(InactivePlayer.delete_inactive())
+            await cursor.execute(InactivePlayer.delete_inactive())
         except Exception as exception:
             await self.bot \
                 .get_channel(SBU_BOT_LOGS_CHANNEL_ID) \
                 .send(exception_to_string('inactives_check task', exception))
         finally:
-            db.commit()
-            db.close()
+            await db.commit()
+            await db.close()
 
     @commands.command()
     async def inactiveadd(self, ctx: commands.Context, afk_time: str):
@@ -60,13 +60,13 @@ class InactiveList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        db = sqlite3.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db')
-        cursor = db.cursor()
+        db = await aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db')
+        cursor = await db.cursor()
 
-        cursor.execute(VerifiedMember.select_row_with_id(ctx.author.id))
-        member = cursor.fetchone()
+        await cursor.execute(VerifiedMember.select_row_with_id(ctx.author.id))
+        member = await cursor.fetchone()
 
-        db.close()
+        await db.close()
 
         if member is None:
             embed = discord.Embed(title=f'Error', description='You need to be verified to run this command',
@@ -81,13 +81,13 @@ class InactiveList(commands.Cog):
 
         new_inactive = InactivePlayer(ctx.author.id, member['uuid'], member['guild_uuid'], int(afk_time))
 
-        db = sqlite3.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
-        cursor = db.cursor()
+        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
+        cursor = await db.cursor()
 
-        cursor.execute(*(new_inactive.insert()))
+        await cursor.execute(*(new_inactive.insert()))
 
-        db.commit()
-        db.close()
+        await db.commit()
+        await db.close()
 
         embed = discord.Embed(title=f'Success',
                               description=f'You have been added to Inactive list until '
@@ -107,12 +107,12 @@ class InactiveList(commands.Cog):
     @commands.command()
     # @commands.cooldown(1, 60)
     async def inactive(self, ctx, *, guild: str):
-        db = sqlite3.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
+        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
 
-        cursor = db.cursor()
-        cursor.execute('''SELECT * FROM INACTIVES''')
+        cursor = await db.cursor()
+        await cursor.execute('''SELECT * FROM INACTIVES''')
 
-        values = cursor.fetchall()
+        values = await cursor.fetchall()
         inactives_uuids = [inactive[1] for inactive in values]  # puts all the UUIDs in an array
 
         # If inputted guild is invalid
@@ -169,7 +169,7 @@ class InactiveList(commands.Cog):
                                               + f"\n\n{embed_msg}")
         await message.edit(embed=embed_var)
 
-        db.close()
+        await db.close()
 
     @inactive.error
     async def inactive_error(self, ctx: commands.Context, exception: Exception):

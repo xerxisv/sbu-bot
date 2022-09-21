@@ -1,5 +1,4 @@
-import sqlite3
-
+import aiosqlite as sqlite3
 import discord
 from discord.ext import commands
 
@@ -19,19 +18,19 @@ class Reputations(commands.Cog):
             await ctx.send("You can't rep yourself.")
             return
 
-        db = sqlite3.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db')
-        cursor = db.cursor()
-        cursor.execute(RepCommand.get_max_rep_id())
-        rep_id = cursor.fetchone()[0] + 1
+        db = await sqlite3.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db')
+        cursor = await db.cursor()
+        await cursor.execute(RepCommand.get_max_rep_id())
+        rep_id = (await cursor.fetchone())[0] + 1
 
         rep = RepCommand(rep_id, receiver.id, ctx.author.id, comments)
 
         insertion_query = rep.insert()
-        cursor.execute(insertion_query[0], insertion_query[1])
-        db.commit()
+        await cursor.execute(insertion_query[0], insertion_query[1])
+        await db.commit()
 
-        cursor.execute(RepCommand.count_rows())
-        global_reps = cursor.fetchone()[0]
+        await cursor.execute(RepCommand.count_rows())
+        global_reps = (await cursor.fetchone())[0]
 
         rep_embed = discord.Embed(
             title='Reputation Given',
@@ -48,10 +47,10 @@ class Reputations(commands.Cog):
             .get_channel(CARRY_SERVICE_REPS_CHANNEL_ID) \
             .send(embed=rep_embed)
 
-        cursor.execute(rep.set_message(message.id))
+        await cursor.execute(rep.set_message(message.id))
 
-        db.commit()
-        db.close()
+        await db.commit()
+        await db.close()
         await ctx.reply(f"Reputation given to {receiver.name}")
 
     @repgive.error
@@ -66,11 +65,11 @@ class Reputations(commands.Cog):
     @commands.has_role(ADMIN_ROLE_ID)
     async def repdel(self, ctx: commands.Context, rep_id: int):
 
-        db = sqlite3.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db')
+        db = await sqlite3.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db')
 
-        cursor = db.cursor()
-        cursor.execute(RepCommand.select_row_with_id(rep_id))
-        rep_tuple = cursor.fetchone()
+        cursor = await db.cursor()
+        await cursor.execute(RepCommand.select_row_with_id(rep_id))
+        rep_tuple = await cursor.fetchone()
 
         if rep_tuple is None:
             embed = discord.Embed(title='Error',
@@ -82,7 +81,7 @@ class Reputations(commands.Cog):
 
         rep = RepCommand.dict_from_tuple(rep_tuple)
 
-        cursor.execute(RepCommand.delete_row_with_id(rep_id))
+        await cursor.execute(RepCommand.delete_row_with_id(rep_id))
 
         try:
             await ctx.guild \
@@ -97,8 +96,8 @@ class Reputations(commands.Cog):
         await ctx.send(embed=embed, delete_after=15)
         await ctx.message.delete(delay=15)
 
-        db.commit()
-        db.close()
+        await db.commit()
+        await db.close()
 
     @repdel.error
     async def repgive_error(self, ctx: commands.Context, exception):

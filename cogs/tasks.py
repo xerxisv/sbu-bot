@@ -1,16 +1,14 @@
-import json
-import tarfile
-
-from asyncio import sleep
 import datetime
+import json
+import os
+import tarfile
+from asyncio import sleep
 
 import aiohttp
 from discord.ext import commands, tasks
 
 from utils import constants
 from utils.error_utils import exception_to_string
-
-import os
 
 
 class TasksCog(commands.Cog):
