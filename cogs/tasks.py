@@ -1,4 +1,5 @@
 import json
+import tarfile
 
 from asyncio import sleep
 import datetime
@@ -91,6 +92,15 @@ class TasksCog(commands.Cog):
         next_midnight = datetime.datetime.now().timestamp() - (datetime.datetime.now().timestamp() % 86400) + 86400
         seconds_until_next = next_midnight - datetime.datetime.now().timestamp()
         await sleep(seconds_until_next)
+
+    @tasks.loop(hours=24)
+    async def backup_db(self):
+        with tarfile.open("backup.tar.gz", "w:gz") as tar_handle:
+            for root, dirs, files in os.walk("./data"):
+                for file in files:
+                    if file.endswith(".db"):
+                        tar_handle.add(os.path.join(root, file))
+        os.rename("backup.tar.gz", "backup/backup.tar.gz")
 
 
 def setup(bot):
