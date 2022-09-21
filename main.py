@@ -194,7 +194,7 @@ async def on_message(message: discord.Message):
 
     elif message.content.upper() == "FLOP":
         if message.author.id == 615987518890049555:
-            array = ["<:turtleonfire:1021834121347084309>", "Fleee", "All hail King Flop"]
+            array = ["<:turtleonfire:1021834121347084309>", "Fleee", "All hail King Flop", "https://i.imgur.com/pnruanZ.png"]
             await message.reply(choice(array))
 
     elif message.content.upper() == "PINGU":
