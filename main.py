@@ -6,7 +6,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from random import choice
 
-from utils.constants import BOT_OWNER_ROLE_ID, JR_MOD_ROLE_ID, SBU_BOT_LOGS_CHANNEL_ID
+from utils.constants import BOT_OWNER_ROLE_ID, JR_MOD_ROLE_ID, SBU_BOT_LOGS_CHANNEL_ID, ADMIN_CHAT_CHANNEL_ID
 from utils.error_utils import exception_to_string, log_error
 from utils.setup import run_setup
 
@@ -18,7 +18,7 @@ bot.remove_command('help')
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready")
-    channel = bot.get_channel(SBU_BOT_LOGS_CHANNEL_ID)
+    channel = bot.get_channel(ADMIN_CHAT_CHANNEL_ID)
     await channel.send(f"<@&{BOT_OWNER_ROLE_ID}> The Bot has been recently rebooted. "
                        "Please enable all the necessary cogs.\nhttps://tenor.com/view/hacker-gif-19246062")
 
