@@ -240,6 +240,10 @@ async def on_message(message: discord.Message):
         if message.author.id in [606917358438580224, 241589674131456000]:
             array = ["Pog!", "Noses!", "Toes!", "Fungus!"]
             await message.reply(choice(array))
+            
+    elif message.content.upper() == "MUDKIP":
+        if message.author.id == 895488539775598603:
+            await message.reply("https://tenor.com/view/mudkip-spin-gif-24834722")
 
     await bot.process_commands(message)
 
