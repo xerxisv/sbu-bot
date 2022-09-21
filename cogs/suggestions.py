@@ -19,8 +19,8 @@ class Suggestions(commands.Cog):
         # Fetch new suggestion ID
         db = connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
         cursor = db.cursor()
-        cursor.execute(Suggestion.count_rows())
-        suggestion_num = cursor.fetchone()[0]
+        cursor.execute(Suggestion.get_next_id())
+        suggestion_num = cursor.fetchone()[0] + 1
 
         # Create embed
         suggestion_embed = discord.Embed(
@@ -42,7 +42,7 @@ class Suggestions(commands.Cog):
         channel = self.bot.get_channel(SUGGESTIONS_CHANNEL_ID)
         message = await channel.send(embed=suggestion_embed)
 
-        await ctx.send(f"Suggestion sent to <#{SUGGESTIONS_CHANNEL_ID}>")
+        await ctx.reply(f"Suggestion sent to <#{SUGGESTIONS_CHANNEL_ID}>")
         await message.add_reaction('✅')
         await message.add_reaction('❌')
 

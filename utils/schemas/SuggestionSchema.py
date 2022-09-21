@@ -103,12 +103,12 @@ class Suggestion(Schema):
 		'''
 
 	@staticmethod
-	def count_rows() -> str:
+	def get_next_id() -> str:
 		"""
 
 		:return: Query string to count the number of rows contained in the SUGGESTIONS table
 		"""
-		return 'SELECT COUNT(*) FROM "SUGGESTIONS";'
+		return 'SELECT max(suggestion_number) FROM SUGGESTIONS;'
 
 	@staticmethod
 	def dict_from_tuple(query_res) -> SuggestionInfo:
