@@ -1,10 +1,10 @@
 import os
-import random
 
 import discord
 import discord.utils
 from discord.ext import commands
 from dotenv import load_dotenv
+from random import choice
 
 from utils.constants import BOT_OWNER_ROLE_ID, JR_MOD_ROLE_ID, SBU_BOT_LOGS_CHANNEL_ID
 from utils.error_utils import exception_to_string, log_error
@@ -18,8 +18,10 @@ bot.remove_command('help')
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready")
-    channel = bot.get_channel(946591422616838264)
-    await channel.send("<@&1015989853202169877> The Bot has been recently rebooted. Please enable all the necessary cogs.\nhttps://tenor.com/view/hacker-gif-19246062")
+    channel = bot.get_channel(SBU_BOT_LOGS_CHANNEL_ID)
+    await channel.send(f"<@&{BOT_OWNER_ROLE_ID}> The Bot has been recently rebooted. "
+                       "Please enable all the necessary cogs.\nhttps://tenor.com/view/hacker-gif-19246062")
+
 
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
@@ -187,53 +189,47 @@ async def on_message(message: discord.Message):
             await message.reply("Meow")
 
     elif message.content.upper() == "MEOWO":
-        if message.author.id in [397389995113185293, 462940637595959296]:
+        if message.author.id == 397389995113185293:
             await message.reply("UwU meow")
 
     elif message.content.upper() == "FLOP":
-        if message.author.id in [615987518890049555, 462940637595959296]:
+        if message.author.id == 615987518890049555:
             array = ["<:turtleonfire:1021834121347084309>", "Fleee", "All hail King Flop"]
-            random_message = random.sample(range(0, len(array)), 1)
-            await message.reply(array[random_message[0]])
+            await message.reply(choice(array))
 
     elif message.content.upper() == "PINGU":
-        if message.author.id in [381494697073573899, 462940637595959296]:
+        if message.author.id == 381494697073573899:
             array = [
                 "<a:poguin:933279319579561986>", "<a:pingupat:932962348908560417>", "UwU",
                 "https://tenor.com/view/noot-noot-apocalypse-gif-25788876"]
-            random_message = random.sample(range(0, len(array)), 1)
-            await message.reply(array[random_message[0]])
-
-    elif message.content.upper() == "JACK":
-        if message.author.id in [358670711109320705, 462940637595959296, 397389995113185293, 438529479355400194]:
-            await message.reply("Go play <@909802667495268372> in <#910961553480765440>")
+            await message.reply(choice(array))
 
     elif message.content.upper() == "NEO":
-        if message.author.id in [566329261535920175]:
+        if message.author.id == 566329261535920175:
             await message.reply("op")
 
     elif message.content.upper() == "WINDOW":
-        if message.author.id in [797274543042986024]:
+        if message.author.id == 797274543042986024:
             await message.reply("https://tenor.com/view/monkey-gif-8660294")
 
     elif message.content.upper() == "PLEB":
-        if message.author.id in [519985798393626634, 462940637595959296]:
+        if message.author.id == 519985798393626634:
             await message.reply("shitting on the bw gamers.")
 
     elif message.content.upper() == "MEEP":
-        if message.author.id in [681475158975971329, 462940637595959296]:
+        if message.author.id == 681475158975971329:
             await message.reply("https://tenor.com/view/meap-phineas-and-ferb-phineas-and-ferb-meap-meep-gif-14038245")
 
     elif message.content.upper() == "MEGA":
-        if message.author.id in [675106662302089247, 462940637595959296]:
+        if message.author.id == 675106662302089247:
             await message.reply("https://tenor.com/view/megalorian-tykhe-gif-24043314")
 
     elif message.content.upper() == "HMM":
-        if message.author.id in [283326249735028736]:
+        if message.author.id == 283326249735028736:
             await message.reply("mhm")
 
     elif message.content.upper() == "CHOMP":
-        if message.author.id in [241589674131456000]:
+        if message.author.id == 241589674131456000:
             await message.reply("https://tenor.com/view/cat-bite-funny-chomp-gif-16986241")
 
     elif message.content.upper() == "AGREED":  # pleb shush, I need to have my fun as well :)
@@ -243,8 +239,7 @@ async def on_message(message: discord.Message):
     elif message.content.upper() == "CANNIBALISM": 
         if message.author.id in [606917358438580224, 241589674131456000]:
             array = ["Pog!", "Noses!", "Toes!", "Fungus!"]
-            random_message = random.sample(range(0, len(array)), 1)
-            await message.reply(array[random_message[0]])
+            await message.reply(choice(array))
 
     await bot.process_commands(message)
 
