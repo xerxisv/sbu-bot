@@ -170,11 +170,11 @@ You can see and example below of someone who is not flagged and someone who is f
 
 Link to gif if you're having trouble loading: https://i.imgur.com/DzRRdk5.mp4"""
 guildchecking2 = """Use:
-`+bancheck [ign]`
+`+banlist check [ign]`
 
 This command searches our <#830188559964307526> channel to ensure this person was not previously banned from our guilds or a scammer.
 
-Link to gif if you're having trouble loading: https://i.imgur.com/ZMaOSfC.gif"""
+Link to gif if you're having trouble loading: https://i.imgur.com/1G8oPwT.gif"""
 guildchecking3 = """
 You can use this command to bring up a cheat-sheet on how to look up people in our guilds at any time in the future:
 
@@ -200,7 +200,7 @@ guildc1 = discord.Embed(
 guildc1.add_field(name="#2 Use discord's search bar to search and make sure they are not in our #banned-list",
                   value=guildchecking2, inline=False)
 guildc1.set_image(
-    url="https://cdn-longterm.mee6.xyz/plugins/commands/images/764326796736856066/9c7a98eac6ddb5f27ae6874808dd166954a10e3d9456624f15221cff6a00704e.gif")
+    url="https://cdn-longterm.mee6.xyz/plugins/commands/images/764326796736856066/2c1d1c042343c75852863d3018df07f9737a06b0b2b67d63a84477d35d4ce6ee.gif")
 guildc2 = discord.Embed(
     title='Guild Checking academy',
     description='',
