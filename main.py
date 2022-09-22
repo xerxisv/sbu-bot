@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 import discord
@@ -171,7 +170,7 @@ async def on_command_error(ctx: commands.Context, exception):
         )
         await ctx.reply(embed=embed)
 
-    elif isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+    elif isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument, commands.CommandNotFound)):
         pass
 
     else:
@@ -195,7 +194,8 @@ async def on_message(message: discord.Message):
 
     elif message.content.upper() == "FLOP":
         if message.author.id == 615987518890049555:
-            array = ["<:turtleonfire:1021834121347084309>", "Fleee", "All hail King Flop", "https://i.imgur.com/pnruanZ.png"]
+            array = ["<:turtleonfire:1021834121347084309>", "Fleee", "All hail King Flop",
+                     "https://i.imgur.com/pnruanZ.png"]
             await message.reply(choice(array))
 
     elif message.content.upper() == "PINGU":
@@ -250,6 +250,6 @@ async def on_message(message: discord.Message):
 
 
 if __name__ == '__main__':
-    asyncio.run(run_setup())
+    run_setup()
     load_dotenv()
     bot.run(os.getenv("TOKEN"))
