@@ -8,7 +8,7 @@ import humanfriendly
 import requests
 from discord.ext import commands, tasks
 
-from utils.constants import GUILDS_INFO, SBU_BOT_LOGS_CHANNEL_ID
+from utils.constants import GUILDS_INFO, SBU_BOT_LOGS_CHANNEL_ID, MODERATOR_ROLE_ID
 from utils.error_utils import exception_to_string, log_error
 from utils.schemas.InactivePlayerSchema import InactivePlayer
 from utils.schemas.VerifiedMemberSchema import VerifiedMember
@@ -105,7 +105,8 @@ class InactiveList(commands.Cog):
             await ctx.reply(embed=embed)
 
     @commands.command()
-    # @commands.cooldown(1, 60)
+    @commands.cooldown(1, 60)
+    @commands.has_role(MODERATOR_ROLE_ID)
     async def inactive(self, ctx, *, guild: str):
         db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
 
@@ -150,7 +151,6 @@ class InactiveList(commands.Cog):
                 continue
 
             try:  # try the member's IGN
-                # TODO add IGN to the verified db. Add task to update IGNs every 24h
                 data3 = requests.get(url=f"https://api.mojang.com/user/profile/{player['uuid']}").json()
 
             except Exception as exception:  # If there is an exception, log it and add the uuid in the embed
