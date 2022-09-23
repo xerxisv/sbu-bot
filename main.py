@@ -133,7 +133,7 @@ async def modhelp(ctx: commands.Context):
 
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
-async def dm(ctx: discord.ext.commands.Context, member: discord.Member, *, message: str):
+async def dm(ctx: discord.ext.commands.Context, member: discord.User, *, message: str):
     try:
         await member.send(message)
     except Exception as err:

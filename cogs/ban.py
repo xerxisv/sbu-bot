@@ -27,7 +27,15 @@ class Ban(commands.Cog):
 
     @commands.command()
     @commands.has_role(MODERATOR_ROLE_ID)
-    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason=None):
+    async def ban(self, ctx: commands.Context, member: discord.User, *, reason=None):
+        try:  # DM user if banning was successful
+            await member.send("You have been banned from SBU for " + str(reason))
+            await member.send(r"Appeal at https://discord.gg/mn6kJrJuVB")
+        except discord.HTTPException:
+            await ctx.send("User cannot be dmed")
+        except Exception as exception:
+            await log_error(ctx, exception)
+
         try:  # Check for any permission errors
             await ctx.guild.ban(user=member, delete_message_days=0, reason=reason)
         except discord.Forbidden:
@@ -38,14 +46,6 @@ class Ban(commands.Cog):
             )
             await ctx.reply(embed=embed)
             return
-
-        try:  # DM user if banning was successful
-            await member.send("You have been banned from SBU for " + reason)
-            await member.send(r"Appeal at https://discord.gg/mn6kJrJuVB")
-        except discord.HTTPException:
-            await ctx.send("User cannot be dmed")
-        except Exception as exception:
-            await log_error(ctx, exception)
 
         # Send to action log
         channel = ctx.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID)
@@ -105,7 +105,7 @@ class Ban(commands.Cog):
 
     @commands.command()
     @commands.has_role(JR_MOD_ROLE_ID)
-    async def mute(self, ctx: commands.Context, member: discord.Member, timespan: str, *, reason: str):
+    async def mute(self, ctx: commands.Context, member: discord.Member, timespan: str, *, reason: str = None):
         # Convert time inputted to seconds
         try:
             timespan = humanfriendly.parse_timespan(timespan)
