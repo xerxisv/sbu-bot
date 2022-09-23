@@ -3,9 +3,10 @@ from pathlib import Path
 from aiosqlite import connect
 
 from utils.schemas import BannedMember, InactivePlayerSchema, RepCommandSchema, SchemaAbstract, SuggestionSchema, \
-    VerifiedMemberSchema
+    VerifiedMemberSchema, GuildTatsuSchema
 
 databases = [
+    GuildTatsuSchema.GuildTatsu,
     SuggestionSchema.Suggestion,
     InactivePlayerSchema.InactivePlayer,
     RepCommandSchema.RepCommand,

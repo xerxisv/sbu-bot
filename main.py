@@ -245,6 +245,10 @@ async def on_message(message: discord.Message):
     elif message.content.upper() == "MUDKIP":
         if message.author.id == 895488539775598603:
             await message.reply("https://tenor.com/view/mudkip-spin-gif-24834722")
+        
+    elif message.content == "RANDOM": # lemme have some wholesome fun too :D
+        if message.author.id == 491654047741509633:
+            await message.reply("https://cdn.discordapp.com/emojis/967203616966459412")
 
     await bot.process_commands(message)
 
