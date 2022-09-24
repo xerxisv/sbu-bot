@@ -3,7 +3,8 @@ from discord.ext import commands
 
 from utils.schemas.GuildTatsuSchema import GuildTatsu
 from utils.schemas.VerifiedMemberSchema import VerifiedMember
-from utils.constants import BRIDGE_BOT_IDS, BRIDGE_CHANNEL_IDS
+from utils.constants import BRIDGE_BOT_IDS, BRIDGE_CHANNEL_IDS, SBU_BOT_LOGS_CHANNEL_ID
+from utils.error_utils import exception_to_string
 
 import random
 
@@ -32,13 +33,10 @@ class GTatsu(commands.Cog):
 
                 uuid = GTatsu.extract_id(ign)
 
-                await cursor.execute(f'''SELECT * FROM "VERIFIED"''')
-                data = await cursor.fetchall()
+                await cursor.execute(VerifiedMember.select_row_with_uuid(uuid))
+                data = await cursor.fetchone()
 
-                for info in data:
-                    if info[1] == uuid:
-                        discord_id = info[0]
-                        break
+                discord_id = VerifiedMember.dict_from_tuple(data)["discord_id"]
 
 
                 await db.close()
@@ -59,9 +57,10 @@ class GTatsu(commands.Cog):
 
                 await db.close()
             
-        except Exception:
-            channel = self.bot.get_channel(989737672987779072)
-            await channel.send(f"gtatsu brokie when {url} was sent")
+        except Exception as exception:
+            channel = self.bot.get_channel(SBU_BOT_LOGS_CHANNEL_ID)
+            await channel.send(f"gtatsu brokie when {url} was sent\n{exception_to_string('/', exception)}")
+            
 
     
     @staticmethod

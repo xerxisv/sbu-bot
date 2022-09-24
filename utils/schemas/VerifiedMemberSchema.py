@@ -56,6 +56,14 @@ class VerifiedMember(Schema):
             FROM "VERIFIED"
             WHERE discord_id={_id}
         '''
+    
+    @staticmethod
+    def select_row_with_uuid(_id: int) -> str:
+        return f'''
+            SELECT *
+            FROM "VERIFIED"
+            WHERE "uuid"='{_id}'
+        '''
 
     @staticmethod
     def dict_from_tuple(query_res) -> VerifiedMemberInfo:
