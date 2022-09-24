@@ -9,6 +9,11 @@ class SuggestionInfo(TypedDict):
 	message_id: int
 	author_id: int
 	suggestion: str
+	answered: bool
+	approved: bool
+	reason: str
+	approved_by: int
+	created_at: int
 
 
 class Suggestion(Schema):
@@ -55,9 +60,66 @@ class Suggestion(Schema):
 		:return: query string that returns the suggestion with the given ID when executed
 		"""
 		return f'''
-			SELECT suggestion_number, message_id, author_id, suggestion
+			SELECT *
 			FROM SUGGESTIONS
 			WHERE suggestion_number={_id};
+		'''
+
+	@staticmethod
+	def count_unanswered_rows() -> str:
+		return '''
+			SELECT COUNT(1)
+			FROM SUGGESTIONS
+			WHERE answered=false;
+		'''
+
+	@staticmethod
+	def select_unanswered_rows(page: int) -> str:
+		return f'''
+			SELECT *
+			FROM "SUGGESTIONS"
+			WHERE answered=false
+			ORDER BY "suggestion_number"
+			LIMIT 10
+			OFFSET {(page - 1) * 10};
+		'''
+
+	@staticmethod
+	def count_approved(approved: bool) -> str:
+		return f'''
+			SELECT COUNT(1)
+			FROM SUGGESTIONS
+			WHERE approved={approved} and answered=true;
+		'''
+
+	@staticmethod
+	def select_approved(approved: bool, page: int) -> str:
+		return f'''
+			SELECT *
+			FROM SUGGESTIONS
+			WHERE approved={approved} and answered=true
+			ORDER BY "suggestion_number"
+			LIMIT 10
+			OFFSET {(page - 1) * 10};
+		'''
+
+	@staticmethod
+	def count_rows_with_author_id(_id: int) -> str:
+		return f'''
+			SELECT COUNT(1)
+			FROM SUGGESTIONS
+			WHERE author_id={_id};
+		'''
+
+	@staticmethod
+	def select_rows_with_author_id(_id: int, page: int) -> str:
+		return f'''
+			SELECT *
+			FROM SUGGESTIONS
+			WHERE author_id={_id}
+			ORDER BY "suggestion_number"
+			LIMIT 10
+			OFFSET {(page - 1) * 10};
 		'''
 
 	@staticmethod
@@ -73,7 +135,7 @@ class Suggestion(Schema):
 		return '''
 			UPDATE "SUGGESTIONS"
 			SET "answered"=:answered, "approved"=:approved, "reason"=:reason, "approved_by"=:approved_by
-			WHERE "suggestion_number"=:suggestion_id
+			WHERE "suggestion_number"=:suggestion_id;
 		''', {
 			"answered": True,
 			"approved": is_approved,
@@ -111,6 +173,14 @@ class Suggestion(Schema):
 		return 'SELECT max(suggestion_number) FROM SUGGESTIONS;'
 
 	@staticmethod
+	def delete_row_id(_id: int) -> str:
+		return f'''
+			DELETE
+			FROM SUGGESTIONS
+			WHERE suggestion_number={_id};
+		'''
+
+	@staticmethod
 	def dict_from_tuple(query_res) -> SuggestionInfo:
 		"""
 		\
@@ -121,5 +191,10 @@ class Suggestion(Schema):
 			"suggestion_number": query_res[0],
 			"message_id": query_res[1],
 			"author_id": query_res[2],
-			"suggestion": query_res[3]
+			"suggestion": query_res[3],
+			"answered": query_res[4],
+			"approved": query_res[5],
+			"reason": query_res[6],
+			"approved_by": query_res[7],
+			"created_at": query_res[8]
 		}

@@ -9,6 +9,7 @@ class BannedMemberInfo(TypedDict):
     uuid: str
     reason: str
     moderator: int
+    banned_at: int
     message: int
 
 
@@ -74,5 +75,6 @@ class BannedMember(Schema):
             "uuid": query_res[0],
             "reason": query_res[1],
             "moderator": query_res[2],
+            "banned_at": query_res[3],
             "message": query_res[4]
         }

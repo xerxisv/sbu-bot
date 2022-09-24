@@ -26,17 +26,17 @@ class Master(commands.Cog):
             if dungeon["profiles"][profile]["dungeons"]["catacombs"]["visited"]:
                 if temp1 <= int(dungeon["profiles"][profile]["dungeons"]["catacombs"]["level"]["level"]):
                     temp1 = int(dungeon["profiles"][profile]["dungeons"]["catacombs"]["level"]["level"])
-            if temp2 <= int(skill["profiles"][profile]["data"]["average_level"]):
-                temp2 = int(skill["profiles"][profile]["data"]["average_level"])
-        slayerreq = f"""You do not meet the slayer reqirement.
-        Current req is **500k total slayer xp**. 
+            if temp2 <= int(skill["profiles"][profile]["data"]["weight"]["senither"]["overall"]):
+                temp2 = int(skill["profiles"][profile]["data"]["weight"]["senither"]["overall"])
+        slayerreq = f"""You do not meet the slayer requirement.
+        Current req is **400k total slayer xp**. 
         Your XP is {temp}"""
-        dungeonreq = f"""You do not meet the cata lvl reqirement.
-                Current req is **cata 25**. 
+        dungeonreq = f"""You do not meet the cata lvl requirement.
+                Current req is **cata 0**. 
                 Your cata lvl is {temp1}"""
-        skillreq = f"""You do not meet the skill avg reqirement.
-                        Current req is **SA 30**. 
-                        Your SA is {temp2}"""
+        weight = f"""You do not meet the weight requirement.
+                        Current req is **2750**. 
+                        Your weight is {temp2}"""
         mastersreq = discord.Embed(
             title='Masters Requirements',
             description='',
@@ -47,16 +47,12 @@ class Master(commands.Cog):
         sacheck = True
         slayercheck = True
         catacheck = True
-        if temp < 500000:
+        if temp < 400000:
             mastersreq.add_field(name="Slayer", value=slayerreq, inline=False)
             check = False
             slayercheck = False
-        if temp1 < 25:
-            mastersreq.add_field(name="Dungeons", value=dungeonreq, inline=False)
-            check = False
-            catacheck = False
         if temp2 < 30:
-            mastersreq.add_field(name="Skill Avg", value=skillreq, inline=False)
+            mastersreq.add_field(name="Skill Avg", value=weight, inline=False)
             check = False
             sacheck = False
         check1 = 0
@@ -78,9 +74,9 @@ class Master(commands.Cog):
                 colour=discord.Colour.purple()
             )
             mastersreq2.add_field(name="Hold Up", value="You meet 2/3 of the requirements.", inline=False)
-            reqsmhm = f"""Slayer Req = 500k | Your Slayers **{temp}**
-            Cata Req = Cata 25 | Your Cata **{temp1}**
-            Skills Req = SA 30 | Your SA **{temp2}**"""
+            reqsmhm = f"""Slayer Req = 400k | Your Slayers **{temp}**
+            Cata Req = Cata 0 | Your Cata **{temp1}**
+            Weight Req = 2750 | Your weight **{temp2}**"""
             mastersreq2.add_field(name="Your Stats", value=reqsmhm, inline=False)
             await ctx.send(embed=mastersreq2)
         else:

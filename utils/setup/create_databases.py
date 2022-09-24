@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from aiosqlite import connect
+from sqlite3 import connect
 
 from utils.schemas import BannedMember, InactivePlayerSchema, RepCommandSchema, SchemaAbstract, SuggestionSchema, \
     VerifiedMemberSchema
@@ -14,14 +14,14 @@ databases = [
 ]
 
 
-async def create_dbs():
+def create_dbs():
     Path('./data').mkdir(parents=True, exist_ok=True)
 
     for db_schema in databases:
-        db = await connect(SchemaAbstract.Schema.DB_PATH + db_schema.DB_NAME + '.db')
+        db = connect(SchemaAbstract.Schema.DB_PATH + db_schema.DB_NAME + '.db')
 
-        cursor = await db.cursor()
-        await cursor.executescript(db_schema.create())
+        cursor = db.cursor()
+        cursor.executescript(db_schema.create())
 
-        await db.commit()
-        await db.close()
+        db.commit()
+        db.close()
