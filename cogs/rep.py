@@ -44,7 +44,7 @@ class Reputations(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @rep.command()
+    @rep.command(aliases=['add'])
     async def give(self, ctx: commands.Context, receiver: discord.Member, *, comments: str):
         if ctx.channel.id not in [CRAFT_REPS_CHANNEL_ID, CARRY_SERVICE_REPS_CHANNEL_ID]:
             embed = discord.Embed(
@@ -130,7 +130,7 @@ class Reputations(commands.Cog):
             await ctx.reply(embed=embed, delete_after=15)
             await ctx.message.delete(delay=15)
 
-    @rep.command()
+    @rep.command(aliases=['rm', 'delete', 'del'])
     @commands.has_role(ADMIN_ROLE_ID)
     async def remove(self, ctx: commands.Context, rep_id: int):
 
@@ -185,7 +185,7 @@ class Reputations(commands.Cog):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('rep help').invoke(ctx)
 
-    @show.command()
+    @show.command(aliases=['getter'])
     async def receiver(self, ctx: commands.Context, receiver: discord.User, page: int = 1):
         db = await aiosqlite.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db')
         cursor: aiosqlite.Cursor = await db.cursor()
@@ -255,7 +255,7 @@ class Reputations(commands.Cog):
             )
             await ctx.reply(embed=embed)
 
-    @show.command()
+    @show.command(aliases=['giver'])
     async def provider(self, ctx: commands.Context, provider: discord.User, page: int = 1):
         db = await aiosqlite.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db')
         cursor: aiosqlite.Cursor = await db.cursor()

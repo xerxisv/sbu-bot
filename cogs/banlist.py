@@ -13,7 +13,8 @@ class BanList(commands.Cog):
 
     @commands.Group
     async def banlist(self, ctx: commands.Context):
-        return
+        if ctx.invoked_subcommand is None:
+            await self.bot.get_command('banlist help').invoke(ctx)
 
     @banlist.command()
     async def help(self, ctx: commands.Context):
@@ -21,16 +22,19 @@ class BanList(commands.Cog):
             title='Command help',
             colour=0xc0c09e
         )
-        embed.add_field(name=f'Add a user to banned-list',
-                        value='`+banlist add <IGN: text> [reason: text]`',
-                        inline=False)
-        embed.add_field(name=f'Remove a user from banned-list',
-                        value='`+banlist remove <IGN: text>`',
-                        inline=False)
         embed.add_field(name='Check if a user if banned',
                         value='`+banlist check <IGN: text>`')
+        embed.add_field(name=f'Add a user to banned-list',
+                        value='`+banlist add <IGN: text> [reason: text]`\n'
+                              '*__Moderator__ command.*',
+                        inline=False)
+        embed.add_field(name=f'Remove a user from banned-list',
+                        value='`+banlist remove <IGN: text>`\n'
+                              '*__Moderator__ command.*',
+                        inline=False)
         embed.add_field(name='List all info related to the ban of the user',
-                        value='`+banlist info <IGN: text>`',
+                        value='`+banlist info <IGN: text>`\n'
+                              '*__Moderator__ command.*',
                         inline=False)
 
         await ctx.reply(embed=embed)
@@ -155,7 +159,7 @@ class BanList(commands.Cog):
             )
             await ctx.reply(embed=embed)
 
-    @banlist.command()
+    @banlist.command(aliases=['del', 'delete', 'rm'])
     @commands.has_role(MODERATOR_ROLE_ID)
     async def remove(self, ctx: commands.Context, ign: str):
         banned_uuid = extract_uuid(ign)

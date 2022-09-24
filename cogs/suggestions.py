@@ -11,7 +11,7 @@ from utils.schemas.SuggestionSchema import Suggestion
 
 
 class Suggestions(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command()
@@ -71,8 +71,9 @@ class Suggestions(commands.Cog):
 
     @commands.Group
     @commands.has_role(ADMIN_ROLE_ID)
-    async def suggestion(self, ctx):
-        pass
+    async def suggestion(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await self.bot.get_command('suggestion help').invoke(ctx)
 
     @suggestion.command()
     async def help(self, ctx: commands.Context):
@@ -104,7 +105,7 @@ class Suggestions(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @suggestion.command()
+    @suggestion.command(aliases=['yes'])
     async def approve(self, ctx: commands.Context, suggestion_id: int, *, reason=None):
 
         db = await aiosqlite.connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
@@ -126,7 +127,7 @@ class Suggestions(commands.Cog):
             colour=SBU_GOLD
         )
 
-        suggestion_author: discord.Member = await self.bot.get_or_fetch_user(suggestion['author_id'])
+        suggestion_author: discord.User = await self.bot.get_or_fetch_user(suggestion['author_id'])
         suggestion_author = suggestion_author if suggestion_author is not None else suggestion["author_id"]
 
         suggestion_embed.set_author(name=f'Suggested by {suggestion_author}')
@@ -180,7 +181,7 @@ class Suggestions(commands.Cog):
 
         raise exception
 
-    @suggestion.command()
+    @suggestion.command(aliases=['no'])
     async def deny(self, ctx, suggestion_id: int, *, reason=None):
         db = await aiosqlite.connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
         cursor = await db.cursor()
@@ -201,7 +202,7 @@ class Suggestions(commands.Cog):
             colour=0xFF0000
         )
 
-        suggestion_author: discord.Member = await self.bot.get_or_fetch_user(suggestion['author_id'])
+        suggestion_author: discord.User = await self.bot.get_or_fetch_user(suggestion['author_id'])
         suggestion_author = suggestion_author if suggestion_author is not None else suggestion["author_id"]
 
         suggestion_embed.set_author(name=f'Suggested by {suggestion_author}')
@@ -254,7 +255,7 @@ class Suggestions(commands.Cog):
 
         raise exception
 
-    @suggestion.command()
+    @suggestion.command(aliases=['del', 'remove', 'rm'])
     async def delete(self, ctx: commands.Context, _id: int):
         # Connect to DB
         db = await aiosqlite.connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
@@ -311,7 +312,7 @@ class Suggestions(commands.Cog):
     async def show(self, ctx):
         pass
 
-    @show.command()
+    @show.command(aliases=['un'])
     async def unanswered(self, ctx: commands.Context, page: int = 1):
         await ctx.trigger_typing()
         db = await aiosqlite.connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')
@@ -454,7 +455,7 @@ class Suggestions(commands.Cog):
 
         raise exception
 
-    @show.command()
+    @show.command(aliases=['author'])
     async def ideator(self, ctx: commands.Context, suggestion_author: discord.User, page: int = 1):
         await ctx.trigger_typing()
         db = await aiosqlite.connect(Suggestion.DB_PATH + Suggestion.DB_NAME + '.db')

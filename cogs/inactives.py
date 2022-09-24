@@ -238,7 +238,7 @@ class InactiveList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        res = requests.get(f'https://api.hypixel.net/guild?player={uuid}&key={os.getenv("APIKEY")}')
+        res = requests.get(f'https://api.hypixel.net/guild?player={uuid}&key={self.key}')
         data = res.json()
 
         print(data)
@@ -281,7 +281,7 @@ class InactiveList(commands.Cog):
             )
             await ctx.reply(embed=embed)
 
-    @mod.command(name='remove')
+    @mod.command(name='remove', aliases=['rm', 'delete', 'del'])
     async def remove_(self, ctx: commands.Context, ign: str):
         uuid = extract_uuid(ign)
 
