@@ -20,11 +20,13 @@ class TasksCog(commands.Cog):
         self.update_members.start()
         self.auto_qotd.start()
         self.backup_db.start()
+        self.inactives_check.start()
 
     def cog_unload(self):
         self.update_members.cancel()
         self.auto_qotd.cancel()
         self.backup_db.cancel()
+        self.inactives_check.cancel()
 
     @tasks.loop(hours=1)
     async def update_members(self):
