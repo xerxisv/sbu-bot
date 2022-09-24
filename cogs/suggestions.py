@@ -17,10 +17,10 @@ class Suggestions(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 5)
     async def suggest(self, ctx: commands.Context, *, suggestion_str: str):
-        if len(suggestion_str) > 1020:
+        if len(suggestion_str) > 500:
             embed = discord.Embed(
                 title='Error',
-                description='Suggestion can\'t be longer than 1020 character'
+                description='Suggestion can\'t be longer than 500 character'
             )
             await ctx.reply(embed=embed)
             return
@@ -442,7 +442,7 @@ class Suggestions(commands.Cog):
         await db.close()
 
     @approved.error
-    async def answered_error(self, ctx: commands.Context, exception: Exception):
+    async def approved_error(self, ctx: commands.Context, exception: Exception):
         if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
@@ -508,7 +508,7 @@ class Suggestions(commands.Cog):
         await db.close()
 
     @ideator.error
-    async def answered_error(self, ctx: commands.Context, exception: Exception):
+    async def ideator_error(self, ctx: commands.Context, exception: Exception):
         if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
@@ -557,13 +557,14 @@ class Suggestions(commands.Cog):
                             value=admin.mention if admin else suggestion['approved_by'], inline=False)
             embed.add_field(name='Reason', value=str(suggestion['reason']), inline=False)
 
-        embed.set_footer(text=f"Created At: <t:{suggestion['created_at']}>")
+        embed.set_footer(text=f"Created At: "
+                              f"{datetime.datetime.fromtimestamp(suggestion['created_at']).strftime('%y-%m-%d %H:%M')}")
 
         await ctx.reply(embed=embed)
         await db.close()
 
     @info.error
-    async def answered_error(self, ctx: commands.Context, exception: Exception):
+    async def info_error(self, ctx: commands.Context, exception: Exception):
         if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
