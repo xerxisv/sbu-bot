@@ -11,9 +11,13 @@ class Reputations(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.Group
+    async def rep(self, ctx):
+        pass
+
+    @rep.command()
     @commands.cooldown(1, 5)
-    async def repgive(self, ctx: commands.Context, receiver: discord.Member, *, comments):
+    async def give(self, ctx: commands.Context, receiver: discord.Member, *, comments: str = None):
         if ctx.author.id == receiver.id:
             await ctx.send("You can't rep yourself.")
             return
@@ -53,17 +57,17 @@ class Reputations(commands.Cog):
         await db.close()
         await ctx.reply(f"Reputation given to {receiver.name}")
 
-    @repgive.error
-    async def repgive_error(self, ctx, exception):
+    @give.error
+    async def give_error(self, ctx, exception):
         if isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.MemberNotFound):
-            await ctx.send("Incorrect format. Use `+repgive <@mention> <comments>`")
+            await ctx.send("Incorrect format. Use `+rep give <@mention> [comments]`")
             return
 
         raise exception
 
-    @commands.command()
+    @rep.command()
     @commands.has_role(ADMIN_ROLE_ID)
-    async def repdel(self, ctx: commands.Context, rep_id: int):
+    async def remove(self, ctx: commands.Context, rep_id: int):
 
         db = await sqlite3.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db')
 
@@ -99,10 +103,10 @@ class Reputations(commands.Cog):
         await db.commit()
         await db.close()
 
-    @repdel.error
-    async def repgive_error(self, ctx: commands.Context, exception):
+    @remove.error
+    async def remove_error(self, ctx: commands.Context, exception):
         if isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.BadArgument):
-            message = await ctx.send("Incorrect format. Use `+repdel <rep_id: integer>`")
+            message = await ctx.send("Incorrect format. Use `+rep remove <rep_id: integer>`")
             await message.delete(delay=15)
             await ctx.message.delete(delay=15)
             return
