@@ -26,21 +26,6 @@ class InactiveList(commands.Cog):
     def cog_unload(self):
         self.inactives_check.cancel()
 
-    @tasks.loop(hours=12)
-    async def inactives_check(self):
-        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
-        cursor = await db.cursor()
-
-        try:
-            await cursor.execute(InactivePlayer.delete_inactive())
-        except Exception as exception:
-            await self.bot \
-                .get_channel(SBU_BOT_LOGS_CHANNEL_ID) \
-                .send(exception_to_string('inactives_check task', exception))
-        finally:
-            await db.commit()
-            await db.close()
-
     @commands.command()
     async def inactiveadd(self, ctx: commands.Context, afk_time: str):
         try:
@@ -48,14 +33,17 @@ class InactiveList(commands.Cog):
             if afk_time < 604800 or afk_time > 2592000:
                 embed = discord.Embed(
                     title=f'Error',
-                    description='Invalid Time \nEnter time in days.\n Min 7, max 30. Ex: 10d for 10 days',
+                    description='Invalid Time \nEnter time in days.\n Min 7, max 30. Ex: 10d for 10 days\n'
+                                '`+inactiveadd 10d`',
                     colour=0xFF0000
                 )
                 await ctx.reply(embed=embed)
                 return
 
         except humanfriendly.InvalidTimespan:
-            embed = discord.Embed(title=f'Error', description='Invalid Time \nEnter time in days Ex: 10d for 10 days',
+            embed = discord.Embed(title=f'Error',
+                                  description='Invalid Time \nEnter time in days Ex: 10d for 10 days\n'
+                                              '`+inactiveadd 10d`',
                                   colour=0xFF0000)
             await ctx.reply(embed=embed)
             return
@@ -79,7 +67,7 @@ class InactiveList(commands.Cog):
         cur_time = time.time()
         afk_time = cur_time + afk_time
 
-        new_inactive = InactivePlayer(ctx.author.id, member['uuid'], member['guild_uuid'], int(afk_time))
+        new_inactive = InactivePlayer(member['uuid'], ctx.author.id, member['guild_uuid'], int(afk_time))
 
         db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
         cursor = await db.cursor()
@@ -100,7 +88,8 @@ class InactiveList(commands.Cog):
     async def inactiveadd_error(self, ctx: commands.Context, exception: Exception):
         if isinstance(exception, commands.MissingRequiredArgument):
             embed = discord.Embed(title=f'Error',
-                                  description='No time inputted \nEnter time in days Ex: 10d for 10 days',
+                                  description='No time inputted \nEnter time in days Ex: 10d for 10 days\n'
+                                              '`+inactiveadd 10d`',
                                   colour=0xFF0000)
             await ctx.reply(embed=embed)
 

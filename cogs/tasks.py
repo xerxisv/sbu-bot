@@ -5,10 +5,13 @@ import tarfile
 from asyncio import sleep
 
 import aiohttp
+import aiosqlite
 from discord.ext import commands, tasks
 
 from utils import constants
+from utils.constants import SBU_BOT_LOGS_CHANNEL_ID
 from utils.error_utils import exception_to_string
+from utils.schemas.InactivePlayerSchema import InactivePlayer
 
 
 class TasksCog(commands.Cog):
@@ -102,6 +105,22 @@ class TasksCog(commands.Cog):
                 for file in files:
                     if file.endswith(".db"):
                         tar_handle.add(os.path.join(root, file), arcname=file)
+
+    @tasks.loop(hours=12)
+    async def inactives_check(self):
+        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
+        cursor = await db.cursor()
+
+        try:
+            # Deletes all rows that are past their inactive time
+            await cursor.execute(InactivePlayer.delete_inactive())
+        except Exception as exception:
+            await self.bot \
+                .get_channel(SBU_BOT_LOGS_CHANNEL_ID) \
+                .send(exception_to_string('inactives_check task', exception))
+        finally:
+            await db.commit()
+            await db.close()
 
 
 def setup(bot):
