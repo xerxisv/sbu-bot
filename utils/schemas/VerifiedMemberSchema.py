@@ -64,6 +64,13 @@ class VerifiedMember(Schema):
             FROM "VERIFIED"
             WHERE "uuid"='{_id}'
         '''
+    
+    @staticmethod
+    def select_all() -> str:
+        return '''
+            SELECT *
+            FROM "VERIFIED"
+        '''
 
     @staticmethod
     def dict_from_tuple(query_res) -> VerifiedMemberInfo:
