@@ -106,44 +106,36 @@ class TasksCog(commands.Cog):
                         tar_handle.add(os.path.join(root, file), arcname=file)
                     
 
-    @tasks.loop(hours=1)
+    @tasks.loop(hours=24)
     async def check_verified(self):
-        db = await aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + ".db")
-        cursor = await db.cursor()
-
-        await cursor.execute(VerifiedMember.select_all())
-        data = cursor.fetchall()
-        
-        for member in data:
-            member = VerifiedMember.dict_from_tuple(member)
-            key = os.getenv("apikey")
-
-            uuid = member["uuid"]
-
-            response = requests.get(f'https://api.hypixel.net/player?key={key}&uuid={uuid}')
-            assert response.status_code == 200, 'api.hypixel.net/player did not return a 200'
-            player = response.json()['player']
-
-            response = requests.get(f'https://api.hypixel.net/guild?key={key}&player={uuid}')
-            assert response.status_code == 200, 'api.hypixel.net/guild did not return a 200'
-            guild = response.json()['guild']
-
-            verified_member = VerifiedMember(member["discord_id"], uuid)
+        async with aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + ".db") as db:
+            cursor = await db.cursor()
 
             sbu = self.bot.get_guild(constants.GUILD_ID)
+            uuids = ()
 
-            if guild["name"] in ["SB Lambda Pi", "SB Theta Tau", "SB Delta Omega", "SB Iota Theta", "SB Uni", "SB Rho Xi", "SB Kappa Eta", "SB Alpha Psi", "SB Masters"]:
-                verified_member.guild_uuid = guild["_id"]
-                user = sbu.get_member(member["discord_id"])
-                await user.remove_roles(*[discord.Object(_id) for _id in GUILD_MEMBER_ROLES_IDS],
-                          reason='verification process',
-                          atomic=False)
-                await member\
-                .add_roles(discord.Object(GUILDS_INFO[guild["name"].upper()]['role_id']), atomic=False)
-            
-            cursor.execute(*verified_member.insert())
-        db.commit()
-        db.close()
+            for guild in constants.GUILDS_INFO:
+                guild_uuid = constants.GUILDS_INFO[guild]["uuid"]
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"https://api.slothpixel.me/api/guilds/id/{guild_uuid}") as resp:
+                        data = resp.json()
+                        members = data["members"]
+                    
+                await cursor.execute(VerifiedMember.select_row_with_guild_uuid(guild_uuid))
+                guild_members = cursor.fetchall()
+                for member in guild_members:
+                    member = VerifiedMember.dict_from_tuple(member)
+                    if not any(d['uuid'] == member["uuid"] for d in members):
+                        uuids = uuids + (uuid,)
+
+                        user = sbu.get_member(member["discord_id"])
+                        await user.remove_roles(*[discord.Object(_id) for _id in GUILD_MEMBER_ROLES_IDS], atomic=False)
+
+                    
+            await cursor.execute(VerifiedMember.update_rows(uuids))
+            db.commit()
+
 
 
 def setup(bot):

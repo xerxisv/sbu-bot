@@ -58,11 +58,19 @@ class VerifiedMember(Schema):
         '''
     
     @staticmethod
-    def select_row_with_uuid(_id: int) -> str:
+    def update_rows(_ids: tuple):
+        return f'''
+            UPDATE TABLE "VERIFIED"
+            SET "guild"=NULL
+            WHERE "uuid" IN {_ids}
+        '''
+    
+    @staticmethod
+    def select_row_with_guild_uuid(_id: str) -> str:
         return f'''
             SELECT *
             FROM "VERIFIED"
-            WHERE "uuid"='{_id}'
+            WHERE "guild_uuid"='{_id}'
         '''
     
     @staticmethod
