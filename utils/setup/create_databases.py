@@ -2,15 +2,15 @@ from pathlib import Path
 
 from sqlite3 import connect
 
-from utils.schemas import BannedMember, InactivePlayerSchema, RepCommandSchema, SchemaAbstract, SuggestionSchema, \
-    VerifiedMemberSchema
+from utils.schemas import BannedMember, InactivePlayer, RepCommand, Schema, Suggestion, \
+    VerifiedMember
 
 databases = [
-    SuggestionSchema.Suggestion,
-    InactivePlayerSchema.InactivePlayer,
-    RepCommandSchema.RepCommand,
-    VerifiedMemberSchema.VerifiedMember,
-    BannedMember.BannedMember
+    Suggestion,
+    InactivePlayer,
+    RepCommand,
+    VerifiedMember,
+    BannedMember
 ]
 
 
@@ -18,7 +18,7 @@ def create_dbs():
     Path('./data').mkdir(parents=True, exist_ok=True)
 
     for db_schema in databases:
-        db = connect(SchemaAbstract.Schema.DB_PATH + db_schema.DB_NAME + '.db')
+        db = connect(Schema.DB_PATH + db_schema.DB_NAME + '.db')
 
         cursor = db.cursor()
         cursor.executescript(db_schema.create())

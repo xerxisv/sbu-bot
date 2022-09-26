@@ -1,7 +1,7 @@
 from typing import TypedDict
 import time
 
-from utils.schemas.SchemaAbstract import Schema
+from utils.schemas import Schema
 
 
 class VerifiedMemberInfo(TypedDict):

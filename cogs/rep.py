@@ -7,7 +7,7 @@ from discord.ext import commands
 from utils.constants import ADMIN_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, CRAFT_REPS_CHANNEL_ID, SBU_GOLD, \
     SBU_LOGO_URL, SBU_PURPLE
 from utils.error_utils import log_error
-from utils.schemas.RepCommandSchema import RepCommand
+from utils.schemas import RepCommand
 
 
 class Reputations(commands.Cog):

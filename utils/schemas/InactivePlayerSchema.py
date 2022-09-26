@@ -1,6 +1,6 @@
 import time
 
-from .SchemaAbstract import Schema
+from utils.schemas import Schema
 
 from utils.constants import GUILDS_INFO
 

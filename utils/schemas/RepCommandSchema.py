@@ -1,5 +1,5 @@
 from typing import TypedDict
-from .SchemaAbstract import Schema
+from utils.schemas import Schema
 import time
 
 

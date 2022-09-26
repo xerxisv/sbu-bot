@@ -11,7 +11,7 @@ from discord.ext import commands, tasks
 from utils import constants
 from utils.constants import SBU_BOT_LOGS_CHANNEL_ID
 from utils.error_utils import exception_to_string
-from utils.schemas.InactivePlayerSchema import InactivePlayer
+from utils.schemas import InactivePlayer
 
 
 class TasksCog(commands.Cog):

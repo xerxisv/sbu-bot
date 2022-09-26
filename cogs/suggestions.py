@@ -7,7 +7,7 @@ from math import ceil
 
 from utils.constants import ADMIN_ROLE_ID, SBU_LOGO_URL, SUGGESTIONS_CHANNEL_ID, SBU_GOLD
 from utils.error_utils import log_error
-from utils.schemas.SuggestionSchema import Suggestion
+from utils.schemas import Suggestion
 
 
 class Suggestions(commands.Cog):

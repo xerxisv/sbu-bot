@@ -4,7 +4,7 @@ import requests
 from discord.ext import commands
 
 from utils.constants import BANNED_LIST_CHANNEL_ID, MODERATOR_ROLE_ID
-from utils.schemas.BannedMember import BannedMember
+from utils.schemas import BannedMember
 
 
 class BanList(commands.Cog):

@@ -2,7 +2,7 @@ import time
 
 from typing import TypedDict
 
-from utils.schemas.SchemaAbstract import Schema
+from utils.schemas import Schema
 
 
 class BannedMemberInfo(TypedDict):

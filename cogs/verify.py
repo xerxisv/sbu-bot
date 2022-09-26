@@ -8,7 +8,7 @@ from discord.ext import commands
 from utils.constants import GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID, GUILDS_INFO, \
     VERIFIED_ROLE_ID
 from utils.error_utils import log_error
-from utils.schemas.VerifiedMemberSchema import VerifiedMember
+from utils.schemas import VerifiedMember
 
 error_embed = discord.Embed(title=f'Error',
                             description='Something went wrong. Please try again later',

@@ -12,8 +12,7 @@ from discord.ext import commands
 from utils import extract_uuid
 from utils.constants import GUILDS_INFO, MODERATOR_ROLE_ID, SBU_GOLD
 from utils.error_utils import log_error
-from utils.schemas.InactivePlayerSchema import InactivePlayer
-from utils.schemas.VerifiedMemberSchema import VerifiedMember
+from utils.schemas import InactivePlayer, VerifiedMember
 
 dotenv.load_dotenv()
 
