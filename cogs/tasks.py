@@ -110,19 +110,17 @@ class TasksCog(commands.Cog):
 
     @tasks.loop(hours=12)
     async def inactives_check(self):
-        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
-        cursor = await db.cursor()
+        async with aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db') as db:
+            cursor = await db.cursor()
 
-        try:
-            # Deletes all rows that are past their inactive time
-            await cursor.execute(InactivePlayer.delete_inactive())
-        except Exception as exception:
-            await self.bot \
-                .get_channel(SBU_BOT_LOGS_CHANNEL_ID) \
-                .send(exception_to_string('inactives_check task', exception))
-        finally:
-            await db.commit()
-            await db.close()
+            try:
+                # Deletes all rows that are past their inactive time
+                await cursor.execute(InactivePlayer.delete_inactive())
+                await db.commit()
+            except Exception as exception:
+                await self.bot \
+                    .get_channel(SBU_BOT_LOGS_CHANNEL_ID) \
+                    .send(exception_to_string('inactives_check task', exception))
 
 
 def setup(bot):

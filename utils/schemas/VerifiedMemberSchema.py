@@ -1,5 +1,7 @@
-from typing import TypedDict
 import time
+from typing import TypedDict
+
+from aiosqlite import Row
 
 from utils.schemas import Schema
 
@@ -11,7 +13,6 @@ class VerifiedMemberInfo(TypedDict):
 
 
 class VerifiedMember(Schema):
-
     DB_NAME = 'verified'
 
     def __init__(self, discord_id: int, uuid: str, guild_uuid: str = None):
@@ -58,7 +59,7 @@ class VerifiedMember(Schema):
         '''
 
     @staticmethod
-    def dict_from_tuple(query_res) -> VerifiedMemberInfo:
+    def dict_from_tuple(query_res: Row) -> VerifiedMemberInfo:
         return {
             'discord_id': query_res[0],
             'uuid': query_res[1],

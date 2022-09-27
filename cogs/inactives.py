@@ -24,8 +24,9 @@ class InactiveList(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.Group
+    @commands.group(name='inactive', aliases=['inactives'])
     async def inactive(self, ctx: commands.Context):
+        await ctx.trigger_typing()
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('inactive help').invoke(ctx)
 
@@ -56,6 +57,7 @@ class InactiveList(commands.Cog):
         await ctx.reply(embed=embed)
 
     @inactive.command()
+    @commands.cooldown(1, 5)
     async def add(self, ctx: commands.Context, afk_time: str):
         try:
             afk_time = humanfriendly.parse_timespan(afk_time)
@@ -77,13 +79,11 @@ class InactiveList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        db = await aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db')
-        cursor = await db.cursor()
+        async with aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db') as db:
+            cursor = await db.cursor()
 
-        await cursor.execute(VerifiedMember.select_row_with_id(ctx.author.id))
-        member = await cursor.fetchone()
-
-        await db.close()
+            await cursor.execute(VerifiedMember.select_row_with_id(ctx.author.id))
+            member = await cursor.fetchone()
 
         if member is None:
             embed = discord.Embed(title=f'Error',
@@ -99,13 +99,11 @@ class InactiveList(commands.Cog):
 
         new_inactive = InactivePlayer(member['uuid'], ctx.author.id, member['guild_uuid'], int(afk_time))
 
-        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
-        cursor = await db.cursor()
+        async with aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db') as db:
+            cursor = await db.cursor()
 
-        await cursor.execute(*(new_inactive.insert()))
-
-        await db.commit()
-        await db.close()
+            await cursor.execute(*(new_inactive.insert()))
+            await db.commit()
 
         embed = discord.Embed(title=f'Success',
                               description=f'You have been added to Inactive list until '
@@ -124,17 +122,9 @@ class InactiveList(commands.Cog):
             await ctx.reply(embed=embed)
 
     @inactive.command()
-    # @commands.cooldown(1, 60)
+    @commands.cooldown(1, 15)
     @commands.has_role(MODERATOR_ROLE_ID)
-    async def check(self, ctx, *, guild: str):
-        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
-
-        cursor = await db.cursor()
-        await cursor.execute('''SELECT * FROM INACTIVES''')
-
-        values = await cursor.fetchall()
-        inactives_uuids = [inactive[0] for inactive in values]  # puts all the UUIDs in an array
-
+    async def check(self, ctx: commands.Context, *, guild: str):
         # If inputted guild is invalid
         if guild.upper() not in GUILDS_INFO.keys():
             embed_var = discord.Embed(color=ctx.author.color,
@@ -142,6 +132,13 @@ class InactiveList(commands.Cog):
                                       colour=0xFF0000)
             await ctx.send(embed=embed_var)
             return
+
+        async with aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db') as db:
+            cursor = await db.cursor()
+            await cursor.execute('''SELECT * FROM INACTIVES''')
+
+            values = await cursor.fetchall()
+            inactives_uuids = [inactive[0] for inactive in values]  # puts all the UUIDs in an array
 
         data = requests.get(
             url="https://api.hypixel.net/guild",
@@ -154,6 +151,7 @@ class InactiveList(commands.Cog):
                                   title=f"Inactive List for {data['guild']['name']}",
                                   description=f"<a:loading:978732444998070304> Skyblock University is thinking",
                                   colour=0xFFFF00)
+        await ctx.trigger_typing()
         message = await ctx.send(embed=embed_var)
 
         embed_msg = ""  # List of inactive IGNs (or UUIDs if API error)
@@ -188,8 +186,6 @@ class InactiveList(commands.Cog):
                                               + f"\n\n{embed_msg}")
         await message.edit(embed=embed_var)
 
-        await db.close()
-
     @check.error
     async def inactive_error(self, ctx: commands.Context, exception: Exception):
         if isinstance(exception, commands.MissingRequiredArgument):
@@ -198,13 +194,14 @@ class InactiveList(commands.Cog):
                                   colour=0xFF0000)
             await ctx.send(embed=embed)
 
-    @inactive.group()
+    @inactive.group(name='mod', aliases=['moderator'])
     @commands.has_role(MODERATOR_ROLE_ID)
     async def mod(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('inactive help').invoke(ctx)
 
     @mod.command(name='add')
+    @commands.cooldown(1, 5)
     async def add_(self, ctx: commands.Context, ign: str, afk_time: str):
         try:
             afk_time = int(humanfriendly.parse_timespan(afk_time))
@@ -231,7 +228,7 @@ class InactiveList(commands.Cog):
         if uuid is None:
             embed = discord.Embed(
                 title='Error',
-                description='Player not found',
+                description='User not found',
                 colour=0xFF0000
             )
             await ctx.reply(embed=embed)
@@ -239,8 +236,6 @@ class InactiveList(commands.Cog):
 
         res = requests.get(f'https://api.hypixel.net/guild?player={uuid}&key={self.key}')
         data = res.json()
-
-        print(data)
 
         if res.status_code != 200 or data['guild'] is None:
             embed = discord.Embed(
@@ -253,21 +248,21 @@ class InactiveList(commands.Cog):
 
         guild_id = res.json()['guild']['_id']
 
-        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
-        cursor: aiosqlite.Cursor = await db.cursor()
+        async with aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db') as db:
+            cursor: aiosqlite.Cursor = await db.cursor()
 
-        inactive = InactivePlayer(uuid, 1, guild_id, int(time.time()) + afk_time)
+            inactive = InactivePlayer(uuid, 1, guild_id, int(time.time()) + afk_time)
 
-        await cursor.execute(*(inactive.insert()))
+            await cursor.execute(*(inactive.insert()))
 
-        embed = discord.Embed(
-            title='Success',
-            description=f'Successfully added {ign} to the inactive list',
-            colour=0x00FF00
-        )
+            embed = discord.Embed(
+                title='Success',
+                description=f'Successfully added {ign} to the inactive list',
+                colour=0x00FF00
+            )
 
-        await db.commit()
-        await db.close()
+            await db.commit()
+
         await ctx.reply(embed=embed)
 
     @add_.error
@@ -281,6 +276,7 @@ class InactiveList(commands.Cog):
             await ctx.reply(embed=embed)
 
     @mod.command(name='remove', aliases=['rm', 'delete', 'del'])
+    @commands.cooldown(1, 5)
     async def remove_(self, ctx: commands.Context, ign: str):
         uuid = extract_uuid(ign)
 
@@ -293,21 +289,20 @@ class InactiveList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        db = await aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db')
-        cursor = await db.cursor()
+        async with aiosqlite.connect(InactivePlayer.DB_PATH + InactivePlayer.DB_NAME + '.db') as db:
+            cursor = await db.cursor()
 
-        await cursor.execute(InactivePlayer.delete_row_with_uuid(uuid))
+            await cursor.execute(InactivePlayer.delete_row_with_uuid(uuid))
 
-        embed = discord.Embed(
-            title='Success',
-            description=f'Successfully removed {ign} from inactives.',
-            colour=0x00FF00
-        )
+            embed = discord.Embed(
+                title='Success',
+                description=f'Successfully removed {ign} from inactives.',
+                colour=0x00FF00
+            )
 
-        await ctx.reply(embed=embed)
+            await ctx.reply(embed=embed)
 
-        await db.commit()
-        await db.close()
+            await db.commit()
 
     @remove_.error
     async def mod_remove_error(self, ctx: commands.Context, exception: Exception):

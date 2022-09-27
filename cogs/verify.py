@@ -1,5 +1,5 @@
 import os
-import sqlite3
+import aiosqlite
 
 import discord
 import requests
@@ -121,22 +121,21 @@ class Verify(commands.Cog):
 
         verified_member = VerifiedMember(member.id, uuid)
 
-        db = sqlite3.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db')
-        cursor = db.cursor()
+        async with aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db') as db:
+            cursor = await db.cursor()
 
-        if is_in_guild:
-            await member\
-                .add_roles(discord.Object(GUILDS_INFO[guild["name"].upper()]['role_id']), atomic=False)
+            if is_in_guild:
+                await member\
+                    .add_roles(discord.Object(GUILDS_INFO[guild["name"].upper()]['role_id']), atomic=False)
 
-            embed = discord.Embed(title=f'Verification',
-                                  description=f'You have been verified as a member of {guild["name"]}',
-                                  colour=0x008000)
+                embed = discord.Embed(title=f'Verification',
+                                      description=f'You have been verified as a member of {guild["name"]}',
+                                      colour=0x008000)
 
-            verified_member.guild_uuid = guild['_id']
+                verified_member.guild_uuid = guild['_id']
 
-        cursor.execute(*verified_member.insert())
-        db.commit()
-        db.close()
+            await cursor.execute(*verified_member.insert())
+            await db.commit()
 
         try:
             await member.edit(nick=player["displayname"])
@@ -149,6 +148,7 @@ class Verify(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command()
+    @commands.cooldown(1, 5)
     async def unverify(self, ctx: commands.Context):
         await ctx.trigger_typing()
         member: discord.Member = ctx.message.author
@@ -159,13 +159,12 @@ class Verify(commands.Cog):
                           atomic=False
                           )
 
-        db = sqlite3.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db')
-        cursor = db.cursor()
+        async with aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db') as db:
+            cursor = await db.cursor()
 
-        cursor.execute(VerifiedMember.delete_row_with_id(member.id))
+            await cursor.execute(VerifiedMember.delete_row_with_id(member.id))
 
-        db.commit()
-        db.close()
+            await db.commit()
 
         embed = discord.Embed(title=f'Verification',
                               description=f'You have been unverified.',

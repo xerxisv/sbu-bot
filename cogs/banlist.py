@@ -3,7 +3,7 @@ import discord
 import requests
 from discord.ext import commands
 
-from utils.constants import BANNED_LIST_CHANNEL_ID, MODERATOR_ROLE_ID
+from utils.constants import BANNED_LIST_CHANNEL_ID, MODERATOR_ROLE_ID, SBU_GOLD
 from utils.schemas import BannedMember
 
 
@@ -11,8 +11,9 @@ class BanList(commands.Cog):
     def __init__(self, bot: discord.Bot):
         self.bot = bot
 
-    @commands.Group
+    @commands.group(name='banlist', aliases=['bl'])
     async def banlist(self, ctx: commands.Context):
+        await ctx.trigger_typing()
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('banlist help').invoke(ctx)
 
@@ -41,6 +42,7 @@ class BanList(commands.Cog):
 
     @banlist.command()
     @commands.has_role(MODERATOR_ROLE_ID)
+    @commands.cooldown(1, 5)
     async def add(self, ctx: commands.Context, banned_ign: str, *, reason: str = 'None'):
         banned_id = extract_uuid(banned_ign)
 
@@ -53,63 +55,60 @@ class BanList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        db = await aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
-        cursor = await db.cursor()
+        async with aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db') as db:
+            cursor = await db.cursor()
 
-        # Check if user is already banned
-        await cursor.execute(BannedMember.select_row_with_id(banned_id))
+            # Check if user is already banned
+            await cursor.execute(BannedMember.select_row_with_id(banned_id))
 
-        if await cursor.fetchone() is not None:
-            embed = discord.Embed(
-                title='Operation Canceled',
-                description='User is already banned',
-                colour=0xFFFF00
+            if await cursor.fetchone() is not None:
+                embed = discord.Embed(
+                    title='Operation Canceled',
+                    description='User is already banned',
+                    colour=0xFFFF00
+                )
+                await ctx.reply(embed=embed)
+                return
+
+            banned_member = BannedMember(banned_id, reason, ctx.author.id)  # Create banned member instance
+
+            # Save banned member to database
+            await cursor.execute(*(banned_member.insert()))
+
+            # Send response
+            banned_embed = discord.Embed(
+                title='Banned Member',
+                description='',
+                colour=discord.Colour.light_gray()
             )
-            await ctx.reply(embed=embed)
-            await db.close()
-            return
 
-        banned_member = BannedMember(banned_id, reason, ctx.author.id)  # Create banned member instance
+            banned_embed.set_footer(text='SBU Banned List')
+            banned_embed.add_field(name='User IGN', value=f'`{banned_ign}`', inline=False)
+            banned_embed.add_field(name='Reason', value=reason, inline=False)
+            banned_embed.add_field(name='UUID Converter', value=f'https://mcuuid.net/?q={banned_id}', inline=False)
 
-        # Save banned member to database
-        await cursor.execute(*(banned_member.insert()))
+            msg = await ctx.guild \
+                .get_channel(BANNED_LIST_CHANNEL_ID) \
+                .send(embed=banned_embed)
 
-        # Send response
-        banned_embed = discord.Embed(
-            title='Banned Member',
-            description='',
-            colour=discord.Colour.light_gray()
-        )
+            response_embed = discord.Embed(
+                title='Success',
+                description=f'User `{banned_ign}` added to <#{BANNED_LIST_CHANNEL_ID}>',
+                colour=0x00FF00
+            )
 
-        banned_embed.set_footer(text='SBU Banned List')
-        banned_embed.add_field(name='User IGN', value=f'`{banned_ign}`', inline=False)
-        banned_embed.add_field(name='Reason', value=reason, inline=False)
-        banned_embed.add_field(name='UUID Converter', value=f'https://mcuuid.net/?q={banned_id}', inline=False)
+            await cursor.execute(banned_member.insert_msg(msg.id))
 
-        msg = await ctx.guild \
-            .get_channel(BANNED_LIST_CHANNEL_ID) \
-            .send(embed=banned_embed)
-
-        response_embed = discord.Embed(
-            title='Success',
-            description=f'User `{banned_ign}` added to <#{BANNED_LIST_CHANNEL_ID}>',
-            colour=0x00FF00
-        )
-
-        await cursor.execute(banned_member.insert_msg(msg.id))
-
-        await ctx.reply(embed=response_embed)
-        await db.commit()
-        await db.close()
+            await ctx.reply(embed=response_embed)
+            await db.commit()
 
     @add.error
     async def add_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Incorrect format. Use `+banlist add <IGN: text> [Reason: text]`")
 
-    @banlist.command()
+    @banlist.command(name='check', aliases=['c'])
     async def check(self, ctx: commands.Context, banned_ign: str):
-
         banned_id = extract_uuid(banned_ign)
 
         if banned_id is None:
@@ -121,11 +120,7 @@ class BanList(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        db = await aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
-        cursor = await db.cursor()
-        await cursor.execute(BannedMember.select_row_with_id(banned_id))
-        banned = await cursor.fetchone()
-        await db.close()
+        banned = await fetch_user_from_db(banned_id)
 
         embed: discord.Embed
 
@@ -136,7 +131,6 @@ class BanList(commands.Cog):
                 colour=0x00FF00
             )
         else:
-            banned = BannedMember.dict_from_tuple(banned)
             mod = await self.bot.get_or_fetch_user(banned['moderator'])
 
             embed = discord.Embed(
@@ -159,8 +153,9 @@ class BanList(commands.Cog):
             )
             await ctx.reply(embed=embed)
 
-    @banlist.command(aliases=['del', 'delete', 'rm'])
+    @banlist.command(name='remove', aliases=['del', 'delete', 'rm'])
     @commands.has_role(MODERATOR_ROLE_ID)
+    @commands.cooldown(1, 5)
     async def remove(self, ctx: commands.Context, ign: str):
         banned_uuid = extract_uuid(ign)
 
@@ -190,21 +185,19 @@ class BanList(commands.Cog):
         except discord.HTTPException:
             pass
 
-        db = await aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
-        cursor = await db.cursor()
+        async with aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db') as db:
+            cursor = await db.cursor()
 
-        await cursor.execute(BannedMember.delete_row_with_id(banned_uuid))
+            await cursor.execute(BannedMember.delete_row_with_id(banned_uuid))
 
-        embed = discord.Embed(
-            title='Success',
-            description=f'User `{ign}` was removed from <#{BANNED_LIST_CHANNEL_ID}>',
-            colour=0x00FF00
-        )
+            embed = discord.Embed(
+                title='Success',
+                description=f'User `{ign}` was removed from <#{BANNED_LIST_CHANNEL_ID}>',
+                colour=0x00FF00
+            )
 
-        await db.commit()
-        await db.close()
-
-        await ctx.reply(embed=embed)
+            await ctx.reply(embed=embed)
+            await db.commit()
 
     @remove.error
     async def remove_error(self, ctx: commands.Context, exception: Exception):
@@ -216,7 +209,7 @@ class BanList(commands.Cog):
             )
             await ctx.reply(embed=embed)
 
-    @banlist.command()
+    @banlist.command(name='info')
     @commands.has_role(MODERATOR_ROLE_ID)
     async def info(self, ctx: commands.Context, ign: str):
         banned_uuid = extract_uuid(ign)
@@ -243,7 +236,7 @@ class BanList(commands.Cog):
 
         embed = discord.Embed(
             title='Banned User Info',
-            colour=0xFFFF00
+            colour=SBU_GOLD
         )
 
         moderator = await self.bot.get_or_fetch_user(banned['moderator'])
@@ -268,11 +261,11 @@ class BanList(commands.Cog):
 
 
 async def fetch_user_from_db(uuid: str):
-    db = await aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db')
-    cursor = await db.cursor()
+    async with aiosqlite.connect(BannedMember.DB_PATH + BannedMember.DB_NAME + '.db') as db:
+        cursor = await db.cursor()
 
-    await cursor.execute(BannedMember.select_row_with_id(uuid))
-    res = await cursor.fetchone()
+        await cursor.execute(BannedMember.select_row_with_id(uuid))
+        res = await cursor.fetchone()
 
     if res is None:
         return None

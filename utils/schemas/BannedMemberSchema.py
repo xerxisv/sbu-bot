@@ -1,6 +1,7 @@
 import time
-
 from typing import TypedDict
+
+from aiosqlite import Row
 
 from utils.schemas import Schema
 
@@ -14,7 +15,6 @@ class BannedMemberInfo(TypedDict):
 
 
 class BannedMember(Schema):
-
     DB_NAME = 'banned-list'
 
     def __init__(self, uuid: str, reason: str, moderator: int):
@@ -70,7 +70,7 @@ class BannedMember(Schema):
         '''
 
     @staticmethod
-    def dict_from_tuple(query_res) -> BannedMemberInfo:
+    def dict_from_tuple(query_res: Row) -> BannedMemberInfo:
         return {
             "uuid": query_res[0],
             "reason": query_res[1],
