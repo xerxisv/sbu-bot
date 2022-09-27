@@ -150,7 +150,7 @@ GUILD_MEMBER_ROLES_IDS = [SB_UNI_MEMBER_ROLE_ID, SB_ALPHA_MEMBER_ROLE_ID, SB_DEL
                           SB_RHO_MEMBER_ROLE_ID, SB_MASTERS_MEMBER_ROLE_ID]
 
 GUILDS_INFO = {
-    "SB UNIVERSITY": {
+    "SB UNI": {
         "role_id": SB_UNI_MEMBER_ROLE_ID,
         "guild_uuid": '6111fcb48ea8c95240436c57',
         "bridge_uuid": 'e3020a41a5c24597ad11a2348c46f815',
