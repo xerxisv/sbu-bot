@@ -16,14 +16,16 @@ from utils.schemas.VerifiedMemberSchema import VerifiedMember
 class TasksCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.update_members.start()
+        # self.update_members.start()
         self.auto_qotd.start()
         self.backup_db.start()
+        self.check_verified.start()
 
     def cog_unload(self):
-        self.update_members.cancel()
+        # self.update_members.cancel()
         self.auto_qotd.cancel()
         self.backup_db.cancel()
+        self.check_verified.start()
 
     @tasks.loop(hours=1)
     async def update_members(self):
@@ -106,8 +108,9 @@ class TasksCog(commands.Cog):
                         tar_handle.add(os.path.join(root, file), arcname=file)
                     
 
-    @tasks.loop(hours=24)
+    @tasks.loop(minutes=1)
     async def check_verified(self):
+        print("test")
         async with aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + ".db") as db:
             cursor = await db.cursor()
 
@@ -115,15 +118,15 @@ class TasksCog(commands.Cog):
             uuids = ()
 
             for guild in constants.GUILDS_INFO:
-                guild_uuid = constants.GUILDS_INFO[guild]["uuid"]
+                guild_uuid = constants.GUILDS_INFO[guild]["guild_uuid"]
 
                 async with aiohttp.ClientSession() as session:
                     async with session.get(f"https://api.slothpixel.me/api/guilds/id/{guild_uuid}") as resp:
-                        data = resp.json()
+                        data = await resp.json()
                         members = data["members"]
                     
                 await cursor.execute(VerifiedMember.select_row_with_guild_uuid(guild_uuid))
-                guild_members = cursor.fetchall()
+                guild_members = await cursor.fetchall()
                 for member in guild_members:
                     member = VerifiedMember.dict_from_tuple(member)
                     if not any(d['uuid'] == member["uuid"] for d in members):
@@ -134,7 +137,7 @@ class TasksCog(commands.Cog):
 
                     
             await cursor.execute(VerifiedMember.update_rows(uuids))
-            db.commit()
+            await db.commit()
 
 
 

@@ -60,8 +60,8 @@ class VerifiedMember(Schema):
     @staticmethod
     def update_rows(_ids: tuple):
         return f'''
-            UPDATE TABLE "VERIFIED"
-            SET "guild"=NULL
+            UPDATE "VERIFIED"
+            SET "guild_uuid"=NULL
             WHERE "uuid" IN {_ids}
         '''
     
