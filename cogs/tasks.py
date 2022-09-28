@@ -108,7 +108,7 @@ class TasksCog(commands.Cog):
                         tar_handle.add(os.path.join(root, file), arcname=file)
                     
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(hours=24)
     async def check_verified(self):
         print("test")
         async with aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + ".db") as db:
