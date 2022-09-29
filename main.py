@@ -1,12 +1,13 @@
 import os
+from random import choice
 
 import discord
 import discord.utils
 from discord.ext import commands
 from dotenv import load_dotenv
-from random import choice
 
-from utils.constants import BOT_OWNER_ROLE_ID, JR_MOD_ROLE_ID, SBU_BOT_LOGS_CHANNEL_ID, ADMIN_CHAT_CHANNEL_ID
+from utils.constants import ADMIN_CHAT_CHANNEL_ID, BOT_OWNER_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, \
+    CRAFT_REPS_CHANNEL_ID, JR_MOD_ROLE_ID, SBU_BOT_LOGS_CHANNEL_ID, SBU_GOLD
 from utils.error_utils import exception_to_string, log_error
 from utils.setup import run_setup
 
@@ -25,7 +26,7 @@ async def on_ready():
 
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
-async def load_all(ctx: discord.ext.commands.Context):
+async def load_all(ctx: commands.Context):
     for filename in os.listdir('./cogs'):
         if not filename.endswith('.py'):
             continue
@@ -37,7 +38,7 @@ async def load_all(ctx: discord.ext.commands.Context):
 
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
-async def load(ctx: discord.ext.commands.Context, extension):
+async def load(ctx: commands.Context, extension):
     try:
         bot.load_extension(f'cogs.{extension}')
     except discord.ExtensionAlreadyLoaded:
@@ -50,7 +51,7 @@ async def load(ctx: discord.ext.commands.Context, extension):
 
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
-async def unload(ctx, extension):
+async def unload(ctx: commands.Context, extension):
     try:
         bot.unload_extension(f'cogs.{extension}')
     except discord.ExtensionNotLoaded:
@@ -63,7 +64,7 @@ async def unload(ctx, extension):
 
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
-async def reload(ctx):
+async def reload(ctx: commands.Context):
     for filename1 in os.listdir('./cogs'):
         if not filename1.endswith('.py'):
             continue
@@ -83,26 +84,32 @@ async def reload(ctx):
 
 
 @bot.command()
-async def ping(ctx):
+async def ping(ctx: commands.Context):
     await ctx.send(f'Pong! {round(bot.latency * 1000)} ms')
 
 
-@bot.command()
+@bot.command(name='help', aliases=['commands'])
 async def help(ctx: commands.Context):
     embed = discord.Embed(
         title='Help',
-        description='All the help commands are listed below',
-        colour=discord.Colour.red()
+        description='All the help commands are listed below.\n'
+                    'Options inside "<>" are required while options inside "[]" are optional.',
+        colour=SBU_GOLD
     )
+    embed.add_field(name="Ping the bot.", value="`+ping`", inline=False)
+    embed.add_field(name="Link your discord and hypixel accounts.", value="`+verify <IGN>`", inline=False)
+    embed.add_field(name="UnLink your discord and hypixel accounts.", value="`+unverify`", inline=False)
+    embed.add_field(name="Lists hypixel stats.", value="`+hypixel <IGN>`", inline=False)
+    embed.add_field(name="Check if you meet reqs for SB Masters.", value="`+checkreq <IGN>`", inline=False)
+    embed.add_field(name="Suggest something.", value="`+suggest <suggestion>`", inline=False)
+    embed.add_field(name="Give reputation to a user.",
+                    value='`+rep give <@mention> <comments>`\n'
+                          f'*It can only be used in <#{CRAFT_REPS_CHANNEL_ID}> or '
+                          f'<#{CARRY_SERVICE_REPS_CHANNEL_ID}>*', inline=False)
+    embed.add_field(name="Add yourself to the inactivity list.", value="`+inactive add <time>`\n"
+                                                                       "*Time is in days, __min 7__, __max 30__\n"
+                                                                       "**Ex**: `+inactive add 25d`*", inline=False)
     embed.set_footer(text='Skyblock University Bot')
-    embed.add_field(name="ping", value="Pong!", inline=False)
-    embed.add_field(name="verify", value="Link your discord and hypixel accounts", inline=False)
-    embed.add_field(name="unverify", value="UnLink your discord and hypixel accounts", inline=False)
-    embed.add_field(name="hypixel", value="Lists hypixel stats", inline=False)
-    embed.add_field(name="checkreq", value="Check if you meet reqs for SB Masters \n `+checkreq IGN`", inline=False)
-    embed.add_field(name="repgive", value="Give a reputation for a carry \n `+repgive @mention Reason`", inline=False)
-    embed.add_field(name="suggest", value="Suggest something \n `+suggest Suggestion`", inline=False)
-    embed.add_field(name="Inactive", value="`+inactiveadd IGN Time`", inline=False)
     await ctx.reply(embed=embed)
 
 
@@ -111,31 +118,33 @@ async def help(ctx: commands.Context):
 async def modhelp(ctx: commands.Context):
     embed = discord.Embed(
         title='Moderation Commands',
-        description='All the moderation commands are listed below',
-        colour=discord.Colour.red()
+        description='All the moderation commands are listed below.\n'
+                    'Options inside "<>" are required while options inside "[]" are optional.',
+        colour=SBU_GOLD
     )
     embed.set_footer(text='Skyblock University Bot')
-    embed.add_field(name="ban", value="`+ban User Reason`", inline=False)
-    embed.add_field(name="mute", value="`+mute User Time Reason`", inline=False)
-    embed.add_field(name="unmute", value="`+unmute User Reason`", inline=False)
-    embed.add_field(name="Lookup section for Rank Academy ", value="`+lookupsection`", inline=False)
-    embed.add_field(name="Shortened questions for promo for Instr and higher", value="`+ras`", inline=False)
-    embed.add_field(name="Add a banned member to banned list", value="`+banlist IGN`", inline=False)
-    embed.add_field(name="Removes a banned member from banned list", value="`+bandel IGN`", inline=False)
-    embed.add_field(name="Check if user is banned", value="`+bancheck IGN`", inline=False)
-    embed.add_field(name="Activate SBU's Crisis Mode", value="`+crisis`", inline=False)
-    embed.add_field(name="Deactivate SBU's Crisis Mode", value="`+crisisend`", inline=False)
-    embed.add_field(name="Check inactive kicks for a guild", value="`+inactive GUILDNAME`", inline=False)
-    embed.add_field(name="QOTD", value="`+qotdadd QOTD`", inline=False)
-    embed.add_field(name="Inactives", value="`+inactive GUILD`", inline=False)
+    embed.add_field(name="Ban", value="`+ban <@mention | ID> [reason]`", inline=False)
+    embed.add_field(name="Mute", value="`+mute <@mention | ID> <time> [reason]`\n"
+                                       "*Max mute duration is 28 days.\n"
+                                       "Mods **can** mute each other but **should not** unless "
+                                       "specifically asked to*", inline=False)
+    embed.add_field(name="Unmute", value="`+unmute <@mention | ID> [reason]`", inline=False)
+    embed.add_field(name="Reputation specific commands", value="`+rep help`", inline=False)
+    embed.add_field(name="Banlist specific commands", value="`+banlist help`", inline=False)
+    embed.add_field(name="Inactives specific commands", value="`+inactive help`", inline=False)
+    embed.add_field(name="Suggestions specific commands", value="`+suggestions help`", inline=False)
+    embed.add_field(name="Activate crisis mode", value="`+crisis`", inline=False)
+    embed.add_field(name="Deactivate crisis mode", value="`+crisisend`", inline=False)
+    embed.add_field(name="Add a question to the QOTD list", value="`+qotdadd <question>`", inline=False)
+    embed.add_field(name="List all questions", value="`+qotdlist`", inline=False)
     await ctx.reply(embed=embed)
 
 
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
-async def dm(ctx: discord.ext.commands.Context, member: discord.User, *, message: str):
+async def dm(ctx: commands.Context, user: discord.User, *, message: str):
     try:
-        await member.send(message)
+        await user.send(message)
     except Exception as err:
         await ctx.reply('User could not be DMed')
         print(err)
@@ -169,10 +178,8 @@ async def on_command_error(ctx: commands.Context, exception):
             colour=0xFF0000
         )
         await ctx.reply(embed=embed)
-
-    elif isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument, commands.CommandNotFound)):
+    elif isinstance(exception, commands.CommandNotFound):
         pass
-
     else:
         try:
             await log_error(ctx, exception)
@@ -184,7 +191,10 @@ async def on_command_error(ctx: commands.Context, exception):
 
 @bot.event
 async def on_message(message: discord.Message):
-    if message.content.upper() == "MEOW":
+    # Prevents the bot from going through the if statements unnecessarily when the message is a command or a bot reply
+    if message.content.startswith('+') or message.author == bot.user:
+        pass
+    elif message.content.upper() == "MEOW":
         if message.author.id == 397389995113185293:
             await message.reply("Meow")
 
@@ -233,15 +243,16 @@ async def on_message(message: discord.Message):
         if message.author.id == 241589674131456000:
             await message.reply("https://tenor.com/view/cat-bite-funny-chomp-gif-16986241")
 
-    elif message.content.upper() == "AGREED":  # pleb shush, I need to have my fun as well :)
+    elif message.content.upper() in ["AGREED", 'I AGREE']:
         if message.author.id == 309231901212672001:
             await message.reply("https://tenor.com/view/metal-gear-rising-gif-25913914")
-            
-    elif message.content.upper() == "CANNIBALISM": 
+
+    elif message.content.upper() == "CANNIBALISM":
         if message.author.id in [606917358438580224, 241589674131456000]:
-            array = ["Pog!", "Noses!", "Toes!", "Fungus!"]
+            array = ["Pog!", "Noses!", "Toes!", "Fungus!",
+                     "https://cdn.discordapp.com/attachments/1007371520575803532/1024383827763798077/IMG_0189.png"]
             await message.reply(choice(array))
-            
+
     elif message.content.upper() == "MUDKIP":
         if message.author.id == 895488539775598603:
             await message.reply("https://tenor.com/view/mudkip-spin-gif-24834722")

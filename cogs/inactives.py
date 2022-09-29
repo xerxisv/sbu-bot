@@ -26,11 +26,12 @@ class InactiveList(commands.Cog):
 
     @commands.group(name='inactive', aliases=['inactives'])
     async def inactive(self, ctx: commands.Context):
-        await ctx.trigger_typing()
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('inactive help').invoke(ctx)
+            return
+        await ctx.trigger_typing()
 
-    @inactive.command()
+    @inactive.command(name='help', aliases=['commands'])
     async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command Help',
@@ -53,6 +54,24 @@ class InactiveList(commands.Cog):
                         value='`+inactive mod remove <IGN>`\n'
                               '*__Moderator__ command*',
                         inline=False)
+        embed.add_field(name='Command aliases list',
+                        value='`+inactive aliases`',
+                        inline=False)
+
+        await ctx.reply(embed=embed)
+
+    @inactive.command(name='alias', aliases=['aliases'])
+    async def alias(self, ctx: commands.Context):
+        embed = discord.Embed(
+            title='Command aliases',
+            colour=SBU_GOLD
+        )
+
+        embed.add_field(name='inactive', value='"inactives"', inline=False)
+        embed.add_field(name='add', value='None', inline=False)
+        embed.add_field(name='check', value='None', inline=False)
+        embed.add_field(name='mod', value='"moderator"', inline=False)
+        embed.add_field(name='remove', value='"rm", "delete", "del"', inline=False)
 
         await ctx.reply(embed=embed)
 

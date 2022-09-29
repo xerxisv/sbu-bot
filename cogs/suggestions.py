@@ -76,7 +76,7 @@ class Suggestions(commands.Cog):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('suggestion help').invoke(ctx)
 
-    @suggestion.command()
+    @suggestion.command(name='help', aliases=['commands'])
     async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command Help',
@@ -87,22 +87,43 @@ class Suggestions(commands.Cog):
                         value='`+suggestion approve <id: integer> [reason: text]`',
                         inline=False)
         embed.add_field(name='Deny a suggestion',
-                        value='`+suggestion deny <id: integer> [reason: text]`',
+                        value='`+suggestion deny <ID> [reason]`',
                         inline=False)
         embed.add_field(name='Delete a suggestion',
-                        value='`+suggestion delete <ID: integer>`',
+                        value='`+suggestion delete <ID>`',
                         inline=False)
         embed.add_field(name='List unanswered suggestions',
-                        value='`+suggestion show answered [page: integer]`',
+                        value='`+suggestion show answered [page]`',
                         inline=False)
         embed.add_field(name='List approved or denied suggestions',
-                        value='`+suggestion show approved [flag: bool]`',
+                        value='`+suggestion show approved [flag] [page]`',
                         inline=False)
         embed.add_field(name='List user specific suggestions',
-                        value='`+suggestion show ideator <@mention | ID: integer>`',
+                        value='`+suggestion show ideator <@mention | ID>`',
                         inline=False)
         embed.add_field(name='List all info related to a suggestion',
-                        value='`+suggestion show info <ID: integer>`')
+                        value='`+suggestion show info <ID>`')
+        embed.add_field(name='Command aliases list',
+                        value='`+suggestion aliases`',
+                        inline=False)
+
+        await ctx.reply(embed=embed)
+
+    @suggestion.command(name='alias', aliases=['aliases'])
+    async def alias(self, ctx: commands.Context):
+        embed = discord.Embed(
+            title='Command aliases',
+            colour=SBU_GOLD
+        )
+        embed.add_field(name='suggestion', value='"suggestions", "sg"', inline=False)
+        embed.add_field(name='approve', value='"yes", "accept"', inline=False)
+        embed.add_field(name='deny', value='"no", "decline"', inline=False)
+        embed.add_field(name='delete', value='"del", "remove", "rm"', inline=False)
+        embed.add_field(name='show', value='"list", "print"', inline=False)
+        embed.add_field(name='unanswered', value='"un", "unresolved"', inline=False)
+        embed.add_field(name='approved', value='"accepted"', inline=False)
+        embed.add_field(name='ideator', value='"author", "creator"', inline=False)
+        embed.add_field(name='info', value='"details"', inline=False)
 
         await ctx.reply(embed=embed)
 

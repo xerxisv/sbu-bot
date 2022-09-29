@@ -13,34 +13,52 @@ class BanList(commands.Cog):
 
     @commands.group(name='banlist', aliases=['bl'])
     async def banlist(self, ctx: commands.Context):
-        await ctx.trigger_typing()
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('banlist help').invoke(ctx)
+            return
+        await ctx.trigger_typing()
 
-    @banlist.command()
+    @banlist.command(name='help', aliases=['commands'])
     async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command help',
-            colour=0xc0c09e
+            colour=SBU_GOLD
         )
         embed.add_field(name='Check if a user if banned',
                         value='`+banlist check <IGN: text>`')
         embed.add_field(name=f'Add a user to banned-list',
-                        value='`+banlist add <IGN: text> [reason: text]`\n'
+                        value='`+banlist add <IGN: text> [reason]`\n'
                               '*__Moderator__ command.*',
                         inline=False)
         embed.add_field(name=f'Remove a user from banned-list',
-                        value='`+banlist remove <IGN: text>`\n'
+                        value='`+banlist remove <IGN>`\n'
                               '*__Moderator__ command.*',
                         inline=False)
         embed.add_field(name='List all info related to the ban of the user',
-                        value='`+banlist info <IGN: text>`\n'
+                        value='`+banlist info <IGN>`\n'
                               '*__Moderator__ command.*',
+                        inline=False)
+        embed.add_field(name='Command aliases list',
+                        value='`+banlist aliases`',
                         inline=False)
 
         await ctx.reply(embed=embed)
 
-    @banlist.command()
+    @banlist.command(name='alias', aliases=['aliases'])
+    async def alias(self, ctx: commands.Context):
+        embed = discord.Embed(
+            title='Command aliases',
+            colour=SBU_GOLD
+        )
+
+        embed.add_field(name='banlist', value='"bl"', inline=False)
+        embed.add_field(name='check', value='"c"', inline=False)
+        embed.add_field(name='add', value='None', inline=False)
+        embed.add_field(name='remove', value='"rm", "delete", "del"', inline=False)
+
+        await ctx.reply(embed=embed)
+
+    @banlist.command(name='add')
     @commands.has_role(MODERATOR_ROLE_ID)
     @commands.cooldown(1, 5)
     async def add(self, ctx: commands.Context, banned_ign: str, *, reason: str = 'None'):

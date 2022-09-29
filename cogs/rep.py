@@ -16,32 +16,59 @@ class Reputations(commands.Cog):
 
     @commands.group(name='rep', aliases=['reputation'])
     async def rep(self, ctx: commands.Context):
-        await ctx.trigger_typing()
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('rep help').invoke(ctx)
+            return
+        await ctx.trigger_typing()
 
-    @rep.command()
+    @rep.command(name='help', aliases=['commands'])
     async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command Help',
             colour=SBU_GOLD
         )
         embed.add_field(name='Give reputation to a user.',
-                        value='`+rep give <@mention> <comments: text>`',
+                        value='`+rep give <@mention | ID> <comments>`\n'
+                              f'*It can only be used in <#{CRAFT_REPS_CHANNEL_ID}> or '
+                              f'<#{CARRY_SERVICE_REPS_CHANNEL_ID}>*',
                         inline=False)
-        embed.add_field(name='Remove reputation from a user.',
-                        value='`+rep remove <rep_id: integer>`',
+        embed.add_field(name='Remove a reputation from a user.',
+                        value='`+rep remove <rep_ID>`\n'
+                              '*__Administrator__ command*',
                         inline=False)
         embed.add_field(name='Show the reputation a user has received.',
-                        value='`+rep show receiver <@mention | ID: integer> [type: craft | carry]`',
+                        value='`+rep show receiver <@mention | ID> [page]`\n'
+                              '*__Administrator__ command*',
                         inline=False)
         embed.add_field(name='Show the reputation a user has given.',
-                        value='`+rep show provider <@mention | ID: integer> [type: craft | carry]`',
+                        value='`+rep show provider <@mention | ID:> [page]`\n'
+                              '*__Administrator__ command*',
                         inline=False)
         embed.add_field(name='Give reputation to a user as another user',
-                        value='`+rep mod give <@mention | ID: integer> <@mention | ID: integer> '
-                              '<type: craft | carry> <comments: text>`',
+                        value='`+rep admin give <@mention | ID> <@mention | ID> '
+                              '<type: craft | carry> <comments>`\n'
+                              '*__Administrator__ command*',
                         inline=False)
+        embed.add_field(name='Command aliases list',
+                        value='`+rep aliases`',
+                        inline=False)
+
+        await ctx.reply(embed=embed)
+
+    @rep.command(name='alias', aliases=['aliases'])
+    async def alias(self, ctx: commands.Context):
+        embed = discord.Embed(
+            title='Command aliases',
+            colour=SBU_GOLD
+        )
+
+        embed.add_field(name='rep', value='"reputation"', inline=False)
+        embed.add_field(name='give', value='"add"', inline=False)
+        embed.add_field(name='remove', value='"rm", "delete", "del"', inline=False)
+        embed.add_field(name='show', value='"list", "print"', inline=False)
+        embed.add_field(name='receiver', value='"getter"', inline=False)
+        embed.add_field(name='provider', value='"giver"', inline=False)
+        embed.add_field(name='admin', value='"administrator"', inline=False)
 
         await ctx.reply(embed=embed)
 
@@ -335,7 +362,7 @@ class Reputations(commands.Cog):
             )
             await ctx.reply(embed=embed)
 
-    @rep.group(name='group', aliases=['administrator', 'fatman'])
+    @rep.group(name='admin', aliases=['administrator', 'fatman'])
     @commands.has_role(ADMIN_ROLE_ID)
     async def admin(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
