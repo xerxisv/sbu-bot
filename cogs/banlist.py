@@ -1,10 +1,10 @@
 import aiosqlite
 import discord
-import requests
 from discord.ext import commands
 
 from utils.constants import BANNED_LIST_CHANNEL_ID, MODERATOR_ROLE_ID, SBU_GOLD
 from utils.schemas import BannedMember
+from utils import extract_uuid
 
 
 class BanList(commands.Cog):
@@ -289,16 +289,6 @@ async def fetch_user_from_db(uuid: str):
         return None
 
     return BannedMember.dict_from_tuple(res)
-
-
-def extract_uuid(ign: str):
-    # Fetch user info
-    res = requests.get(f'https://api.mojang.com/users/profiles/minecraft/{ign}')
-
-    if res.status_code != 200:  # Ensure that the request returned a user
-        return None
-
-    return res.json()['id']  # Return user's UUID
 
 
 def setup(bot):

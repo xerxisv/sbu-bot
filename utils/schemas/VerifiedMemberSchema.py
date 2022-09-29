@@ -51,11 +51,50 @@ class VerifiedMember(Schema):
         '''
 
     @staticmethod
+    def delete_row_with_profile_uuid(uuid: str):
+        return f'''
+            DELETE
+            FROM "VERIFIED"
+            WHERE uuid={uuid}
+        '''
+
+    @staticmethod
     def select_row_with_id(_id: int) -> str:
         return f'''
             SELECT *
             FROM "VERIFIED"
             WHERE discord_id={_id}
+        '''
+
+    @staticmethod
+    def select_row_with_uuid(uuid: str) -> str:
+        return f'''
+            SELECT *
+            FROM "VERIFIED"
+            WHERE uuid={uuid}
+        '''
+    
+    @staticmethod
+    def update_rows_with_ids(uuids: list) -> str:
+        return f'''
+            UPDATE "VERIFIED"
+            SET "guild_uuid"=NULL
+            WHERE "uuid" IN ({', '.join(uuid for uuid in uuids)})
+        '''
+    
+    @staticmethod
+    def select_rows_with_guild_uuid(uuid: str) -> str:
+        return f'''
+            SELECT *
+            FROM "VERIFIED"
+            WHERE "guild_uuid"='{uuid}'
+        '''
+    
+    @staticmethod
+    def select_all() -> str:
+        return '''
+            SELECT *
+            FROM "VERIFIED"
         '''
 
     @staticmethod

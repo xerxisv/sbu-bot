@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from sqlite3 import connect
 
 from utils.schemas import BannedMember, InactivePlayer, RepCommand, Schema, Suggestion, \
@@ -15,8 +13,6 @@ databases = [
 
 
 def create_dbs():
-    Path('./data').mkdir(parents=True, exist_ok=True)
-
     for db_schema in databases:
         db = connect(Schema.DB_PATH + db_schema.DB_NAME + '.db')
 

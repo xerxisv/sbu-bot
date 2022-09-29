@@ -39,6 +39,9 @@ async def load_all(ctx: commands.Context):
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
 async def load(ctx: commands.Context, extension):
+    if extension == 'all':
+        await bot.get_command('load_all').invoke(ctx)
+        return
     try:
         bot.load_extension(f'cogs.{extension}')
     except discord.ExtensionAlreadyLoaded:
@@ -249,13 +252,16 @@ async def on_message(message: discord.Message):
 
     elif message.content.upper() == "CANNIBALISM":
         if message.author.id in [606917358438580224, 241589674131456000]:
-            array = ["Pog!", "Noses!", "Toes!", "Fungus!",
-                     "https://cdn.discordapp.com/attachments/1007371520575803532/1024383827763798077/IMG_0189.png"]
+            array = ["Pog!", "Noses!", "Toes!", "Fungus!", "https://i.imgur.com/IJ8URxl.jpg"]
             await message.reply(choice(array))
 
     elif message.content.upper() == "MUDKIP":
         if message.author.id == 895488539775598603:
             await message.reply("https://tenor.com/view/mudkip-spin-gif-24834722")
+        
+    elif message.content == "RANDOM":
+        if message.author.id == 491654047741509633:
+            await message.reply("https://cdn.discordapp.com/emojis/967203616966459412")
 
     await bot.process_commands(message)
 
