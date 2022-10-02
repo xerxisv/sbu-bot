@@ -117,7 +117,7 @@ body2 = """If you would consider our guild like a college campus, our general ch
 body3 = """If you feel yourself getting short with someone, irritated or angry - don’t fret! We have plenty of other people who would love to help and take your place. Just step back for a minute and let someone else take over.
 
 """
-end1 = """"If you are helping someone that is just asking for free things from you over and over again, please be sure to report beggars to our mod team, so we may handle these situations individually.
+end1 = """If you are helping someone that is just asking for free things from you over and over again, please be sure to report beggars to our mod team, so we may handle these situations individually.
 **This is the end of the course for seniors. Please ping <@&801634222577156097> role
 Instructors+ type the comamnd -done after finishing reading.
 **
