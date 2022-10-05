@@ -11,7 +11,7 @@ from discord.ext import commands, tasks
 
 from utils import constants
 from utils.error_utils import exception_to_string
-from utils.schemas import InactivePlayer, VerifiedMember
+from utils.database.schemas import InactivePlayer, VerifiedMember
 
 
 class TasksCog(commands.Cog):

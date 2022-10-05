@@ -1,6 +1,6 @@
 from sqlite3 import connect
 
-from utils.schemas import BannedMember, InactivePlayer, RepCommand, Schema, Suggestion, \
+from utils.database.schemas import BannedMember, InactivePlayer, RepCommand, Schema, Suggestion, \
     VerifiedMember
 
 databases = [
@@ -13,11 +13,11 @@ databases = [
 
 
 def create_dbs():
-    for db_schema in databases:
-        db = connect(Schema.DB_PATH + db_schema.DB_NAME + '.db')
+    db = connect(Schema.DB_PATH)
 
+    for db_schema in databases:
         cursor = db.cursor()
         cursor.executescript(db_schema.create())
 
-        db.commit()
-        db.close()
+    db.commit()
+    db.close()

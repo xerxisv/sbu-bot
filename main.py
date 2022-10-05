@@ -1,3 +1,4 @@
+import asyncio
 import os
 from random import choice
 
@@ -10,6 +11,7 @@ from utils.constants import ADMIN_CHAT_CHANNEL_ID, BOT_OWNER_ROLE_ID, CARRY_SERV
     CRAFT_REPS_CHANNEL_ID, JR_MOD_ROLE_ID, SBU_BOT_LOGS_CHANNEL_ID, SBU_GOLD
 from utils.error_utils import exception_to_string, log_error
 from utils.setup import run_setup
+from utils.database import DBConnection
 
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="+", intents=intents)
@@ -19,6 +21,9 @@ bot.remove_command('help')
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready")
+
+    await DBConnection().create_db()
+
     channel = bot.get_channel(ADMIN_CHAT_CHANNEL_ID)
     await channel.send(f"<@&{BOT_OWNER_ROLE_ID}> The Bot has been recently rebooted. "
                        "Please enable all the necessary cogs.\nhttps://tenor.com/view/hacker-gif-19246062")
@@ -197,6 +202,7 @@ async def on_message(message: discord.Message):
     # Prevents the bot from going through the if statements unnecessarily when the message is a command or a bot reply
     if message.content.startswith('+') or message.author == bot.user:
         pass
+
     elif message.content.upper() == "MEOW":
         if message.author.id == 397389995113185293:
             await message.reply("Meow")
@@ -258,7 +264,7 @@ async def on_message(message: discord.Message):
     elif message.content.upper() == "MUDKIP":
         if message.author.id == 895488539775598603:
             await message.reply("https://tenor.com/view/mudkip-spin-gif-24834722")
-        
+
     elif message.content == "RANDOM":
         if message.author.id == 491654047741509633:
             await message.reply("https://cdn.discordapp.com/emojis/967203616966459412")
@@ -276,3 +282,4 @@ if __name__ == '__main__':
     run_setup()
     load_dotenv()
     bot.run(os.getenv("TOKEN"))
+    asyncio.run(DBConnection().close_db())

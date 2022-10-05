@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 
 from utils.constants import BANNED_LIST_CHANNEL_ID, MODERATOR_ROLE_ID, SBU_GOLD
-from utils.schemas import BannedMember
+from utils.database.schemas import BannedMember
 from utils import extract_uuid
 
 
