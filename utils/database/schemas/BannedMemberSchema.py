@@ -3,7 +3,7 @@ from typing import TypedDict
 
 from aiosqlite import Row
 
-from utils.schemas import Schema
+from utils.database.schemas import Schema
 
 
 class BannedMemberInfo(TypedDict):
@@ -15,7 +15,6 @@ class BannedMemberInfo(TypedDict):
 
 
 class BannedMember(Schema):
-    DB_NAME = 'banned-list'
 
     def __init__(self, uuid: str, reason: str, moderator: int):
         self.uuid = uuid

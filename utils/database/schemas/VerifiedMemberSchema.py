@@ -3,7 +3,7 @@ from typing import TypedDict
 
 from aiosqlite import Row
 
-from utils.schemas import Schema
+from utils.database.schemas import Schema
 
 
 class VerifiedMemberInfo(TypedDict):
@@ -13,7 +13,6 @@ class VerifiedMemberInfo(TypedDict):
 
 
 class VerifiedMember(Schema):
-    DB_NAME = 'verified'
 
     def __init__(self, discord_id: int, uuid: str, guild_uuid: str = None):
         self.discord_id = discord_id
@@ -22,7 +21,7 @@ class VerifiedMember(Schema):
 
     def insert(self) -> (str, dict):
         return '''
-            INSERT OR REPLACE INTO "VERIFIED"
+            INSERT OR REPLACE INTO "USERS"
             VALUES (:discord_id, :uuid, :guild_uuid, :created_at)
         ''', {
             "discord_id": self.discord_id,
@@ -34,11 +33,14 @@ class VerifiedMember(Schema):
     @staticmethod
     def create() -> str:
         return '''
-            CREATE TABLE IF NOT EXISTS "VERIFIED" (
-            "discord_id" INTEGER PRIMARY KEY , 
-            "uuid" TEXT UNIQUE ,
-            "guild_uuid" TEXT ,
-            "created_at" INTEGER NOT NULL 
+            CREATE TABLE IF NOT EXISTS "USERS" (
+            "uuid" TEXT PRIMARY KEY ,
+            "discord_id" INTEGER ,
+            "ign" TEXT ,
+            "guild_uuid" TEXT DEFAULT null ,
+            "inactive_until" INTEGER DEFAULT null ,
+            "tatsu_score" INTEGER DEFAULT 0 ,
+            "created_at" INTEGER NOT null 
             );
         '''
 
@@ -46,7 +48,7 @@ class VerifiedMember(Schema):
     def delete_row_with_id(_id: int):
         return f'''
             DELETE
-            FROM "VERIFIED"
+            FROM "USERS"
             WHERE discord_id={_id}
         '''
 
@@ -54,7 +56,7 @@ class VerifiedMember(Schema):
     def delete_row_with_profile_uuid(uuid: str):
         return f'''
             DELETE
-            FROM "VERIFIED"
+            FROM "USERS"
             WHERE uuid={uuid}
         '''
 
@@ -62,7 +64,7 @@ class VerifiedMember(Schema):
     def select_row_with_id(_id: int) -> str:
         return f'''
             SELECT *
-            FROM "VERIFIED"
+            FROM "USERS"
             WHERE discord_id={_id}
         '''
 
@@ -70,14 +72,14 @@ class VerifiedMember(Schema):
     def select_row_with_uuid(uuid: str) -> str:
         return f'''
             SELECT *
-            FROM "VERIFIED"
+            FROM "USERS"
             WHERE uuid={uuid}
         '''
     
     @staticmethod
     def update_rows_with_ids(uuids: list) -> str:
         return f'''
-            UPDATE "VERIFIED"
+            UPDATE "USERS"
             SET "guild_uuid"=NULL
             WHERE "uuid" IN ({', '.join(uuid for uuid in uuids)})
         '''
@@ -86,7 +88,7 @@ class VerifiedMember(Schema):
     def select_rows_with_guild_uuid(uuid: str) -> str:
         return f'''
             SELECT *
-            FROM "VERIFIED"
+            FROM "USERS"
             WHERE "guild_uuid"='{uuid}'
         '''
     
@@ -94,7 +96,7 @@ class VerifiedMember(Schema):
     def select_all() -> str:
         return '''
             SELECT *
-            FROM "VERIFIED"
+            FROM "USERS"
         '''
 
     @staticmethod

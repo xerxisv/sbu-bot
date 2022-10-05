@@ -3,7 +3,7 @@ from typing import TypedDict
 
 from aiosqlite import Row
 
-from utils.schemas import Schema
+from utils.database.schemas import Schema
 
 
 class RepCommandInfo(TypedDict):
@@ -16,8 +16,6 @@ class RepCommandInfo(TypedDict):
 
 
 class RepCommand(Schema):
-    DB_NAME = 'reputation'
-    LIMIT = 10
 
     def __init__(self, rep_id: int, receiver: int, provider: int, comments: str, rep_type: str):
         self.rep_id = rep_id

@@ -4,7 +4,7 @@ from typing import TypedDict
 from aiosqlite import Row
 
 from utils.constants import GUILDS_INFO
-from utils.schemas import Schema
+from utils.database.schemas import Schema
 
 
 class InactivePlayerInfo(TypedDict):
@@ -16,8 +16,6 @@ class InactivePlayerInfo(TypedDict):
 
 
 class InactivePlayer(Schema):
-    DB_NAME = 'inactive'
-    LIMIT = 10
 
     def __init__(self, uuid: str, discord_id: int, guild_uuid: str, inactive_until: int):
         self.uuid = uuid
