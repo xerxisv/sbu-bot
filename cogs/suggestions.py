@@ -52,8 +52,8 @@ class Suggestions(commands.Cog):
             message = await channel.send(embed=suggestion_embed)
 
             await ctx.reply(f"Suggestion sent to <#{SUGGESTIONS_CHANNEL_ID}>")
-            await message.add_reaction(':white_check_mark:')
-            await message.add_reaction(':x:')
+            await message.add_reaction('✅')
+            await message.add_reaction('❌')
 
             suggestion = Suggestion(suggestion_num, message.id, suggestion_str, ctx.author.id)
 
