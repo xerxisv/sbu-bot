@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 import aiohttp
 
+import requests
+
 
 class Master(commands.Cog):
     def __init__(self, bot):
@@ -10,6 +12,9 @@ class Master(commands.Cog):
     @commands.command(aliases=['checkreqs'])
     async def checkreq(self, ctx, arg):
         await ctx.send("Checking Reqs now...")
+
+        response = requests.get(f"https://sky.shiiyu.moe/api/v2/profile/{arg}")
+
         async with aiohttp.ClientSession() as session:
             async with session.get(f'https://sky.shiiyu.moe/api/v2/profile/{arg}') as resp:
                 skill = await resp.json()
