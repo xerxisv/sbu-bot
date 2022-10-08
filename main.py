@@ -264,7 +264,7 @@ async def on_message(message: discord.Message):
             await message.reply("https://cdn.discordapp.com/emojis/967203616966459412")
     elif message.content == "FIRE":
         if message.author.id == 856492201529835521:
-            await message.reply("https://cdn.discordapp.com/emojis/1028045534180671499")
+            await message.reply("https://cdn.discordapp.com/emojis/943095611161460739.webp?size=128&quality=lossless")
     elif message.content.upper() == "ZMAJ":
         if message.author.id == 852647923875446816:
             await message.reply("https://media.discordapp.net/attachments/1027212487008989284/1027212547591508070/cat-angry-cat.gif")
