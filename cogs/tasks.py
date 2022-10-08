@@ -68,7 +68,7 @@ class TasksCog(commands.Cog):
     @tasks.loop(hours=24)
     async def auto_qotd(self):
         channel = self.bot.get_channel(constants.QOTD_CHANNEL_ID)
-        #
+        
 
         with open(constants.QOTD_PATH) as f:
             qotd_obj = json.load(f)
@@ -79,7 +79,7 @@ class TasksCog(commands.Cog):
             channel = self.bot.get_channel(constants.MOD_CHAT_CHANNEL_ID)
             await channel.send(
                 f"<@&{constants.JR_MOD_ROLE_ID}> no QOTD's left in the archive. Automatic qotd canceled.\n"
-                f"Please add more using `+qotdadd`.")
+                f"Please add more using `+qotd add`.")
             return
 
         message = await channel.send(qotd_list[0]["qotd"] + f" <@&{constants.QOTD_ROLE_ID}>")
@@ -94,7 +94,7 @@ class TasksCog(commands.Cog):
             channel = self.bot.get_channel(constants.MOD_CHAT_CHANNEL_ID)
             await channel.send(
                 f"<@&{constants.JR_MOD_ROLE_ID}> QOTD's Running Low. Only {num1} remain.\n"
-                f"Please add more using `+qotdadd`.")
+                f"Please add more using `+qotd add`.")
 
     @auto_qotd.before_loop
     async def wait_until_next(self):
