@@ -60,7 +60,7 @@ class HypixelStats(commands.Cog):
 
     @commands.command()
     async def skycrypt(self, ctx, ign):
-        await ctx.reply(f"https://sky.shiiyu.moe/stats/{ign})
+        await ctx.reply(f"https://sky.shiiyu.moe/stats/{ign}")
     
     @skycrypt.error
     async def check_error(self, ctx, error):
