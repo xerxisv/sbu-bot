@@ -58,6 +58,14 @@ class HypixelStats(commands.Cog):
         if isinstance(error, commands.CommandOnCooldown):
             await ctx.send(error)
 
+    @commands.command()
+    async def skycrypt(self, ctx, ign):
+        await ctx.reply(f"https://sky.shiiyu.moe/stats/{ign})
+    
+    @skycrypt.error
+    async def check_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("IGN not provided, please try again")
 
 def setup(bot):
     bot.add_cog(HypixelStats(bot))
