@@ -17,32 +17,41 @@ class RepCommandInfo(TypedDict):
 
 class RepCommand(Schema):
 
-    def __init__(self, rep_id: int, receiver: int, provider: int, comments: str, rep_type: str):
+    def __init__(self, rep_id: int, receiver: int, provider: int, comments: str, rep_type: str, msg_id: int):
         self.rep_id = rep_id
         self.receiver = receiver
         self.provider = provider
         self.comments = comments
         self.type = rep_type
+        self.msg_id = msg_id
+
+    @staticmethod
+    def create() -> str:
+        return '''
+            CREATE TABLE IF NOT EXISTS "REPUTATION" (
+                "rep-id" INTEGER PRIMARY KEY , 
+                "receiver" INTEGER NOT NULL ,
+                "provider" INTEGER NOT NULL ,
+                "comments" TEXT NOT NULL ,
+                "created_at" INTEGER NOT NULL ,
+                "type" TEXT NOT NULL ,
+                "msg_id" INTEGER DEFAULT null
+            );
+        '''
 
     def insert(self) -> (str, dict):
         return '''
-            INSERT INTO "REP-COMMANDS" ("rep-id", receiver, provider, comments, created_at, type)
-            VALUES (:rep_id, :receiver, :provider, :comments, :created_at, :type)
+            INSERT INTO "REPUTATION"
+            VALUES (:rep_id, :receiver, :provider, :comments, :created_at, :type, :msg_id)
         ''', {
             "rep_id": self.rep_id,
             "receiver": self.receiver,
             "provider": self.provider,
             "comments": self.comments,
             "created_at": int(time.time()),
-            "type": self.type
+            "type": self.type,
+            "msg_id": self.msg_id
         }
-
-    def set_message(self, msg_id: int) -> str:
-        return f'''
-            UPDATE "REP-COMMANDS"
-            SET "msg_id"={msg_id}
-            WHERE "rep-id"={self.rep_id};
-        '''
 
     @staticmethod
     def dict_from_tuple(query_res: Row) -> RepCommandInfo:
@@ -59,7 +68,7 @@ class RepCommand(Schema):
     def select_row_with_id(_id: int) -> str:
         return f'''
             SELECT "rep-id", receiver, provider, comments, type, msg_id
-            FROM "REP-COMMANDS"
+            FROM "REPUTATION"
             WHERE "rep-id"={_id};
         '''
 
@@ -67,7 +76,7 @@ class RepCommand(Schema):
     def count_rows_with_receiver(_id: int) -> str:
         return f'''
             SELECT COUNT(1)
-            FROM "REP-COMMANDS"
+            FROM "REPUTATION"
             WHERE receiver={_id}
         '''
 
@@ -75,7 +84,7 @@ class RepCommand(Schema):
     def select_rows_with_receiver(_id: int, page: int) -> str:
         return f'''
             SELECT "rep-id", receiver, provider, comments, type, msg_id
-            FROM "REP-COMMANDS"
+            FROM "REPUTATION"
             WHERE receiver={_id}
             ORDER BY "rep-id"
             LIMIT {RepCommand.LIMIT}
@@ -86,7 +95,7 @@ class RepCommand(Schema):
     def count_rows_with_provider(_id: int) -> str:
         return f'''
             SELECT COUNT(1)
-            FROM "REP-COMMANDS"
+            FROM "REPUTATION"
             WHERE provider={_id}
         '''
 
@@ -94,7 +103,7 @@ class RepCommand(Schema):
     def select_rows_with_provider(_id: int, page: int) -> str:
         return f'''
             SELECT "rep-id", receiver, provider, comments, type, msg_id
-            FROM "REP-COMMANDS"
+            FROM "REPUTATION"
             WHERE provider={_id}
             ORDER BY "rep-id"
             LIMIT {RepCommand.LIMIT}
@@ -105,22 +114,8 @@ class RepCommand(Schema):
     def delete_row_with_id(_id: int) -> str:
         return f'''
             DELETE 
-            FROM "REP-COMMANDS"
+            FROM "REPUTATION"
             WHERE "rep-id"={_id}
-        '''
-
-    @staticmethod
-    def create() -> str:
-        return '''
-            CREATE TABLE IF NOT EXISTS "REP-COMMANDS" (
-                "rep-id" INTEGER PRIMARY KEY , 
-                "receiver" INTEGER NOT NULL ,
-                "provider" INTEGER NOT NULL ,
-                "comments" TEXT NOT NULL ,
-                "created_at" INTEGER NOT NULL ,
-                "type" TEXT NOT NULL ,
-                "msg_id" INTEGER DEFAULT null
-            );
         '''
 
     @staticmethod
@@ -129,11 +124,11 @@ class RepCommand(Schema):
 
         :return: Query string to count the number of rows contained in the SUGGESTIONS table
         """
-        return 'SELECT COUNT(*) FROM "REP-COMMANDS";'
+        return 'SELECT COUNT(*) FROM "REPUTATION";'
 
     @staticmethod
     def get_max_rep_id() -> str:
         return '''
             SELECT max("rep-id")
-            FROM "REP-COMMANDS"
+            FROM "REPUTATION"
         '''

@@ -14,7 +14,7 @@ from utils.setup import run_setup
 from utils.database import DBConnection
 
 intents = discord.Intents().all()
-bot = commands.Bot(command_prefix="+", intents=intents)
+bot = commands.Bot(command_prefix="+", intents=intents, case_insensitive=True)
 bot.remove_command('help')
 
 

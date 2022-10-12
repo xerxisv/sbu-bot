@@ -16,41 +16,36 @@ class BannedMemberInfo(TypedDict):
 
 class BannedMember(Schema):
 
-    def __init__(self, uuid: str, reason: str, moderator: int):
+    def __init__(self, uuid: str, reason: str, moderator: int, message: int):
         self.uuid = uuid
         self.reason = reason
         self.moderator = moderator
-
-    def insert(self) -> (str, dict):
-        return '''
-            INSERT
-            INTO BANNED (uuid, reason, moderator, created_at)
-            VALUES (:uuid, :reason, :moderator, :created_at)
-        ''', {
-            "uuid": self.uuid,
-            "reason": self.reason,
-            "moderator": self.moderator,
-            "created_at": int(time.time())
-        }
-
-    def insert_msg(self, msg: int) -> str:
-        return f'''
-            UPDATE BANNED
-            SET "message"={msg}
-            WHERE uuid='{self.uuid}'
-        '''
+        self.message = message
 
     @staticmethod
     def create() -> str:
         return '''
-            CREATE TABLE IF NOT EXISTS "BANNED" (
-                "uuid" TEXT PRIMARY KEY ,
-                "reason" TEXT DEFAULT 'None',
-                "moderator" INTEGER NOT NULL,
-                "created_at" INTEGER NOT NULL,
-                "message" INTEGER DEFAULT NULL
-            )
-        '''
+                CREATE TABLE IF NOT EXISTS "BANNED" (
+                    "uuid" TEXT PRIMARY KEY ,
+                    "reason" TEXT DEFAULT 'None',
+                    "moderator" INTEGER NOT NULL,
+                    "created_at" INTEGER NOT NULL,
+                    "message" INTEGER DEFAULT NULL
+                )
+            '''
+
+    def insert(self) -> (str, dict):
+        return '''
+            INSERT
+            INTO BANNED
+            VALUES (:uuid, :reason, :moderator, :created_at, :message)
+        ''', {
+            "uuid": self.uuid,
+            "reason": self.reason,
+            "moderator": self.moderator,
+            "created_at": int(time.time()),
+            "message": self.message
+        }
 
     @staticmethod
     def select_row_with_id(_id: str) -> str:
