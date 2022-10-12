@@ -1,13 +1,12 @@
 from sqlite3 import connect
 
-from utils.database.schemas import BannedMember, InactivePlayer, RepCommand, Schema, Suggestion, \
-    VerifiedMember
+from utils.database.schemas import BannedMember, RepCommand, Schema, Suggestion, \
+    User
 
 databases = [
     Suggestion,
-    InactivePlayer,
     RepCommand,
-    VerifiedMember,
+    User,
     BannedMember
 ]
 

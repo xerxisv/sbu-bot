@@ -3,3 +3,4 @@ humanfriendly~=10.0
 python-dotenv~=0.21.0
 requests~=2.28.1
 aiosqlite~=0.17.0
+pet-pet-gif~=1.0.2

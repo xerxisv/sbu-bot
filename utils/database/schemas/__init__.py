@@ -1,7 +1,6 @@
 from .SchemaAbstract import Schema
 from .RepCommandSchema import RepCommand
-from .InactivePlayerSchema import InactivePlayer
-from .VerifiedMemberSchema import VerifiedMember
+from .UserSchema import User
 from .BannedMemberSchema import BannedMember
 from .SuggestionSchema import Suggestion
 
