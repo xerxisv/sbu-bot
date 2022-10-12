@@ -6,15 +6,17 @@ from discord.ext import commands
 
 from utils.constants import ADMIN_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, CRAFT_REPS_CHANNEL_ID, SBU_GOLD, \
     SBU_LOGO_URL, SBU_PURPLE
+from utils.database import DBConnection
 from utils.error_utils import log_error
-from utils.schemas import RepCommand
+from utils.database.schemas import RepCommand
 
 
 class Reputations(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.db: aiosqlite.Connection = DBConnection().get_db()
 
-    @commands.group(name='rep', aliases=['reputation'])
+    @commands.group(name='rep', aliases=['reputation'], case_insensitive=True)
     async def rep(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('rep help').invoke(ctx)
@@ -106,34 +108,31 @@ class Reputations(commands.Cog):
             await ctx.message.delete(delay=15)
             return
 
-        async with aiosqlite.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db') as db:
-            cursor = await db.cursor()
-            await cursor.execute(RepCommand.get_max_rep_id())
+        cursor: aiosqlite.Cursor = await self.db.cursor()
+        await cursor.execute(RepCommand.get_max_rep_id())
 
-            rep_id = (await cursor.fetchone())[0] + 1
-            rep_type = 'carry' if ctx.channel.id == CARRY_SERVICE_REPS_CHANNEL_ID else 'craft'
+        rep_id = (await cursor.fetchone())[0] + 1
+        rep_type = 'carry' if ctx.channel.id == CARRY_SERVICE_REPS_CHANNEL_ID else 'craft'
 
-            rep = RepCommand(rep_id, receiver.id, ctx.author.id, comments, rep_type)
+        rep_embed = discord.Embed(
+            title=f'{rep_type.title()} Reputation Given',
+            colour=SBU_PURPLE
+        )
 
-            await cursor.execute(*(rep.insert()))
-            await db.commit()
+        rep_embed.set_author(name=f'Reputation by {ctx.message.author.name}')
+        rep_embed.add_field(name='Receiver', value=receiver.mention, inline=True)
+        rep_embed.add_field(name='Comments', value=comments, inline=False)
+        rep_embed.set_footer(text=f'Rep ID: {rep_id}')
+        rep_embed.set_thumbnail(url=SBU_LOGO_URL)
 
-            rep_embed = discord.Embed(
-                title=f'{rep_type.title()} Reputation Given',
-                colour=SBU_PURPLE
-            )
+        message = await ctx.message.channel \
+            .send(embed=rep_embed)
 
-            rep_embed.set_author(name=f'Reputation by {ctx.message.author.name}')
-            rep_embed.add_field(name='Receiver', value=receiver.mention, inline=True)
-            rep_embed.add_field(name='Comments', value=comments, inline=False)
-            rep_embed.set_footer(text=f'Rep ID: {rep_id}')
-            rep_embed.set_thumbnail(url=SBU_LOGO_URL)
+        rep = RepCommand(rep_id, receiver.id, ctx.author.id, comments, rep_type, message.id)
 
-            message = await ctx.message.channel \
-                .send(embed=rep_embed)
-
-            await cursor.execute(rep.set_message(message.id))
-            await db.commit()
+        await cursor.execute(*(rep.insert()))
+        await cursor.close()
+        await self.db.commit()
 
         embed = discord.Embed(
             title='Success',
@@ -149,7 +148,7 @@ class Reputations(commands.Cog):
         if isinstance(exception, (commands.MissingRequiredArgument, commands.BadArgument)):
             embed = discord.Embed(
                 title='Error',
-                description='Incorrect format. Use `+rep give <@mention | ID: integer> <comments: text>`',
+                description='Incorrect format. Use `+rep give <@mention | ID> <comments>`',
                 colour=0xFF0000
             )
             await ctx.reply(embed=embed, delete_after=15)
@@ -158,7 +157,7 @@ class Reputations(commands.Cog):
         elif isinstance(exception, commands.UserNotFound):
             embed = discord.Embed(
                 title='Error',
-                description='Invalid user. Use `+rep show provider <@mention | ID: integer> [page: integer]`',
+                description='Invalid user. Use `+rep show provider <@mention | ID> [page]`',
                 colour=0xFF0000
             )
             await ctx.reply(embed=embed, delete_after=15)
@@ -168,60 +167,58 @@ class Reputations(commands.Cog):
     @commands.has_role(ADMIN_ROLE_ID)
     @commands.cooldown(1, 5)
     async def remove(self, ctx: commands.Context, rep_id: int):
-        async with aiosqlite.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db') as db:
-            cursor = await db.cursor()
-            await cursor.execute(RepCommand.select_row_with_id(rep_id))
-            rep_tuple = await cursor.fetchone()
+        cursor = await self.db.cursor()
+        await cursor.execute(RepCommand.select_row_with_id(rep_id))
+        rep_tuple = await cursor.fetchone()
 
-            if rep_tuple is None:
-                embed = discord.Embed(title='Error',
-                                      description=f'Reputation with id {rep_id} not found.',
-                                      colour=0xFF0000)
-                await ctx.send(embed=embed, delete_after=15)
+        if rep_tuple is None:
+            embed = discord.Embed(title='Error',
+                                  description=f'Reputation with id {rep_id} not found.',
+                                  colour=0xFF0000)
+            await ctx.send(embed=embed, delete_after=15)
+            await ctx.message.delete(delay=15)
+            return
+
+        rep = RepCommand.dict_from_tuple(rep_tuple)
+
+        await cursor.execute(RepCommand.delete_row_with_id(rep_id))
+
+        embed = None
+        channel_id = CARRY_SERVICE_REPS_CHANNEL_ID if rep['type'] == 'carry' else CRAFT_REPS_CHANNEL_ID
+
+        try:
+            await ctx.guild \
+                .get_channel(channel_id) \
+                .get_partial_message(rep['msg_id']) \
+                .delete()
+        except discord.NotFound as exception:
+            await log_error(ctx, exception)
+            embed = discord.Embed(title=f'Partial Deletion', description=f'Reputation with id {rep_id} removed from'
+                                                                         f' database but not from <#{channel_id}>.',
+                                  colour=0xFFFF00)
+        else:
+            embed = discord.Embed(title=f'Successful Deletion', description=f'Reputation with id {rep_id} removed'
+                                                                            f' from <#{channel_id}>.',
+                                  colour=0x00FF00)
+        finally:
+            delete = ctx.message.channel.id in [CRAFT_REPS_CHANNEL_ID, CARRY_SERVICE_REPS_CHANNEL_ID]
+
+            await ctx.send(embed=embed, delete_after=15 if delete else None)
+            if delete:
                 await ctx.message.delete(delay=15)
-                await db.close()
-                return
-
-            rep = RepCommand.dict_from_tuple(rep_tuple)
-
-            await cursor.execute(RepCommand.delete_row_with_id(rep_id))
-
-            embed = None
-            channel_id = CARRY_SERVICE_REPS_CHANNEL_ID if rep['type'] == 'carry' else CRAFT_REPS_CHANNEL_ID
-
-            try:
-                await ctx.guild \
-                    .get_channel(channel_id) \
-                    .get_partial_message(rep['msg_id']) \
-                    .delete()
-            except discord.NotFound as exception:
-                await log_error(ctx, exception)
-                embed = discord.Embed(title=f'Partial Deletion', description=f'Reputation with id {rep_id} removed from'
-                                                                             f' database but not from <#{channel_id}>.',
-                                      colour=0xFFFF00)
-            else:
-                embed = discord.Embed(title=f'Successful Deletion', description=f'Reputation with id {rep_id} removed'
-                                                                                f' from <#{channel_id}>.',
-                                      colour=0x00FF00)
-            finally:
-                delete = ctx.message.channel.id in [CRAFT_REPS_CHANNEL_ID, CARRY_SERVICE_REPS_CHANNEL_ID]
-
-                await ctx.send(embed=embed, delete_after=15 if delete else None)
-                if delete:
-                    await ctx.message.delete(delay=15)
 
     @remove.error
     async def remove_error(self, ctx: commands.Context, exception):
         if isinstance(exception, (commands.MissingRequiredArgument, commands.MemberNotFound)):
             embed = discord.Embed(
                 title='Error',
-                description='Incorrect format. Use `+rep remove <rep_id: integer>`',
+                description='Incorrect format. Use `+rep remove <rep_id>`',
                 colour=0xFF0000
             )
             await ctx.reply(embed=embed, delete_after=15)
             await ctx.message.delete(delay=15)
 
-    @rep.group(name='show', aliases=['list', 'print'])
+    @rep.group(name='show', aliases=['list', 'print'], case_insensitive=True)
     async def show(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('rep help').invoke(ctx)
@@ -229,67 +226,67 @@ class Reputations(commands.Cog):
     @show.command(name='receiver', aliases=['getter'])
     @commands.cooldown(1, 5)
     async def receiver(self, ctx: commands.Context, receiver: discord.User, page: int = 1):
-        async with aiosqlite.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db') as db:
-            cursor: aiosqlite.Cursor = await db.cursor()
+        cursor: aiosqlite.Cursor = await self.db.cursor()
 
-            await cursor.execute(RepCommand.count_rows_with_receiver(receiver.id))
-            rows = (await cursor.fetchone())[0]
+        await cursor.execute(RepCommand.count_rows_with_receiver(receiver.id))
+        rows = (await cursor.fetchone())[0]
 
-            if rows == 0:
-                embed = discord.Embed(
-                    title='204',
-                    description='User has not received any reps <a:confusion:1023126211586707547>',
-                    colour=SBU_GOLD
-                )
-                await ctx.reply(embed=embed)
-                return
-
-            max_page = ceil(rows / RepCommand.LIMIT)
-
-            if page > max_page or page < 1:
-                embed = discord.Embed(
-                    title='Error',
-                    description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                    colour=0xFF0000
-                )
-                await ctx.reply(embed=embed)
-                return
-
-            await cursor.execute(RepCommand.select_rows_with_receiver(receiver.id, page))
-            res = await cursor.fetchall()
-
+        if rows == 0:
             embed = discord.Embed(
-                title=f'Reps Received by {receiver.display_name}',
+                title='204',
+                description='User has not received any reps <a:confusion:1023126211586707547>',
                 colour=SBU_GOLD
             )
-
-            for rep_tuple in res:
-                rep = RepCommand.dict_from_tuple(rep_tuple)
-                provider = await ctx.bot.get_or_fetch_user(rep['provider'])
-
-                embed.add_field(name=f"__Rep #{rep['rep_id']}__",
-                                value=f"`{rep['comments']}`\n"
-                                      f"*Type: {rep['type'].title()}*\n"
-                                      f"*By: {provider.mention}*",
-                                inline=False)
-
-            embed.set_footer(text=f'Page: {page}/{max_page}')
-
             await ctx.reply(embed=embed)
+            return
+
+        max_page = ceil(rows / RepCommand.LIMIT)
+
+        if page > max_page or page < 1:
+            embed = discord.Embed(
+                title='Error',
+                description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        await cursor.execute(RepCommand.select_rows_with_receiver(receiver.id, page))
+        res = await cursor.fetchall()
+        await cursor.close()
+
+        embed = discord.Embed(
+            title=f'Reps Received by {receiver.display_name}',
+            colour=SBU_GOLD
+        )
+
+        for rep_tuple in res:
+            rep = RepCommand.dict_from_tuple(rep_tuple)
+            provider = await ctx.bot.get_or_fetch_user(rep['provider'])
+
+            embed.add_field(name=f"__Rep #{rep['rep_id']}__",
+                            value=f"`{rep['comments']}`\n"
+                                  f"*Type: {rep['type'].title()}*\n"
+                                  f"*By: {provider.mention}*",
+                            inline=False)
+
+        embed.set_footer(text=f'Page: {page}/{max_page}')
+
+        await ctx.reply(embed=embed)
 
     @receiver.error
     async def receiver_error(self, ctx: commands.Context, exception: Exception):
         if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
-                description='Incorrect format. Use `+rep show receiver <@mention | ID: integer> [page: integer]`',
+                description='Incorrect format. Use `+rep show receiver <@mention | ID> [page]`',
                 colour=0xFF0000
             )
             await ctx.reply(embed=embed)
         elif isinstance(exception, commands.UserNotFound):
             embed = discord.Embed(
                 title='Error',
-                description='Invalid user. Use `+rep show receiver <@mention | ID: integer> [page: integer]`',
+                description='Invalid user. Use `+rep show receiver <@mention | ID> [page]`',
                 colour=0xFF0000
             )
             await ctx.reply(embed=embed)
@@ -297,53 +294,53 @@ class Reputations(commands.Cog):
     @show.command(name='provider', aliases=['giver'])
     @commands.cooldown(1, 5)
     async def provider(self, ctx: commands.Context, provider: discord.User, page: int = 1):
-        async with aiosqlite.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db') as db:
-            cursor: aiosqlite.Cursor = await db.cursor()
+        cursor: aiosqlite.Cursor = await self.db.cursor()
 
-            await cursor.execute(RepCommand.count_rows_with_provider(provider.id))
-            rows = (await cursor.fetchone())[0]
+        await cursor.execute(RepCommand.count_rows_with_provider(provider.id))
+        rows = (await cursor.fetchone())[0]
 
-            if rows == 0:
-                embed = discord.Embed(
-                    title='204',
-                    description='User has not provided any reps <a:confusion:1023126211586707547>',
-                    colour=SBU_GOLD
-                )
-                await ctx.reply(embed=embed)
-                return
-
-            max_page = ceil(rows / RepCommand.LIMIT)
-
-            if page > max_page or page < 1:
-                embed = discord.Embed(
-                    title='Error',
-                    description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                    colour=0xFF0000
-                )
-                await ctx.reply(embed=embed)
-                return
-
-            await cursor.execute(RepCommand.select_rows_with_provider(provider.id, page))
-            res = await cursor.fetchall()
-
+        if rows == 0:
             embed = discord.Embed(
-                title=f'Reps Given by {provider.display_name}',
+                title='204',
+                description='User has not provided any reps <a:confusion:1023126211586707547>',
                 colour=SBU_GOLD
             )
-
-            for rep_tuple in res:
-                rep = RepCommand.dict_from_tuple(rep_tuple)
-                receiver = await ctx.bot.get_or_fetch_user(rep['receiver'])
-
-                embed.add_field(name=f"__Rep #{rep['rep_id']}__",
-                                value=f"`{rep['comments']}`\n"
-                                      f"*Type: {rep['type'].title()}*\n"
-                                      f"*To: {receiver.mention}*",
-                                inline=False)
-
-            embed.set_footer(text=f'Page: {page}/{max_page}')
-
             await ctx.reply(embed=embed)
+            return
+
+        max_page = ceil(rows / RepCommand.LIMIT)
+
+        if page > max_page or page < 1:
+            embed = discord.Embed(
+                title='Error',
+                description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        await cursor.execute(RepCommand.select_rows_with_provider(provider.id, page))
+        res = await cursor.fetchall()
+        await cursor.close()
+
+        embed = discord.Embed(
+            title=f'Reps Given by {provider.display_name}',
+            colour=SBU_GOLD
+        )
+
+        for rep_tuple in res:
+            rep = RepCommand.dict_from_tuple(rep_tuple)
+            receiver = await ctx.bot.get_or_fetch_user(rep['receiver'])
+
+            embed.add_field(name=f"__Rep #{rep['rep_id']}__",
+                            value=f"`{rep['comments']}`\n"
+                                  f"*Type: {rep['type'].title()}*\n"
+                                  f"*To: {receiver.mention}*",
+                            inline=False)
+
+        embed.set_footer(text=f'Page: {page}/{max_page}')
+
+        await ctx.reply(embed=embed)
 
     @provider.error
     async def provider_error(self, ctx: commands.Context, exception: Exception):
@@ -362,7 +359,7 @@ class Reputations(commands.Cog):
             )
             await ctx.reply(embed=embed)
 
-    @rep.group(name='admin', aliases=['administrator', 'fatman'])
+    @rep.group(name='admin', aliases=['administrator', 'fatman'], case_insensitive=True)
     @commands.has_role(ADMIN_ROLE_ID)
     async def admin(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
@@ -392,42 +389,39 @@ class Reputations(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        async with aiosqlite.connect(RepCommand.DB_PATH + RepCommand.DB_NAME + '.db') as db:
-            cursor: aiosqlite.Cursor = await db.cursor()
+        cursor: aiosqlite.Cursor = await self.db.cursor()
 
-            await cursor.execute(RepCommand.get_max_rep_id())
-            rep_id = (await cursor.fetchone())[0] + 1
+        await cursor.execute(RepCommand.get_max_rep_id())
+        rep_id = (await cursor.fetchone())[0] + 1
 
-            rep = RepCommand(rep_id, receiver.id, provider.id, comments, rep_type)
+        rep_embed = discord.Embed(
+            title=f'{rep_type.title()} Reputation Given',
+            colour=SBU_PURPLE
+        )
 
-            await cursor.execute(*(rep.insert()))
-            await db.commit()
+        rep_embed.set_author(name=f'Reputation by {provider.display_name}')
+        rep_embed.add_field(name='Receiver', value=receiver.mention, inline=False)
+        rep_embed.add_field(name='Comments', value=comments, inline=False)
+        rep_embed.set_footer(text=f'Rep ID: {rep_id}')
+        rep_embed.set_thumbnail(url=SBU_LOGO_URL)
 
-            rep_embed = discord.Embed(
-                title=f'{rep_type.title()} Reputation Given',
-                colour=SBU_PURPLE
-            )
+        msg = await ctx.guild \
+            .get_channel(CARRY_SERVICE_REPS_CHANNEL_ID if rep_type == 'carry' else CRAFT_REPS_CHANNEL_ID) \
+            .send(embed=rep_embed)
 
-            rep_embed.set_author(name=f'Reputation by {provider.display_name}')
-            rep_embed.add_field(name='Receiver', value=receiver.mention, inline=False)
-            rep_embed.add_field(name='Comments', value=comments, inline=False)
-            rep_embed.set_footer(text=f'Rep ID: {rep_id}')
-            rep_embed.set_thumbnail(url=SBU_LOGO_URL)
+        rep = RepCommand(rep_id, receiver.id, provider.id, comments, rep_type, msg.id)
 
-            msg = await ctx.guild \
-                .get_channel(CARRY_SERVICE_REPS_CHANNEL_ID if rep_type == 'carry' else CRAFT_REPS_CHANNEL_ID) \
-                .send(embed=rep_embed)
+        await cursor.execute(*(rep.insert()))
+        await cursor.close()
+        await self.db.commit()
 
-            await cursor.execute(rep.set_message(msg.id))
-            await db.commit()
+        embed = discord.Embed(
+            title='Success',
+            description=f'Rep added successfully for {receiver.mention} by {provider.mention}',
+            colour=0x00FF00
+        )
 
-            embed = discord.Embed(
-                title='Success',
-                description=f'Rep added successfully for {receiver.mention} by {provider.mention}',
-                colour=0x00FF00
-            )
-
-            await ctx.reply(embed=embed)
+        await ctx.reply(embed=embed)
 
     @give_from.error
     async def give_from_error(self, ctx: commands.Context, exception: Exception):

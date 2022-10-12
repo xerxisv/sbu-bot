@@ -7,8 +7,9 @@ from discord.ext import commands
 
 from utils.constants import GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID, GUILDS_INFO, \
     VERIFIED_ROLE_ID
+from utils.database import DBConnection
 from utils.error_utils import log_error
-from utils.schemas import VerifiedMember
+from utils.database.schemas import User
 
 error_embed = discord.Embed(title=f'Error',
                             description='Something went wrong. Please try again later',
@@ -18,12 +19,13 @@ error_embed = discord.Embed(title=f'Error',
 class Verify(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.db: aiosqlite.Connection = DBConnection().get_db()
+        self.key = os.getenv("apikey")
 
     @commands.command(description="Add the role if in guild")
     @commands.cooldown(1, 5)
     async def verify(self, ctx: commands.Context, ign: str = None):
         await ctx.trigger_typing()
-        key = os.getenv("apikey")
 
         if ign is None:  # No IGN was inputted
             embed = discord.Embed(title=f'Error', description='Please enter a user \n `+verify RealMSpeed`',
@@ -62,12 +64,12 @@ class Verify(commands.Cog):
 
         try:
             # Fetch player data
-            response = requests.get(f'https://api.hypixel.net/player?key={key}&uuid={uuid}')
+            response = requests.get(f'https://api.hypixel.net/player?key={self.key}&uuid={uuid}')
             assert response.status_code == 200, 'api.hypixel.net/player did not return a 200'
             player = response.json()['player']
 
             # Fetch guild data
-            response = requests.get(f'https://api.hypixel.net/guild?key={key}&player={uuid}')
+            response = requests.get(f'https://api.hypixel.net/guild?key={self.key}&player={uuid}')
             assert response.status_code == 200, 'api.hypixel.net/guild did not return a 200'
             guild = response.json()['guild']
 
@@ -119,23 +121,20 @@ class Verify(commands.Cog):
             .add_roles(*[discord.Object(_id) for _id in [VERIFIED_ROLE_ID, GUILD_MEMBER_ROLE_ID]],
                        reason='Verification Complete', atomic=False)
 
-        verified_member = VerifiedMember(member.id, uuid)
+        verified_member = User(uuid, member.id, ign)
 
-        async with aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db') as db:
-            cursor = await db.cursor()
+        if is_in_guild:
+            await member\
+                .add_roles(discord.Object(GUILDS_INFO[guild["name"].upper()]['role_id']), atomic=False)
 
-            if is_in_guild:
-                await member\
-                    .add_roles(discord.Object(GUILDS_INFO[guild["name"].upper()]['role_id']), atomic=False)
+            embed = discord.Embed(title=f'Verification',
+                                  description=f'You have been verified as a member of {guild["name"]}',
+                                  colour=0x008000)
 
-                embed = discord.Embed(title=f'Verification',
-                                      description=f'You have been verified as a member of {guild["name"]}',
-                                      colour=0x008000)
+            verified_member.guild_uuid = guild['_id']
 
-                verified_member.guild_uuid = guild['_id']
-
-            await cursor.execute(*verified_member.insert())
-            await db.commit()
+        await self.db.execute(*(verified_member.insert()))
+        await self.db.commit()
 
         try:
             await member.edit(nick=player["displayname"])
@@ -159,12 +158,8 @@ class Verify(commands.Cog):
                           atomic=False
                           )
 
-        async with aiosqlite.connect(VerifiedMember.DB_PATH + VerifiedMember.DB_NAME + '.db') as db:
-            cursor = await db.cursor()
-
-            await cursor.execute(VerifiedMember.delete_row_with_id(member.id))
-
-            await db.commit()
+        await self.db.execute(User.delete_row_with_id(member.id))
+        await self.db.commit()
 
         embed = discord.Embed(title=f'Verification',
                               description=f'You have been unverified.',

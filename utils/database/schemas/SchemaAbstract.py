@@ -20,8 +20,8 @@ class Schema(ABC):
 		Returns a tuple containing the insertion string and the values dictionary
 	"""
 
-	DB_NAME = ''
-	DB_PATH = './data/'
+	DB_PATH = './data/database.db'
+	LIMIT = 10
 
 	@abstractmethod
 	def insert(self) -> (str, dict):

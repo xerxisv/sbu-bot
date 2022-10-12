@@ -3,7 +3,7 @@ from typing import TypedDict
 
 from aiosqlite import Row
 
-from utils.schemas import Schema
+from utils.database.schemas import Schema
 
 
 class SuggestionInfo(TypedDict):
@@ -22,8 +22,6 @@ class Suggestion(Schema):
     """
     Represents a suggestion row/document to be added in the database
     """
-
-    DB_NAME = 'suggestions'
 
     def __init__(self, suggestion_number: int, message_id: int, suggestion: str, author_id: int):
         """
@@ -101,8 +99,8 @@ class Suggestion(Schema):
             FROM SUGGESTIONS
             WHERE approved={approved} and answered=true
             ORDER BY "suggestion_number"
-            LIMIT 10
-            OFFSET {(page - 1) * 10};
+            LIMIT {Suggestion.LIMIT}
+            OFFSET {(page - 1) * Suggestion.LIMIT};
         '''
 
     @staticmethod
@@ -120,8 +118,8 @@ class Suggestion(Schema):
             FROM SUGGESTIONS
             WHERE author_id={_id}
             ORDER BY "suggestion_number"
-            LIMIT 10
-            OFFSET {(page - 1) * 10};
+            LIMIT {Suggestion.LIMIT}
+            OFFSET {(page - 1) * Suggestion.LIMIT};
         '''
 
     @staticmethod
