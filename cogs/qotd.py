@@ -26,6 +26,7 @@ class QOTD(commands.Cog):
 
         embed.add_field(name="Add a QOTD", value="`qotd add <QOTD>`", inline=False)
         embed.add_field(name="List all QOTD's", value="`qotd list`", inline=False)
+        embed.add_field(name="Remove a QOTD", value="`qotd remove", inline=False)
 
         await ctx.reply(embed=embed)
 
