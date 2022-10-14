@@ -82,7 +82,11 @@ class TasksCog(commands.Cog):
                 f"<@&{constants.JR_MOD_ROLE_ID}> no QOTD's left in the archive. Automatic qotd canceled.\n"
                 f"Please add more using `+qotd add`.")
             return
-
+        try:
+            message = await channel.fetch_message(channel.last_message_id)
+            await message.thread.delete()
+        except AttributeError:
+            pass
         message = await channel.send(qotd_list[0]["qotd"] + f" <@&{constants.QOTD_ROLE_ID}>")
         await message.create_thread(name="QOTD")
         qotd_list.pop(0)
