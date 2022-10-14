@@ -200,7 +200,7 @@ async def on_command_error(ctx: commands.Context, exception):
 @bot.event
 async def on_message(message: discord.Message):
     # Prevents the bot from going through the if statements unnecessarily when the message is a command or a bot reply
-    if message.content.startswith('+') or message.author == bot.user:
+    if message.content.startswith('!') or message.author == bot.user:
         pass
     elif chat_triggers.is_trigger(message.content):
         await chat_triggers.handle_trigger(message)
