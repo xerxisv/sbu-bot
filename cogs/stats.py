@@ -37,19 +37,19 @@ class Stats(commands.Cog):
             await ctx.reply(embed=embed)
             return
         else:
-            guild = res.json()['guild']
+            guild = res.json()
 
         embed = discord.Embed(title=f'{ign} Hypixel stats', colour=SBU_GOLD)
 
-        embed.add_field(name='Rank', value=f'{player["rank"].replace("plus", "+").replace("_", "")}', inline=False)
-        embed.add_field(name="Level:", value=player["level"], inline=False)
-        embed.add_field(name="Discord:", value=f'@{player["links"]["DISCORD"]}', inline=False)
-        embed.add_field(name="Online:", value=player['online'], inline=False)
+        embed.add_field(name='Rank', value=f'{player["rank"].replace("PLUS", "+").replace("_", "")}', inline=False)
+        embed.add_field(name='Level:', value=f'{player["level"]}', inline=False)
+        embed.add_field(name='Discord:', value=f'{player["links"]["DISCORD"]}', inline=False)
+        embed.add_field(name='Online:', value=f'{player["online"]}', inline=False)
 
         if guild is None:
-            embed.add_field(name="Guild:", value=f"{ign} isn't in a guild")
+            embed.add_field(name='Guild:', value=f'{ign} isn\'t in a guild')
         else:
-            embed.add_field(name="Guild:", value=guild["name"])
+            embed.add_field(name='Guild:', value=guild["name"])
         await ctx.reply(embed=embed)
 
     @hypixel.error
@@ -60,14 +60,14 @@ class Stats(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-    @commands.command()
+    @commands.command(aliases=['s'])
     async def skycrypt(self, ctx: commands.Context, ign: str):
-        await ctx.reply(f"https://sky.shiiyu.moe/stats/{ign}")
+        await ctx.reply(f'https://sky.shiiyu.moe/stats/{ign}')
     
     @skycrypt.error
     async def check_error(self, ctx: commands.Context, error: Exception):
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.reply("Please enter an IGN\n Ex: `+skycrypt RealMSpeed`")
+            await ctx.reply('Please enter an IGN\n Ex: `+skycrypt RealMSpeed`')
 
 
 def setup(bot):
