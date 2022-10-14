@@ -70,7 +70,6 @@ class TasksCog(commands.Cog):
     @tasks.loop(hours=24)
     async def auto_qotd(self):
         channel = self.bot.get_channel(constants.QOTD_CHANNEL_ID)
-        
 
         with open(constants.QOTD_PATH) as f:
             qotd_obj = json.load(f)
