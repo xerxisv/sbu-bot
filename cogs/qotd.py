@@ -82,7 +82,7 @@ class QOTD(commands.Cog):
         # Set the questions' start and end index
         start = questions_max * page  # Skips the first `questions_max * page` objects
         # Keeps 24 objects skipping the rest and ensuring that we are within index bounds
-        end = (max_page * page) + min(max_page, q_len - (max_page * page))
+        end = (questions_max * page) + min(questions_max, q_len - (max_page * page))
 
         questions = questions[start:end]
 
