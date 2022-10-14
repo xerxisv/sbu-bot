@@ -1,16 +1,38 @@
 import discord
 from discord.ext import commands
 import json
-from utils.constants import SBU_LOGO_URL, JR_MOD_ROLE_ID, QOTD_PATH
+from utils.constants import SBU_LOGO_URL, JR_MOD_ROLE_ID, QOTD_PATH, SBU_GOLD
 
 
 class QOTD(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    @commands.command()
+    
+    @commands.group(name='qotd', aliases=["q"])
     @commands.has_role(JR_MOD_ROLE_ID)
-    async def qotdadd(self, ctx, *, qotd):
+    async def qotd(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await self.bot.get_command('qotd help').invoke(ctx)
+            return
+        await ctx.trigger_typing()
+    
+    @qotd.command(name="help", aliases=["commands"])
+    @commands.has_role(JR_MOD_ROLE_ID)
+    async def help(self, ctx):
+        embed = discord.Embed(
+            title='Command help',
+            colour=SBU_GOLD
+        )
+
+        embed.add_field(name="Add a QOTD", value="`qotd add <QOTD>`", inline=False)
+        embed.add_field(name="List all QOTD's", value="`qotd list`", inline=False)
+        embed.add_field(name="Remove a QOTD", value="`qotd remove", inline=False)
+
+        await ctx.reply(embed=embed)
+
+    @qotd.command(name="add", aliases=["a"])
+    @commands.has_role(JR_MOD_ROLE_ID)
+    async def add(self, ctx, *, qotd):
         if ctx.author.id == 0:
             await ctx.send("Banned from qotd")
             return
@@ -36,9 +58,9 @@ class QOTD(commands.Cog):
             url=SBU_LOGO_URL)
         await ctx.send(embed=qotd_embed)
 
-    @commands.command()
+    @qotd.command(name="list", aliases=["l"])
     @commands.has_role(JR_MOD_ROLE_ID)
-    async def qotdlist(self, ctx):
+    async def list_(self, ctx):
         with open(QOTD_PATH) as fp:
             list_obj = json.load(fp)
         if len(list_obj) >= 24:
@@ -61,10 +83,23 @@ class QOTD(commands.Cog):
             url=SBU_LOGO_URL)
         await ctx.send(embed=qotd_embed)
 
-    @qotdlist.error
+    @list_.error
     async def on_qotdlist_error(self, ctx: discord.ext.commands.Context, error: discord.DiscordException):
         if isinstance(error, discord.ext.commands.MissingRole):
             await ctx.reply('')
+        
+    @qotd.command(name="remove", aliases=["del", "delete", "d", "r"])
+    @commands.has_role(JR_MOD_ROLE_ID)
+    async def remove(self, ctx, _id: int):
+        with open(QOTD_PATH) as f:
+            qotds = json.load(f)
+        qotds.pop(_id-1)
+        with open(QOTD_PATH, "w") as f:
+            json.dump(qotds, f,
+                      indent=4,
+                      separators=(',', ': '))
+        
+        await ctx.reply("Successfully removed that qotd")
 
 
 def setup(bot):

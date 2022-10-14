@@ -28,7 +28,7 @@ class TasksCog(commands.Cog):
         self.auto_qotd.cancel()
         self.backup_db.cancel()
         self.inactives_check.cancel()
-        self.check_verified.start()
+        self.check_verified.cancel()
 
     @tasks.loop(hours=1)
     async def update_members(self):
@@ -68,20 +68,21 @@ class TasksCog(commands.Cog):
     @tasks.loop(hours=24)
     async def auto_qotd(self):
         channel = self.bot.get_channel(constants.QOTD_CHANNEL_ID)
-        #
-
         with open(constants.QOTD_PATH) as f:
             qotd_obj = json.load(f)
 
         qotd_list = list(qotd_obj)
-
         if len(qotd_list) < 1:
             channel = self.bot.get_channel(constants.MOD_CHAT_CHANNEL_ID)
             await channel.send(
                 f"<@&{constants.JR_MOD_ROLE_ID}> no QOTD's left in the archive. Automatic qotd canceled.\n"
-                f"Please add more using `+qotdadd`.")
+                f"Please add more using `+qotd add`.")
             return
-
+        try:
+            message = await channel.fetch_message(channel.last_message_id)
+            await message.thread.delete()
+        except AttributeError:
+            pass
         message = await channel.send(qotd_list[0]["qotd"] + f" <@&{constants.QOTD_ROLE_ID}>")
         await message.create_thread(name="QOTD")
         qotd_list.pop(0)
@@ -94,7 +95,7 @@ class TasksCog(commands.Cog):
             channel = self.bot.get_channel(constants.MOD_CHAT_CHANNEL_ID)
             await channel.send(
                 f"<@&{constants.JR_MOD_ROLE_ID}> QOTD's Running Low. Only {num1} remain.\n"
-                f"Please add more using `+qotdadd`.")
+                f"Please add more using `+qotd add`.")
 
     @auto_qotd.before_loop
     async def wait_until_next(self):
