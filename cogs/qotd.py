@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 from utils.constants import SBU_LOGO_URL, JR_MOD_ROLE_ID, QOTD_PATH, SBU_GOLD
+from math import ceil
 
 
 class QOTD(commands.Cog):
@@ -24,8 +25,9 @@ class QOTD(commands.Cog):
             colour=SBU_GOLD
         )
 
-        embed.add_field(name="Add a QOTD", value="`qotd add <QOTD>`", inline=False)
-        embed.add_field(name="List all QOTD's", value="`qotd list`", inline=False)
+        embed.add_field(name="Add a QOTD", value="`+qotd add <QOTD>`", inline=False)
+        embed.add_field(name="List all QOTD's", value="`+qotd list`", inline=False)
+        embed.add_field(name="Remove a QOTD", value="`+qotd remove <num>`", inline=False)
 
         await ctx.reply(embed=embed)
 
@@ -57,42 +59,62 @@ class QOTD(commands.Cog):
             url=SBU_LOGO_URL)
         await ctx.send(embed=qotd_embed)
 
-    @qotd.command(name="list", aliases=["l"])
+    @qotd.command(name='list', aliases=['show', 'print'])
     @commands.has_role(JR_MOD_ROLE_ID)
-    async def list_(self, ctx):
+    async def list_(self, ctx: commands.Context, page: int = 0):
         with open(QOTD_PATH) as fp:
-            list_obj = json.load(fp)
-        if len(list_obj) >= 24:
-            qotd_embed = discord.Embed(
-                title=f'QOTD List',
-                description=f'Too many QOTD to display. \nTotal Number: {len(list_obj)}',
-                colour=0x8F49EA
+            questions = json.load(fp)
+
+        q_len = len(questions)  # The length of the questions array
+        questions_max = 24  # Maximum number of questions that can be displayed at a time
+        max_page = ceil(q_len / questions_max)  # The maximum page number
+
+        # Ensure that page is within the limits
+        if page > max_page:
+            embed = discord.Embed(
+                title='Error',
+                description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
+                colour=0xFF0000
             )
-            await ctx.send(embed=qotd_embed)
+            await ctx.reply(embed=embed)
             return
+
+        # Set the questions' start and end index
+        start = questions_max * page  # Skips the first `questions_max * page` objects
+        # Keeps 24 objects skipping the rest and ensuring that we are within index bounds
+        end = (max_page * page) + min(max_page, q_len - (max_page * page))
+
+        questions = questions[start:end]
+
         qotd_embed = discord.Embed(
             title=f'QOTD List',
-            colour=0x8F49EA
+            colour=SBU_GOLD
         )
-        count = 1
-        for qotd in list_obj:
-            qotd_embed.add_field(name=f'QOTD: {count}', value=qotd['qotd'], inline=False)
-            count = count + 1
-        qotd_embed.set_thumbnail(
-            url=SBU_LOGO_URL)
-        await ctx.send(embed=qotd_embed)
+
+        for index, qotd in enumerate(questions):
+            qotd_embed.add_field(name=f'QOTD: {index + 1}', value=qotd['qotd'], inline=False)
+
+        qotd_embed.set_thumbnail(url=SBU_LOGO_URL)
+        qotd_embed.set_footer(text=f'Page: {page+1}/{max_page}')
+
+        await ctx.reply(embed=qotd_embed)
 
     @list_.error
-    async def on_qotdlist_error(self, ctx: discord.ext.commands.Context, error: discord.DiscordException):
+    async def list_error(self, ctx: discord.ext.commands.Context, error: discord.DiscordException):
         if isinstance(error, discord.ext.commands.MissingRole):
             await ctx.reply('')
         
-    @qotd.command(name="remove", aliases=["del", "delete", "d", "r"])
+    @qotd.command(name="remove", aliases=["del", "delete", "rm"])
     @commands.has_role(JR_MOD_ROLE_ID)
-    async def remove(self, ctx, _id: int):
+    async def remove(self, ctx: commands.Context, i: int):
+        # Read all the questions
         with open(QOTD_PATH) as f:
             qotds = json.load(f)
-        qotds.pop(_id-1)
+
+        # Remove the question at index i-1
+        qotds.pop(i - 1)
+
+        # Write questions
         with open(QOTD_PATH, "w") as f:
             json.dump(qotds, f,
                       indent=4,
