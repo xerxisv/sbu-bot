@@ -151,7 +151,11 @@ class InactiveList(commands.Cog):
             return
 
         cursor = await self.db.cursor()
-        await cursor.execute('''SELECT * FROM INACTIVES''')
+        await cursor.execute('''
+                SELECT *
+                FROM USERS
+                WHERE inactive_until IS NOT null
+            ''')
 
         values = await cursor.fetchall()
         await cursor.close()
