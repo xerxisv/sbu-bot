@@ -84,7 +84,7 @@ class TasksCog(commands.Cog):
             return
         try:
             message = await channel.fetch_message(channel.last_message_id)
-            await message.thread.delete()
+            await message.thread.edit(locked=True, archived=True)
         except AttributeError:
             pass
         message = await channel.send(qotd_list[0]["qotd"] + f" <@&{constants.QOTD_ROLE_ID}>")
