@@ -146,7 +146,7 @@ class Suggestions(commands.Cog):
             title=f'Approved',
             description=f"{suggestion['suggestion']}",
             timestamp=datetime.datetime.utcnow(),
-            colour=0xFFFF00
+            colour=0x00FF00
         )
 
         suggestion_author: discord.User = await self.bot.get_or_fetch_user(suggestion['author_id'])
