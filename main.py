@@ -203,7 +203,7 @@ async def on_message(message: discord.Message):
     
     elif message.content.upper() == "IMPLINKS":
         if message.author.id in ['491654047741509633','351827324758523905','309231901212672001','606917358438580224','519985798393626634','241589674131456000']:
-            await message.reply("MEE6 Dashboard: https://mee6.xyz/dashboard/\nTicket Tool: https://tickettool.xyz/manage-servers\nYAGPDB: https://yagpdb.xyz/\nGiveaway Boat: https://giveaway.boats/dashboard/\nTatsu Dashboard: https://tatsu.gg/\nDyno: https://dyno.gg/\nWick Dashboard: https://wickbot.com/\nSBU Bot: https://github.com/xerxisv/sbu-bot/
+            await message.reply("MEE6 Dashboard: https://mee6.xyz/dashboard/\nTicket Tool: https://tickettool.xyz/manage-servers\nYAGPDB: https://yagpdb.xyz/\nGiveaway Boat: https://giveaway.boats/dashboard/\nTatsu Dashboard: https://tatsu.gg/\nDyno: https://dyno.gg/\nWick Dashboard: https://wickbot.com/\nSBU Bot: https://github.com/xerxisv/sbu-bot/")
 
     elif message.content.upper() == "MEOWO":
         if message.author.id == 397389995113185293:
