@@ -123,6 +123,7 @@ class Ban(commands.Cog):
         duration = datetime.timedelta(seconds=timespan)
 
         await member.timeout_for(duration=duration, reason=reason)
+        await member.send("You have been muted in Skyblock University.\n\nIf you would like to appeal your mute, please create a ticket using <@575252669443211264>")
         await ctx.reply(f"{member.mention} has been muted for {duration} | Reason {reason}")
 
         await ctx.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
