@@ -24,13 +24,15 @@ class TasksCog(commands.Cog):
         self.backup_db.start()
         self.inactives_check.start()
         self.check_verified.start()
+        self.weekly_tatsu.start()
 
     def cog_unload(self):
         self.update_members.cancel()
         self.auto_qotd.cancel()
         self.backup_db.cancel()
         self.inactives_check.cancel()
-        self.check_verified.start()
+        self.check_verified.cancel()
+        self.weekly_tatsu.cancel()
 
     @tasks.loop(hours=1)
     async def update_members(self):
@@ -84,7 +86,7 @@ class TasksCog(commands.Cog):
             return
         try:
             message = await channel.fetch_message(channel.last_message_id)
-            await message.thread.delete()
+            await message.thread.edit(locked=True, archived=True)
         except AttributeError:
             pass
         message = await channel.send(qotd_list[0]["qotd"] + f" <@&{constants.QOTD_ROLE_ID}>")
@@ -165,6 +167,37 @@ class TasksCog(commands.Cog):
             await self.bot \
                 .get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID) \
                 .send(exception_to_string('inactives_check task', exception))
+            
+    @tasks.loop(hours=168)
+    async def weekly_tatsu(self):
+        cursor: aiosqlite.Cursor = await self.db.cursor()
+        await cursor.execute(User.select_top_tatsu())
+        users = await cursor.fetchall()
+
+        max_tatsu = {
+            "tatsu": 0,
+            "id": 0,
+            "ign": None
+        }
+
+        for user in users:
+            user = User.dict_from_tuple(user)
+            weekly_tatsu = user["tatsu_score"] - user["weekly_tatsu_score"]
+            if weekly_tatsu > max_tatsu["tatsu"]:
+                max_tatsu["tatsu"] = weekly_tatsu
+                max_tatsu["id"] = user["discord_id"]
+                max_tatsu["ign"] = user["ign"]
+            await self.db.execute(User.set_last_week_tatsu(user["ign"], user["tatsu_score"]))
+            
+        
+        if max_tatsu["id"] != 0:
+            guild = self.bot.get_guild(constants.GUILD_ID)
+            role = guild.get_role(constants.TOP_GUILD_ACTIVE_ROLE_ID)
+            for member in role.members:
+                await member.remove_roles(role)
+            member = guild.get_member(max_tatsu["id"])
+            await member.add_roles(role)
+            
 
 
 def setup(bot):

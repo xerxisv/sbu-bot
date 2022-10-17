@@ -40,6 +40,7 @@ class Verify(commands.Cog):
             assert response.status_code != 204  # Only returns 204 when the name inputted is wrong
 
             uuid = response.json()['id']
+            ign = response.json()["name"]
 
             del response
         except AssertionError:  # In case of a 204
