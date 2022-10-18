@@ -101,11 +101,6 @@ class QOTD(commands.Cog):
 
         await ctx.reply(embed=qotd_embed)
 
-    @list_.error
-    async def list_error(self, ctx: discord.ext.commands.Context, error: discord.DiscordException):
-        if isinstance(error, discord.ext.commands.MissingRole):
-            await ctx.reply('')
-
     @qotd.command(name="remove", aliases=["del", "delete", "rm"])
     @commands.has_role(JR_MOD_ROLE_ID)
     async def remove(self, ctx: commands.Context, i: int):
