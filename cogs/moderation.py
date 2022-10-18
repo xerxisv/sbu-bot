@@ -1,6 +1,4 @@
 import datetime
-import time
-from random import choice
 
 import discord
 import humanfriendly
@@ -9,35 +7,25 @@ from discord.ext import commands
 from utils.constants import JR_MOD_ROLE_ID, MODERATOR_ROLE_ID, MOD_ACTION_LOG_CHANNEL_ID
 from utils.error_utils import log_error
 
-COOLDOWN_AMOUNT = 60.0
-last_executed = time.time()
 
-
-def assert_cooldown():
-    global last_executed
-    if last_executed + COOLDOWN_AMOUNT < time.time():
-        last_executed = time.time()
-        return True
-    return False
-
-
-class Ban(commands.Cog):
+class Moderation(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command()
     @commands.has_role(MODERATOR_ROLE_ID)
-    async def ban(self, ctx: commands.Context, member: discord.User, *, reason=None):
-        try:  # DM user if banning was successful
-            await member.send("You have been banned from SBU for " + str(reason))
-            await member.send(r"Appeal at https://discord.gg/mn6kJrJuVB")
-        except discord.HTTPException:
-            await ctx.send("User cannot be dmed")
-        except Exception as exception:
-            await log_error(ctx, exception)
+    async def ban(self, ctx: commands.Context, user: discord.User, *, reason=None):
+        if ctx.guild.get_member(user.id):
+            try:  # DM user if banning was successful
+                await user.send("You have been banned from SBU for " + str(reason))
+                await user.send(r"Appeal at https://discord.gg/mn6kJrJuVB")
+            except discord.HTTPException:
+                await ctx.send("User cannot be dmed")
+            except Exception as exception:
+                await log_error(ctx, exception)
 
         try:  # Check for any permission errors
-            await ctx.guild.ban(user=member, delete_message_days=0, reason=reason)
+            await ctx.guild.ban(user=user, delete_message_days=0, reason=reason)
         except discord.Forbidden:
             embed = discord.Embed(
                 title='Error',
@@ -51,11 +39,11 @@ class Ban(commands.Cog):
         channel = ctx.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID)
         author = ctx.message.author.id
 
-        message = f"Moderator: <@{author}> \n User: <@{member.id}> | {member} \n Action: Ban \n Reason: {reason}"
+        message = f"Moderator: <@{author}> \n User: <@{user.id}> | {user} \n Action: Ban \n Reason: {reason}"
         await channel.send(message)
 
         # Send confirmation
-        embed = discord.Embed(description=f"Moderator: <@{author}> \nUser: {member} "
+        embed = discord.Embed(description=f"Moderator: <@{author}> \nUser: {user} "
                                           f"\nAction: Ban \nReason: {reason}")
         await ctx.reply(embed=embed)
         # channel = self.bot.get_channel(946591422616838264)
@@ -115,7 +103,17 @@ class Ban(commands.Cog):
         if timespan > (28 * 86400):
             embed = discord.Embed(
                 title='Error',
-                description='Max mute duration is 28 days'
+                description='Max mute duration is 28 days',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        if member.get_role(JR_MOD_ROLE_ID) and member.id != ctx.author.id:
+            embed = discord.Embed(
+                title='Error',
+                description='You cannot mute other staff members',
+                colour=0xFF0000
             )
             await ctx.reply(embed=embed)
             return
@@ -123,7 +121,8 @@ class Ban(commands.Cog):
         duration = datetime.timedelta(seconds=timespan)
 
         await member.timeout_for(duration=duration, reason=reason)
-        await member.send("You have been muted in Skyblock University.\n\nIf you would like to appeal your mute, please create a ticket using <@575252669443211264>")
+        await member.send("You have been muted in Skyblock University.\n\n"
+                          "If you would like to appeal your mute, please create a ticket using <@575252669443211264>")
         await ctx.reply(f"{member.mention} has been muted for {duration} | Reason {reason}")
 
         await ctx.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
@@ -132,9 +131,6 @@ class Ban(commands.Cog):
             f"Action: Mute \n"
             f"Duration: {duration} \n"
             f"Reason: {reason}")
-
-        # channel = self.bot.get_channel(946591422616838264)
-        # await channel.send(f"Mute command ran by <@{author}> muting <@{member.id}>")
 
     @mute.error
     async def mute_error(self, ctx: commands.Context, exception: Exception):
@@ -159,9 +155,6 @@ class Ban(commands.Cog):
                   f"Action: Unmute \n"
                   f"Reason: {reason}")
 
-        # channel = self.bot.get_channel(946591422616838264)
-        # await channel.send(f"Unmute command ran by {ctx.message.author.mention} unmuting {member.mention}")
-
     @unmute.error
     async def check_error(self, ctx, exception):
         if isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
@@ -177,32 +170,16 @@ class Ban(commands.Cog):
         if not message.content.startswith("!warn"):
             return
 
-        # ( ͡° ͜ʖ ͡°)
-        if message.author.get_role(JR_MOD_ROLE_ID) is None:
-            if not assert_cooldown():
-                return
-
-            clown_fiesta = [
-                'https://tenor.com/view/clown-pennywise-ten-10-gif-25962140',
-                'https://tenor.com/view/clown-nose-joker-funny-dropped-gif-23619188',
-                'https://tenor.com/view/'
-                'clown-detector-bitcoin-rd_btc-my-clown-detector-is-off-the-charts-strike_memes-gif-22298893',
-                'https://tenor.com/view/mr-rogers-nightmare-clown-gif-5401671'
-            ]
-
-            await message.reply(content=choice(clown_fiesta))
-            return
-
         # Split the message on every space character
         split_msg = message.content.split(' ')
         # If the message is less than 2 words long then it's an invalid warn command, return
         if len(split_msg) < 3:
             return
 
-        # Else remove the discord formatting characters from the ID
+        # Else remove the discord formatting characters from the mention
         user_id = split_msg[1].replace('<', '').replace('@', '').replace('>', '')
 
-        # And check if it is indeed a Snowflake
+        # And check if it was indeed a mention
         if not user_id.isnumeric():
             return
 
@@ -222,4 +199,4 @@ class Ban(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Ban(bot))
+    bot.add_cog(Moderation(bot))

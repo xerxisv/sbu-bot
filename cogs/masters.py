@@ -1,74 +1,94 @@
-import discord
-from discord.ext import commands
 import aiohttp
-
+import discord
 import requests
+from discord.ext import commands
 
 
 class Master(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=['checkreqs'])
-    async def checkreq(self, ctx, arg):
-        response = requests.get(f"https://sky.shiiyu.moe/api/v2/profile/{arg}")
+    @commands.command(name='checkreq', aliases=['checkreqs'])
+    async def checkreq(self, ctx: commands.Context, ign: str):
+        requests.get(f"https://sky.shiiyu.moe/api/v2/profile/{ign}")
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(f'https://sky.shiiyu.moe/api/v2/profile/{arg}') as resp:
+            async with session.get(f'https://sky.shiiyu.moe/api/v2/profile/{ign}') as resp:
                 profiles = await resp.json()
 
-        dungeonlvl = 0
-        slayerxp = 0
+        dungeon_lvl = 0
+        slayer_xp = 0
         weight = 0
-            
+
         for profile in profiles["profiles"]:
-            if dungeonlvl < int(profiles["profiles"][profile]["data"]["dungeons"]["catacombs"]["level"]["level"]):
-                dungeonlvl = int(profiles["profiles"][profile]["data"]["dungeons"]["catacombs"]["level"]["level"])
-            if slayerxp < int(profiles["profiles"][profile]["data"]["slayer_xp"]):
-                slayerxp = int(profiles["profiles"][profile]["data"]["slayer_xp"])
+            if dungeon_lvl < int(profiles["profiles"][profile]["data"]["dungeons"]["catacombs"]["level"]["level"]):
+                dungeon_lvl = int(profiles["profiles"][profile]["data"]["dungeons"]["catacombs"]["level"]["level"])
+            if slayer_xp < int(profiles["profiles"][profile]["data"]["slayer_xp"]):
+                slayer_xp = int(profiles["profiles"][profile]["data"]["slayer_xp"])
             if weight < int(profiles["profiles"][profile]["data"]["weight"]["senither"]["overall"]):
                 weight = int(profiles["profiles"][profile]["data"]["weight"]["senither"]["overall"])
-            
-        embed = discord.Embed(
-            title='Masters Requirements',
-            description='',
-            colour=discord.Colour.red()
-        )
-        embed.set_footer(text='SB Masters')
 
-        passedreqs = 3
-        slayerreq = True
-        dungeonreq = True
-        weightreq = True
+        passed_reqs = 3
+        slayer_req = True
+        dungeon_req = True
+        weight_req = True
 
-        if dungeonlvl < 0:
-            dungeonreq = False
-            passedreqs -= 1
-        if slayerxp < 400000:
-            slayerreq = False
-            passedreqs -= 1
+        if dungeon_lvl < 0:
+            dungeon_req = False
+            passed_reqs -= 1
+        if slayer_xp < 400000:
+            slayer_req = False
+            passed_reqs -= 1
         if weight < 2750:
-            weightreq = False
-            passedreqs -= 1
-        
-        
-        if passedreqs != 0 and passedreqs != 3:
-            embed.add_field(name="Hold Up", value=f"You meet {passedreqs}/3 of the requirements.", inline=False)
-            embed.color = discord.Colour.purple()
-        elif passedreqs == 0:
+            weight_req = False
+            passed_reqs -= 1
+
+        if passed_reqs != 0 and passed_reqs != 3:
+            embed = discord.Embed(
+                title='Masters Requirements',
+                description='',
+                colour=discord.Colour.purple()
+            )
+            embed.add_field(name="Hold Up", value=f"You meet {passed_reqs}/3 of the requirements.", inline=False)
+        elif passed_reqs == 0:
+            embed = discord.Embed(
+                title='Masters Requirements',
+                description='',
+                colour=discord.Colour.red()
+            )
             embed.add_field(name="No requirements met", value="You dont meet any of the requirements", inline=False)
         else:
+            embed = discord.Embed(
+                title='Masters Requirements',
+                description='',
+                colour=discord.Colour.blue()
+            )
             embed.add_field(name="Congratulations!", value="You meet all the requirements", inline=False)
-            embed.color = discord.Colour.blue()
-        
+
         p = "**Passed**"
         np = "**Not Passed**"
-        
-        embed.add_field(name="Your Stats", value=f"Slayer Req: 400000 xp | Your Slayers: **{slayerxp}** | {p if slayerreq else np} \n Cata req: level 0 | Your Cata: **{dungeonlvl}** | {p if dungeonreq else np} \nWeight req: 2750 senither weight | Your Weight: {weight} | {p if weightreq else np}", inline=False)
+
+        embed.add_field(name="Your Stats", value=f"Slayer Req: 400000 xp | "
+                                                 f"Your Slayers: **{slayer_xp}** | {p if slayer_req else np} \n"
+                                                 f"Cata req: level 0 | "
+                                                 f"Your Cata: **{dungeon_lvl}** | {p if dungeon_req else np} \n"
+                                                 f"Weight req: 2750 senither weight | "
+                                                 f"Your Weight: {weight} | {p if weight_req else np}", inline=False)
+        embed.set_footer(text='SB Masters')
 
         await ctx.send(embed=embed)
+
+    @checkreq.error
+    async def checkreq_err(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, commands.MissingRequiredArgument):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+checkreq <IGN>`.\nEx: `+checkreq RealMSpeed`',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
 
 
 def setup(bot):
     bot.add_cog(Master(bot))
-

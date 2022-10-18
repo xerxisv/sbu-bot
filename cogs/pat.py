@@ -1,7 +1,10 @@
+from io import BytesIO
+
 import discord
 from discord.ext import commands
-from io import BytesIO
-from petpetgif import petpet as petpetgif
+from petpetgif import petpet
+
+from utils.constants import ACTIVE_ROLE_ID
 
 
 class Pat(commands.Cog):
@@ -9,17 +12,19 @@ class Pat(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    @commands.has_role("Active")
+    @commands.has_role(ACTIVE_ROLE_ID)
     @commands.cooldown(1, 20, commands.BucketType.member)
-    async def pat(self, ctx, image: discord.member.Member = None):
-        if image == None:
-            image = await ctx.author.avatar.read()
-        if type(image) == discord.member.Member:
-            image = await image.avatar.read()  # retrieve the image bytes
+    async def pat(self, ctx: commands.Context, member: discord.User = None):
+        if member is None:
+            member = ctx.author
+
+        image = await member.display_avatar.read()  # retrieve the image bytes
+
         source = BytesIO(image)
         dest = BytesIO()
-        petpetgif.make(source, dest)
+        petpet.make(source, dest)
         dest.seek(0)
+
         await ctx.send(file=discord.File(dest, filename=f"{image[0]}-petpet.gif"))
 
     @pat.error
@@ -29,16 +34,6 @@ class Pat(commands.Cog):
         elif isinstance(error, commands.CommandOnCooldown):
             await ctx.send(error)
 
-    @commands.command()
-    async def convert(self, ctx, value : str):
-        temp = int(value[:-1])
-        if value[-1].upper() == 'C':
-            fahrenheit = (temp * 9/5) + 32
-            await ctx.send(f'{temp} celcius is {round(fahrenheit,2)} in fahrenheit.')
-        elif value[-1].upper() == 'F':
-            celsius = (temp - 32) * 5/9
-            await ctx.send(f'{temp} fahrenheit is {round(celsius,2)} in celsius.')
-        else:
-            await ctx.send(f'Input values as `+convert 200f` to convert 200 fahrenheit to celsius')
+
 def setup(bot):
     bot.add_cog(Pat(bot))
