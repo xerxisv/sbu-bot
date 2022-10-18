@@ -4,7 +4,7 @@ import aiosqlite
 import discord
 from discord.ext import commands
 
-from utils.constants import ADMIN_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, CRAFT_REPS_CHANNEL_ID, SBU_GOLD, \
+from utils.constants import JR_ADMIN_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, CRAFT_REPS_CHANNEL_ID, SBU_GOLD, \
     SBU_LOGO_URL, SBU_PURPLE
 from utils.database import DBConnection
 from utils.error_utils import log_error
@@ -30,26 +30,26 @@ class Reputations(commands.Cog):
             colour=SBU_GOLD
         )
         embed.add_field(name='Give reputation to a user.',
-                        value='`+rep give <@mention | ID> <comments>`\n'
+                        value='`+rep give <@mention> <comments>`\n'
                               f'*It can only be used in <#{CRAFT_REPS_CHANNEL_ID}> or '
                               f'<#{CARRY_SERVICE_REPS_CHANNEL_ID}>*',
                         inline=False)
         embed.add_field(name='Remove a reputation from a user.',
                         value='`+rep remove <rep_ID>`\n'
-                              '*__Administrator__ command*',
+                              '*__Jr. Admin__ command*',
                         inline=False)
         embed.add_field(name='Show the reputation a user has received.',
                         value='`+rep show receiver <@mention | ID> [page]`\n'
-                              '*__Administrator__ command*',
+                              '*__Jr. Admin__ command*',
                         inline=False)
         embed.add_field(name='Show the reputation a user has given.',
                         value='`+rep show provider <@mention | ID:> [page]`\n'
-                              '*__Administrator__ command*',
+                              '*__Jr. Admin__ command*',
                         inline=False)
         embed.add_field(name='Give reputation to a user as another user',
                         value='`+rep admin give <@mention | ID> <@mention | ID> '
                               '<type: craft | carry> <comments>`\n'
-                              '*__Administrator__ command*',
+                              '*__Jr. Admin__ command*',
                         inline=False)
         embed.add_field(name='Command aliases list',
                         value='`+rep aliases`',
@@ -164,7 +164,7 @@ class Reputations(commands.Cog):
             await ctx.message.delete(delay=15)
 
     @rep.command(name='remove', aliases=['rm', 'delete', 'del'])
-    @commands.has_role(ADMIN_ROLE_ID)
+    @commands.has_role(JR_ADMIN_ROLE_ID)
     @commands.cooldown(1, 5)
     async def remove(self, ctx: commands.Context, rep_id: int):
         cursor = await self.db.cursor()
@@ -360,7 +360,7 @@ class Reputations(commands.Cog):
             await ctx.reply(embed=embed)
 
     @rep.group(name='admin', aliases=['administrator', 'fatman'], case_insensitive=True)
-    @commands.has_role(ADMIN_ROLE_ID)
+    @commands.has_role(JR_ADMIN_ROLE_ID)
     async def admin(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('rep help').invoke(ctx)
