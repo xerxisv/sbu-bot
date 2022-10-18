@@ -71,6 +71,14 @@ triggers = {
     "ZMAJ": {
         "owner": [852647923875446816],
         "reply": 'https://media.discordapp.net/attachments/1027212487008989284/1027212547591508070/cat-angry-cat.gif'
+    },
+    "MHM": {
+        "owner": [665885831856128001],
+        "reply": 'mhm'
+    },
+    "🔥🔥": {
+        "owner": [149565760950239232],
+        "reply": 'Go to school.'
     }
 }
 
