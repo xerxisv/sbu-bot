@@ -40,8 +40,6 @@ class Verify(commands.Cog):
 
             uuid = response.json()['id']
             ign = response.json()["name"]
-
-            del response
         except AssertionError:  # In case of a 204
             embed = discord.Embed(title=f'Error',
                                   description='Error fetching information from the API. Recheck the spelling of your '
@@ -105,10 +103,7 @@ class Verify(commands.Cog):
 
         is_in_guild = False
 
-        if guild is None \
-                or guild["name"] not in ["SB Lambda Pi", "SB Theta Tau", "SB Delta Omega", "SB Iota Theta",
-                                         "SB Uni", "SB Rho Xi", "SB Kappa Eta", "SB Alpha Psi", "SB Masters"]:
-
+        if guild is None or guild["name"].upper() not in GUILDS_INFO.keys():
             embed = discord.Embed(title=f'Verification',
                                   description='You are not in any of the SBU guilds. You are now verified without '
                                               'the guild member roles.',
@@ -133,7 +128,14 @@ class Verify(commands.Cog):
 
             verified_member.guild_uuid = guild['_id']
 
-        await self.db.execute(*(verified_member.insert()))
+        cursor: aiosqlite.Cursor = await self.db.cursor()
+        await cursor.execute(*(verified_member.find()))
+
+        if await cursor.fetchone() is None:
+            await cursor.execute(*(verified_member.insert()))
+        else:
+            await cursor.execute(*(verified_member.update()))
+
         await self.db.commit()
 
         try:
@@ -158,7 +160,7 @@ class Verify(commands.Cog):
                           atomic=False
                           )
 
-        await self.db.execute(User.delete_row_with_id(member.id))
+        await self.db.execute(User.unverify_row_with_id(member.id))
         await self.db.commit()
 
         embed = discord.Embed(title=f'Verification',

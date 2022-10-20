@@ -26,7 +26,7 @@ class User(Schema):
     def __init__(self, uuid: str, discord_id: int, ign: str, guild_uuid: str = None):
         self.uuid = uuid
         self.discord_id = discord_id
-        self.ign = ign.upper()
+        self.ign = ign
         self.guild_uuid = guild_uuid
 
     def insert(self) -> (str, dict):
@@ -41,6 +41,27 @@ class User(Schema):
             "created_at": int(time.time())
         }
 
+    def update(self) -> (str, dict):
+        return '''
+            UPDATE "USERS"
+            SET "ign"=:ign, "discord_id"=:discord_id, "guild_uuid"=:guild_uuid
+            WHERE "uuid"=:uuid;
+        ''', {
+            "ign": self.ign,
+            "discord_id": self.discord_id,
+            "guild_uuid": self.guild_uuid,
+            "uuid": self.uuid
+        }
+
+    def find(self) -> (str, dict):
+        return '''
+            SELECT COUNT(1)
+            FROM USERS
+            WHERE uuid=:uuid
+        ''', {
+            "uuid": self.uuid
+        }
+
     @staticmethod
     def create() -> str:
         return f'''
@@ -52,7 +73,8 @@ class User(Schema):
             "inactive_until" INTEGER DEFAULT null ,
             "tatsu_score" INTEGER DEFAULT 0 ,
             "last_week_tatsu" INTEGER DEFAULT 0,
-            "created_at" INTEGER NOT null 
+            "created_at" INTEGER NOT null,
+            "gtatsu_modifier" FLOAT DEFAULT 1
             );
             
             INSERT OR REPLACE INTO "USERS" (uuid, discord_id, ign, guild_uuid, inactive_until, created_at)
@@ -74,7 +96,7 @@ class User(Schema):
         return f'''
             UPDATE "USERS"
             SET tatsu_score=tatsu_score + ({amount} * gtatsu_modifier)
-            WHERE ign='{ign.upper()}';
+            WHERE UPPER(ign)='{ign.upper()}';
         '''
 
     @staticmethod
@@ -82,7 +104,7 @@ class User(Schema):
         return f'''
             UPDATE "USERS"
             SET tatsu_score=tatsu_score + {amount}
-            WHERE ign='{ign.upper()}';
+            WHERE UPPER(ign)='{ign.upper()}';
         '''
 
     @staticmethod
@@ -90,7 +112,7 @@ class User(Schema):
         return f'''
             UPDATE "USERS"
             SET tatsu_score={tatsu}
-            WHERE ign='{ign.upper()}';
+            WHERE UPPER(ign)='{ign.upper()}';
         '''
     
     @staticmethod
@@ -98,7 +120,7 @@ class User(Schema):
         return f'''
             UPDATE "USERS"
             SET "last_week_tatsu"={tatsu}
-            WHERE ign='{ign.upper()}'
+            WHERE UPPER(ign)='{ign.upper()}'
         '''
 
     @staticmethod
@@ -106,7 +128,7 @@ class User(Schema):
         return f'''
             UPDATE "USERS"
             SET "gtatsu_modifier"={modifier}
-            WHERE ign='{ign.upper()}'
+            WHERE UPPER(ign)='{ign.upper()}'
         '''
 
     @staticmethod
@@ -134,19 +156,11 @@ class User(Schema):
         '''
 
     @staticmethod
-    def delete_row_with_id(_id: int):
+    def unverify_row_with_id(_id: int):
         return f'''
-            DELETE
-            FROM "USERS"
+            UPDATE "USERS"
+            SET discord_id=1, guild_uuid=NULL
             WHERE discord_id={_id}
-        '''
-
-    @staticmethod
-    def delete_row_with_profile_uuid(uuid: str):
-        return f'''
-            DELETE
-            FROM "USERS"
-            WHERE uuid={uuid}
         '''
 
     @staticmethod
@@ -155,14 +169,6 @@ class User(Schema):
             SELECT *
             FROM "USERS"
             WHERE discord_id={_id}
-        '''
-
-    @staticmethod
-    def select_row_with_uuid(uuid: str) -> str:
-        return f'''
-            SELECT *
-            FROM "USERS"
-            WHERE uuid={uuid}
         '''
     
     @staticmethod
@@ -186,7 +192,7 @@ class User(Schema):
         return f'''
             SELECT *
             FROM "USERS"
-            WHERE "ign"='{ign.upper()}'
+            WHERE UPPER(ign)='{ign.upper()}'
         '''
     
     @staticmethod
@@ -212,7 +218,7 @@ class User(Schema):
         return {
             'uuid': query_res[0],
             'discord_id': query_res[1],
-            'ign': (query_res[2]).upper(),
+            'ign': (query_res[2]),
             'guild_uuid': query_res[3],
             'inactive_until': query_res[4],
             'tatsu_score': query_res[5],
