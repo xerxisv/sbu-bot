@@ -1,32 +1,46 @@
+# TODO 1. Fix GT Leaderboard changing date mode when changing guild
+# TODO 2. Remove the need for upper case IGNs. Make use for SQLs UPPER?
+
 import discord
 from discord.ext import commands
-from discord.ui import View, Button
+from discord.ui import View, Button, Select
 
 import aiosqlite
-import random
+import time
 
-from utils.constants import BRIDGE_BOT_IDS, BRIDGE_CHANNEL_IDS, JR_ADMIN_ROLE_ID, ADMIN_ROLE_ID, SBU_GOLD
+from utils import weighted_randint
+from utils.constants import BRIDGE_BOT_IDS, BRIDGE_CHANNEL_IDS, GUILDS_INFO, JR_ADMIN_ROLE_ID, SBU_GOLD
 from utils.database import DBConnection
 from utils.database.schemas import User
 
+
 class GTatsu(commands.Cog):
+
+    TATSU_CD = 45  # in seconds
+    tatsu_dates = {}
+
     def __init__(self, bot):
         self.bot = bot
         self.db: aiosqlite.Connection = DBConnection().get_db()
     
     @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.id in BRIDGE_BOT_IDS and message.channel.id in BRIDGE_CHANNEL_IDS:
-            cursor: aiosqlite.Cursor = await self.db.cursor()
-            await cursor.execute(User.select_row_with_ign(message.embeds[0].title))
-            user = await cursor.fetchone()
-            if user is not None:
-                user = User.dict_from_tuple(user)
-                tatsu = random.randint(2, 5) + int(user["tatsu_score"])
-                await self.db.execute(User.set_tatsu(user["ign"], tatsu))
-                await self.db.commit()
-            
-    
+    async def on_message(self, message: discord.Message):
+        if not (message.author.id in BRIDGE_BOT_IDS and message.channel.id in BRIDGE_CHANNEL_IDS):
+            return
+        if len(message.embeds) < 1:
+            return
+
+        ign = message.embeds[0].title
+
+        if ign.find(' ') > 0:
+            return
+        if self.ensure_cooldown(ign):
+            return
+
+        await self.db.execute(User.add_to_tatsu(ign, weighted_randint(12, 5)))
+        await self.db.commit()
+        self.tatsu_dates[ign] = int(time.time())
+
     @commands.group(name="gtatsu", aliases=["gt"])
     async def gtatsu(self, ctx):
         if ctx.invoked_subcommand is None:
@@ -42,9 +56,12 @@ class GTatsu(commands.Cog):
         )
 
         embed.add_field(name="Check your gtatsu", value="`gtatsu rank <IGN>`", inline=False)
-        embed.add_field(name="Add gtatsu", value="`gtatsu add <IGN> <tatsu>`", inline=False)
-        embed.add_field(name="Remove gtatsu", value="`gtatsu remove <IGN> <tatsu>`", inline=False)
-        embed.add_field(name="Set gtatsu", value="`gtatsu set <IGN> <tatsu>`", inline=False)
+        embed.add_field(name="Add gtatsu", value="`gtatsu add <IGN> <tatsu>`\n"
+                                                 "*__Jr. Admin__ command*", inline=False)
+        embed.add_field(name="Remove gtatsu", value="`gtatsu remove <IGN> <tatsu>`\n"
+                                                    "*__Jr. Admin__ command*", inline=False)
+        embed.add_field(name="Set gtatsu", value="`gtatsu set <IGN> <tatsu>`\n"
+                                                 "*__Jr. Admin__ command*", inline=False)
     
         await ctx.reply(embed=embed)
     
@@ -53,142 +70,254 @@ class GTatsu(commands.Cog):
     async def set_(self, ctx, ign: str, tatsu: int):
         await self.db.execute(User.set_tatsu(ign, tatsu))
 
-        await ctx.reply(f"{ign} now has {tatsu} gtatsu")
-    
+        embed = discord.Embed(
+            title='Success',
+            description=f'{ign} now has {tatsu} gtatsu',
+            colour=0x00FF00
+        )
+        await ctx.reply(embed=embed)
+
+    @set_.error
+    async def set_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, (commands.MissingRequiredArgument, commands.BadArgument)):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+gtatsu set <IGN> <amount>`',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
     @gtatsu.command(name="add")
     @commands.has_role(JR_ADMIN_ROLE_ID)
     async def add(self, ctx, ign: str, tatsu: int):
-        cursor: aiosqlite.Cursor = await self.db.cursor()
-        await cursor.execute(User.select_row_with_ign(message.embeds[0].title))
-        user = await cursor.fetchone()
-        user = User.dict_from_tuple(user)
-        tatsu = tatsu + user["tatsu_score"]
-
-        await self.db.execute(User.set_tatsu(ign, tatsu))
+        await self.db.execute(User.add_to_tatsu_static(ign, tatsu))
         await self.db.commit()
 
-        await ctx.reply(f"{ign} now has {tatsu} gtatsu")
-    
+        embed = discord.Embed(
+            title='Success',
+            description=f'{tatsu} gtatsu points added to {ign}',
+            colour=0x00FF00
+        )
+        await ctx.reply(embed=embed)
+
+    @add.error
+    async def add_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, (commands.MissingRequiredArgument, commands.BadArgument)):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+gtatsu add <IGN> <amount>`',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
 
     @gtatsu.command(name="remove")
     @commands.has_role(JR_ADMIN_ROLE_ID)
     async def remove(self, ctx, ign: str, tatsu: int):
-        cursor: aiosqlite.Cursor = await self.db.cursor()
-        await cursor.execute(User.select_row_with_ign(message.embeds[0].title))
-        user = await cursor.fetchone()
-        user = User.dict_from_tuple(user)
-        tatsu = tatsu - user["tatsu_score"]
-
-        await self.db.execute(User.set_tatsu(ign, tatsu))
+        await self.db.execute(User.add_to_tatsu_static(ign, -tatsu))
         await self.db.commit()
 
-        await ctx.reply(f"{ign} now has {tatsu} gtatsu")
-        
+        embed = discord.Embed(
+            title='Success',
+            description=f'{tatsu} gtatsu points removed from {ign}',
+            colour=0x00FF00
+        )
+        await ctx.reply(embed=embed)
+
+    @remove.error
+    async def remove_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, (commands.MissingRequiredArgument, commands.BadArgument)):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+gtatsu remove <IGN> <amount>`',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
+    @gtatsu.command(name='modifier')
+    @commands.has_role(JR_ADMIN_ROLE_ID)
+    async def modifier(self, ctx: commands.Context, ign: str, modifier: float):
+        await self.db.execute(User.set_modifier(ign, modifier))
+        await self.db.commit()
+
+        embed = discord.Embed(
+            title='Success',
+            description=f'{ign}\'s modifier has been set to {modifier}',
+            colour=0x00FF00
+        )
+        await ctx.reply(embed=embed)
+
+    @modifier.error
+    async def modifier_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, (commands.MissingRequiredArgument, commands.BadArgument)):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+gtatsu modifier <IGN> <modifier>`',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
     @gtatsu.command(name="rank", aliases=["r"])
-    async def rank(self, ctx, ign=None):
+    async def rank(self, ctx: commands.Context, ign: str = None):
         cursor: aiosqlite.Cursor = await self.db.cursor()
         if ign is None:
             await cursor.execute(User.select_row_with_id(ctx.author.id))
             user = await cursor.fetchone()
             user = User.dict_from_tuple(user)
-            ign = user["ign"]
         else:
             await cursor.execute(User.select_row_with_ign(ign))
             user = await cursor.fetchone()
             user = User.dict_from_tuple(user)
-        
-        tatsu = user["tatsu_score"]
-        await ctx.reply(f"{ign}'s gtatsu: {tatsu}")
+
+        if user is None:
+            embed = discord.Embed(
+                title='Error',
+                description=f'User with IGN `{ign}` not found.',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        ign = user["ign"] + ("'s" if not user['ign'].endswith('s') else '')
+
+        embed = discord.Embed(
+            title='GTatsu Score',
+            description=f'{ign} gtatsu: {user["tatsu_score"]}',
+            colour=SBU_GOLD
+        )
+        await ctx.reply(embed=embed)
     
     @gtatsu.command(name="leaderboard", aliases=["l"])
-    async def leaderboard(self, ctx):
-        cursor: aiosqlite.Cursor = await self.db.cursor()
-        await cursor.execute(User.select_top_tatsu())
-        users = await cursor.fetchall()
-        users = users[:10]
-        temp = []
-        for user in users:
-            user = User.dict_from_tuple(user)
-            temp.append(user)
-        users = temp
+    async def leaderboard(self, ctx: commands.Context):
 
-        top_weekly=[]
-        for u in users:
-            top = {
-                "this_week_tatsu_score": 0
-            }
-            for user in users:
-                if user in top_weekly:
-                    continue
-                if user["this_week_tatsu_score"] >= top["this_week_tatsu_score"]:
-                    top = user
-            top_weekly.append(top)
-            
+        users = await get_users('Global', True)
 
-        embed = discord.Embed(title="GTatsu Leaderboard", color=SBU_GOLD)
+        embed = discord.Embed(title='Global GTatsu Leaderboard', color=SBU_GOLD)
 
         for user in users:
-            ign = user["ign"]
-            tatsu = user["tatsu_score"]
-            weekly_tatsu = user["tatsu_score"] - user["weekly_tatsu_score"]
-            embed.add_field(name=ign, value=f"**Total GTatsu:** {tatsu}  |  **Weekly GTatsu:** {weekly_tatsu}", inline=False)
+            embed.add_field(name=user['ign'],
+                            value=f"*Weekly GTatsu:* **{user['tatsu_score'] - user['weekly_tatsu_score']}**",
+                            inline=False)
         
-        view = leaderboard_view(users, top_weekly, True)
+        view = LeaderboardView('Global', False)
 
-        await ctx.reply(embed=embed, view = view)
+        await ctx.reply(embed=embed, view=view)
 
-    @gtatsu.command()
-    @commands.has_role(ADMIN_ROLE_ID)
-    async def update_tables(self, ctx):
-        await self.db.execute('''ALTER TABLE "USERS" ADD COLUMN "last_week_tatsu" INTEGER DEFAULT 0''')
-        await self.db.commit()
+    def ensure_cooldown(self, ign: str) -> bool:
+        return False if ign not in self.tatsu_dates else self.tatsu_dates[ign] + self.TATSU_CD > int(time.time())
 
-class leaderboard_view(View):
-    def __init__(self, top_total, top_weekly, total_disabled):
-        super().__init__(timeout=None)
-        self.add_item(total_button(top_total, top_weekly, total_disabled))
-        self.add_item(weekly_button(top_total, top_weekly, total_disabled))
 
-class total_button(Button):
-    def __init__(self, top_total, top_weekly, total_disabled):
+class LeaderboardView(View):
+    def __init__(self, guild: str, total_disabled: bool):
+        super().__init__(timeout=60, disable_on_timeout=True)
+        self.add_item(TotalButton(guild, total_disabled))
+        self.add_item(WeeklyButton(guild, total_disabled))
+        self.add_item(SisterhoodSelectionMenu(guild, total_disabled))
+
+
+class TotalButton(Button):
+    def __init__(self, guild: str, total_disabled):
         super().__init__(label="Total", style=discord.ButtonStyle.blurple, disabled=total_disabled)
-        self.top_total = top_total
-        self.top_weekly = top_weekly
-        self.total_diabled = total_disabled
+        self.guild = guild
+        self.total_disabled = total_disabled
+
     async def callback(self, interaction):
-        embed = discord.Embed(title="GTatsu Leaderboard", color=SBU_GOLD)
+        embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard', color=SBU_GOLD)
 
-        for user in self.top_total:
-            ign = user["ign"]
-            tatsu = user["tatsu_score"]
-            weekly_tatsu = user["tatsu_score"] - user["weekly_tatsu_score"]
-            embed.add_field(name=ign, value=f"**Total GTatsu:** {tatsu}  |  **Weekly GTatsu:** {weekly_tatsu}", inline=False)
-        
-        view = leaderboard_view(self.top_total, self.top_weekly, not self.total_diabled)
+        users = await get_users(self.guild, False)
+        if len(users) < 1:
+            embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard',
+                                  description='Nothing to display',
+                                  color=SBU_GOLD)
 
+            view = LeaderboardView(self.guild, not self.total_disabled)
+            await interaction.response.edit_message(embed=embed, view=view)
+            return
+
+        for user in users:
+            embed.add_field(name=user["ign"], value=f"*Total GTatsu:* **{user['tatsu_score']}**",
+                            inline=False)
+
+        view = LeaderboardView(self.guild, not self.total_disabled)
         await interaction.response.edit_message(embed=embed, view=view)
 
-class weekly_button(Button):
-    def __init__(self, top_total, top_weekly, total_disabled):
+
+class WeeklyButton(Button):
+    def __init__(self, guild: str, total_disabled):
         super().__init__(label="Weekly", style=discord.ButtonStyle.blurple, disabled=not total_disabled)
-        self.top_total = top_total
-        self.top_weekly = top_weekly
-        self.total_diabled = total_disabled
+        self.guild = guild
+        self.total_disabled = total_disabled
+
     async def callback(self, interaction):
-        embed = discord.Embed(title="GTatsu Leaderboard", color=SBU_GOLD)
+        embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard', color=SBU_GOLD)
 
-        for user in self.top_weekly:
-            ign = user["ign"]
-            tatsu = user["tatsu_score"]
-            weekly_tatsu = user["tatsu_score"] - user["weekly_tatsu_score"]
-            embed.add_field(name=ign, value=f"**Weekly GTatsu:** {weekly_tatsu}  |  **Total GTatsu:** {tatsu}", inline=False)
-        
-        view = leaderboard_view(self.top_total, self.top_weekly, not self.total_diabled)
+        users = await get_users(self.guild, True)
+        if len(users) < 1:
+            embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard',
+                                  description='Nothing to display',
+                                  color=SBU_GOLD)
 
+            view = LeaderboardView(self.guild, not self.total_disabled)
+            await interaction.response.edit_message(embed=embed, view=view)
+            return
+
+        for user in users:
+            embed.add_field(name=user['ign'],
+                            value=f"*Weekly GTatsu:* **{user['tatsu_score'] - user['weekly_tatsu_score']}**",
+                            inline=False)
+
+        view = LeaderboardView(self.guild, not self.total_disabled)
         await interaction.response.edit_message(embed=embed, view=view)
-    
 
 
-    
+class SisterhoodSelectionMenu(Select):
+    def __init__(self, guild, total_disabled):
+        super().__init__(placeholder='Select Guild',
+                         options=[
+                             discord.SelectOption(label='Global', default=guild == 'Global'),
+                             discord.SelectOption(label='SB Uni', default=guild == 'SB Uni'),
+                             discord.SelectOption(label='SB Alpha Psi', default=guild == 'SB Alpha Psi'),
+                             discord.SelectOption(label='SB Kappa Eta', default=guild == 'SB Kappa Eta'),
+                             discord.SelectOption(label='SB Delta Omega', default=guild == 'SB Delta Omega'),
+                             discord.SelectOption(label='SB Masters', default=guild == 'SB Masters'),
+                         ])
+        self.guild = guild
+        self.total_disabled = total_disabled
+
+    async def callback(self, interaction):
+        embed = discord.Embed(title=f'{self.values[0]} GTatsu Leaderboard', color=SBU_GOLD)
+
+        users = await get_users(self.values[0], self.total_disabled)
+        if len(users) < 1:
+            embed = discord.Embed(title=f'{self.values[0]} GTatsu Leaderboard',
+                                  description='Nothing to display',
+                                  color=SBU_GOLD)
+
+            view = LeaderboardView(self.values[0], self.total_disabled)
+            await interaction.response.edit_message(embed=embed, view=view)
+            return
+
+        for user in users:
+            embed.add_field(name=user['ign'],
+                            value=f"*Total GTatsu:* **{user['tatsu_score']}**" if not self.total_disabled else
+                            f"*Weekly GTatsu:* **{user['tatsu_score'] - user['weekly_tatsu_score']}**",
+                            inline=False)
+
+        view = LeaderboardView(self.values[0], self.total_disabled)
+        await interaction.response.edit_message(embed=embed, view=view)
+
+
+async def get_users(guild: str, weekly: bool):
+    cursor: aiosqlite.Cursor = await DBConnection().get_db().cursor()
+    await cursor.execute(User.select_top_tatsu(None if guild == 'Global' else GUILDS_INFO[guild.upper()]['guild_uuid'],
+                                               weekly))
+    users = await cursor.fetchall()
+
+    return [User.dict_from_tuple(user) for user in users]
+
+
 def setup(bot):
     bot.add_cog(GTatsu(bot))

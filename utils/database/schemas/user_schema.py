@@ -26,7 +26,7 @@ class User(Schema):
     def __init__(self, uuid: str, discord_id: int, ign: str, guild_uuid: str = None):
         self.uuid = uuid
         self.discord_id = discord_id
-        self.ign = ign
+        self.ign = ign.upper()
         self.guild_uuid = guild_uuid
 
     def insert(self) -> (str, dict):
@@ -68,13 +68,29 @@ class User(Schema):
             ('87de0116d5834793a3f2ad0d99b4e8f2', 0, 'MastersBridge', '570940fb0cf2d37483e106b3', 
                 {int(time.time() + 31556926 )}, {int(time.time())})
         '''
-    
+
+    @staticmethod
+    def add_to_tatsu(ign: str, amount: int) -> str:
+        return f'''
+            UPDATE "USERS"
+            SET tatsu_score=tatsu_score + ({amount} * gtatsu_modifier)
+            WHERE ign='{ign.upper()}';
+        '''
+
+    @staticmethod
+    def add_to_tatsu_static(ign: str, amount: int) -> str:
+        return f'''
+            UPDATE "USERS"
+            SET tatsu_score=tatsu_score + {amount}
+            WHERE ign='{ign.upper()}';
+        '''
+
     @staticmethod
     def set_tatsu(ign: str, tatsu: int) -> str:
         return f'''
             UPDATE "USERS"
             SET tatsu_score={tatsu}
-            WHERE ign='{ign}'
+            WHERE ign='{ign.upper()}';
         '''
     
     @staticmethod
@@ -82,7 +98,15 @@ class User(Schema):
         return f'''
             UPDATE "USERS"
             SET "last_week_tatsu"={tatsu}
-            WHERE ign='{ign}'
+            WHERE ign='{ign.upper()}'
+        '''
+
+    @staticmethod
+    def set_modifier(ign: str, modifier: float) -> str:
+        return f'''
+            UPDATE "USERS"
+            SET "gtatsu_modifier"={modifier}
+            WHERE ign='{ign.upper()}'
         '''
 
     @staticmethod
@@ -162,7 +186,7 @@ class User(Schema):
         return f'''
             SELECT *
             FROM "USERS"
-            WHERE "ign"='{ign}'
+            WHERE "ign"='{ign.upper()}'
         '''
     
     @staticmethod
@@ -173,13 +197,14 @@ class User(Schema):
         '''
     
     @staticmethod
-    def select_top_tatsu() -> str:
-        return '''
-            SELECT *
+    def select_top_tatsu(guild: str = None, weekly: bool = True) -> str:
+        return f'''
+            SELECT *, ("tatsu_score" - "last_week_tatsu") as "current_score"
             FROM "USERS"
-            WHERE "discord_id"!=0
+            WHERE "discord_id"!=0 AND "guild_uuid" {"IS NOT NULL" if not guild else "='" + guild + "'"}  
             ORDER BY
-                "tatsu_score" DESC
+                {"current_score" if weekly else "tatsu_score"} DESC
+            LIMIT 10;
             '''
 
     @staticmethod
@@ -187,7 +212,7 @@ class User(Schema):
         return {
             'uuid': query_res[0],
             'discord_id': query_res[1],
-            'ign': query_res[2],
+            'ign': (query_res[2]).upper(),
             'guild_uuid': query_res[3],
             'inactive_until': query_res[4],
             'tatsu_score': query_res[5],

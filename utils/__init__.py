@@ -1,4 +1,5 @@
 from typing import Optional
+from random import random
 import requests
 
 
@@ -9,3 +10,11 @@ def extract_uuid(ign: str) -> Optional[str]:
     if res.status_code == 200:
         uuid = res.json()['id']
     return uuid
+
+
+def weighted_randint(end, loops=1) -> int:
+    result = 0
+    for _ in range(loops):
+        result += random() * (end/loops)
+
+    return int(result)
