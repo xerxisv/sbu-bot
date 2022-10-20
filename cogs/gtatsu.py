@@ -1,6 +1,3 @@
-# TODO 1. Fix GT Leaderboard changing date mode when changing guild
-# TODO 2. Remove the need for upper case IGNs. Make use for SQLs UPPER?
-
 import discord
 from discord.ext import commands
 from discord.ui import View, Button, Select
@@ -290,7 +287,7 @@ class SisterhoodSelectionMenu(Select):
     async def callback(self, interaction):
         embed = discord.Embed(title=f'{self.values[0]} GTatsu Leaderboard', color=SBU_GOLD)
 
-        users = await get_users(self.values[0], self.total_disabled)
+        users = await get_users(self.values[0], not self.total_disabled)
         if len(users) < 1:
             embed = discord.Embed(title=f'{self.values[0]} GTatsu Leaderboard',
                                   description='Nothing to display',
@@ -302,7 +299,7 @@ class SisterhoodSelectionMenu(Select):
 
         for user in users:
             embed.add_field(name=user['ign'],
-                            value=f"*Total GTatsu:* **{user['tatsu_score']}**" if not self.total_disabled else
+                            value=f"*Total GTatsu:* **{user['tatsu_score']}**" if self.total_disabled else
                             f"*Weekly GTatsu:* **{user['tatsu_score'] - user['weekly_tatsu_score']}**",
                             inline=False)
 
