@@ -186,7 +186,7 @@ async def on_command_error(ctx: commands.Context, exception):
             colour=0xFF0000
         )
         await ctx.reply(embed=embed)
-    elif isinstance(exception, commands.CommandNotFound):
+    elif isinstance(exception, (commands.CommandNotFound, commands.MissingRequiredArgument)):
         pass
     else:
         try:
