@@ -201,6 +201,14 @@ class TasksCog(commands.Cog):
             member = guild.get_member(max_tatsu["id"])
             await member.add_roles(role)
 
+    @weekly_tatsu.before_loop
+    async def wait_until_next_week(self):
+        next_week = datetime.datetime.now().replace(day=datetime.datetime.now().day +
+                                                    (7 - datetime.datetime.weekday(datetime.datetime.now())))\
+                                                        .timestamp()
+        seconds_until_next_week = (next_week - (next_week % 86400) + 86400) - datetime.datetime.now().timestamp()
+        await sleep(seconds_until_next_week)
+
 
 def setup(bot):
     bot.add_cog(TasksCog(bot))
