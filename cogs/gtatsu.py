@@ -166,11 +166,9 @@ class GTatsu(commands.Cog):
         if ign is None:
             await cursor.execute(User.select_row_with_id(ctx.author.id))
             user = await cursor.fetchone()
-            user = User.dict_from_tuple(user)
         else:
             await cursor.execute(User.select_row_with_ign(ign))
             user = await cursor.fetchone()
-            user = User.dict_from_tuple(user)
 
         if user is None:
             embed = discord.Embed(
@@ -181,6 +179,7 @@ class GTatsu(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
+        user = User.dict_from_tuple(user)
         ign = user["ign"] + ("'s" if not user['ign'].endswith('s') else '')
 
         embed = discord.Embed(
