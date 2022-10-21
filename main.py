@@ -30,14 +30,6 @@ async def on_ready():
 
 
 @bot.command()
-async def gtt(ctx: commands.Context):
-    embed = discord.Embed()
-    embed.set_author(name='bit_aesthetic')
-
-    await ctx.reply(embed=embed)
-
-
-@bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
 async def load_all(ctx: commands.Context):
     for filename in os.listdir('./cogs'):
