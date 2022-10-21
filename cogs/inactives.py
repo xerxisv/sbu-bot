@@ -139,7 +139,7 @@ class InactiveList(commands.Cog):
             await ctx.reply(embed=embed)
 
     @inactive.command()
-    @commands.cooldown(1, 15)
+    @commands.cooldown(1, 30)
     @commands.has_role(MODERATOR_ROLE_ID)
     async def check(self, ctx: commands.Context, *, guild: str):
         # If inputted guild is invalid
@@ -189,22 +189,38 @@ class InactiveList(commands.Cog):
             if exp_7d_total > self.min_exp or player["uuid"] in inactives_uuids:
                 continue
 
-            try:  # try the member's IGN
-                data3 = requests.get(url=f"https://api.mojang.com/user/profile/{player['uuid']}").json()
+            try:  # Fetch player info from hypixel API
+                hypixel_res = requests.get(f"https://api.hypixel.net/player?key={self.key}&uuid={player['uuid']}")
+                # Ensure OK status
+                assert hypixel_res.status_code == 200, 'Hypixel did not return a 200'
+
+                hypixel_prof = hypixel_res.json()
+                # Ensure player exists
+                assert hypixel_prof['player'] is not None, f'Player with UUID {player["uuid"]} not found'
 
             except Exception as exception:  # If there is an exception, log it and add the uuid in the embed
                 await log_error(ctx, exception)
                 embed_msg += f'{player["uuid"]}\n'
 
-            else:  # If no error, add IGN in embed instead
-                username = data3["name"]
+            else:  # Else
+                # Continue if player has logged in the last 7 days
+                try:
+                    print(hypixel_prof['player']['lastLogin'])
+                    print(hypixel_prof['player']['lastLogin'] + 604800)
+                    print(int(time.time()))
+                    if (hypixel_prof['player']['lastLogin'] / 1000) + 604800 > time.time():
+                        continue
+                except KeyError:
+                    pass
+                # Add him to inactives if not
+                username = hypixel_prof['player']['displayname']
                 embed_msg += f"`{username}`\n"
 
             total_inactive += 1  # Increment the inactive total
 
         embed_var = discord.Embed(color=0x00FF00,
                                   title=f"Inactive List for {data['guild']['name']}",
-                                  description=f"{total_inactive} members were found to be under {self.min_exp} GEXP."
+                                  description=f"{total_inactive} members were found to be inactive."
                                               + f"\n\n{embed_msg}")
         await message.edit(embed=embed_var)
 
