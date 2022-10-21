@@ -27,7 +27,7 @@ class GTatsu(commands.Cog):
         if len(message.embeds) < 1:
             return
 
-        ign = message.embeds[0].title
+        ign = message.embeds[0].author.name
 
         if ign.find(' ') > 0:
             return
