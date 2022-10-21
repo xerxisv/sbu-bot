@@ -29,6 +29,9 @@ class GTatsu(commands.Cog):
 
         ign = message.embeds[0].author.name
 
+        if not isinstance(ign, str):
+            return
+
         if ign.find(' ') > 0:
             return
         if self.ensure_cooldown(ign):
@@ -209,7 +212,7 @@ class GTatsu(commands.Cog):
 
 class LeaderboardView(View):
     def __init__(self, guild: str, total_disabled: bool):
-        super().__init__(timeout=60, disable_on_timeout=True)
+        super().__init__(timeout=120, disable_on_timeout=True)
         self.add_item(TotalButton(guild, total_disabled))
         self.add_item(WeeklyButton(guild, total_disabled))
         self.add_item(SisterhoodSelectionMenu(guild, total_disabled))

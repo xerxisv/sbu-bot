@@ -222,7 +222,7 @@ class User(Schema):
             'guild_uuid': query_res[3],
             'inactive_until': query_res[4],
             'tatsu_score': query_res[5],
-            'weekly_tatsu_score': query_res[6],
-            'this_week_tatsu_score': query_res[5] - query_res[6],
-            'created_at': query_res[7]
+            'weekly_tatsu_score': query_res[7],
+            'this_week_tatsu_score': query_res[5] - query_res[7],
+            'created_at': query_res[6]
         }
