@@ -95,6 +95,10 @@ triggers = {
     "IAE": {
         "owner": [714139701879111721],
         "reply": 'xcam 🙏'
+    },
+    "TOASTER": {
+        "owner": [220578609335631872],
+        "reply": 'https://cdn.discordapp.com/attachments/1031248294627790989/1033067050245050489/icystickercomm.png'
     }
 }
 
