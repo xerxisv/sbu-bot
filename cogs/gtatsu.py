@@ -13,7 +13,7 @@ from utils.database.schemas import User
 
 class GTatsu(commands.Cog):
 
-    TATSU_CD = 45  # in seconds
+    TATSU_CD = 20  # in seconds
     tatsu_dates = {}
 
     def __init__(self, bot):
@@ -37,7 +37,7 @@ class GTatsu(commands.Cog):
         if self.ensure_cooldown(ign):
             return
 
-        await self.db.execute(User.add_to_tatsu(ign, weighted_randint(12, 5)))
+        await self.db.execute(User.add_to_tatsu(ign, weighted_randint(12, 3)))
         await self.db.commit()
         self.tatsu_dates[ign] = int(time.time())
 
