@@ -53,14 +53,12 @@ class User(Schema):
             "uuid": self.uuid
         }
 
-    def find(self) -> (str, dict):
-        return '''
+    def find(self) -> str:
+        return f'''
             SELECT COUNT(1)
             FROM USERS
-            WHERE uuid=:uuid
-        ''', {
-            "uuid": self.uuid
-        }
+            WHERE uuid='{self.uuid}'
+        '''
 
     @staticmethod
     def create() -> str:

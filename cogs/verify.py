@@ -129,12 +129,13 @@ class Verify(commands.Cog):
             verified_member.guild_uuid = guild['_id']
 
         cursor: aiosqlite.Cursor = await self.db.cursor()
-        await cursor.execute(*(verified_member.find()))
+        await cursor.execute(verified_member.find())
+        res = (await cursor.fetchone())[0]
 
-        if await cursor.fetchone() is None:
-            await cursor.execute(*(verified_member.insert()))
+        if res == 0:
+            await cursor.execute(*verified_member.insert())
         else:
-            await cursor.execute(*(verified_member.update()))
+            await cursor.execute(*verified_member.update())
 
         await self.db.commit()
 
