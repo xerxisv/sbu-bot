@@ -38,6 +38,10 @@ triggers = {
         "owner": [491654047741509633],
         "reply": 'https://cdn.discordapp.com/emojis/967203616966459412'
     },
+    "FIRE": {
+        "owner": [856492201529835521],
+        "reply": ""
+    },
     "MHM": {
         "owner": [665885831856128001],
         "reply": 'mhm'
@@ -45,6 +49,10 @@ triggers = {
     "TOASTER": {
         "owner": [220578609335631872],
         "reply": 'https://cdn.discordapp.com/attachments/1031248294627790989/1033067050245050489/icystickercomm.png'
+    },
+    "NEO": {
+        "owner": [566329261535920175],
+        "reply": "Op"
     }
 }
 
