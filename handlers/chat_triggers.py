@@ -40,7 +40,7 @@ triggers = {
     },
     "FIRE": {
         "owner": [856492201529835521],
-        "reply": ""
+        "reply": "https://cdn.discordapp.com/emojis/943095611161460739.webp?size=128&quality=lossless"
     },
     "MHM": {
         "owner": [665885831856128001],
