@@ -15,6 +15,6 @@ def extract_uuid(ign: str) -> Optional[str]:
 def weighted_randint(end, loops=1) -> int:
     result = 0
     for _ in range(loops):
-        result += random() * (end/loops)
+        result += round(random() * (end/loops))
 
     return int(result)

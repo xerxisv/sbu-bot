@@ -3,43 +3,17 @@ from discord.ext import commands
 from discord.ui import View, Button, Select
 
 import aiosqlite
-import time
 
-from utils import weighted_randint
-from utils.constants import BRIDGE_BOT_IDS, BRIDGE_CHANNEL_IDS, GUILDS_INFO, JR_ADMIN_ROLE_ID, SBU_GOLD
+from utils.constants import GUILDS_INFO, JR_ADMIN_ROLE_ID, SBU_GOLD
 from utils.database import DBConnection
 from utils.database.schemas import User
 
 
 class GTatsu(commands.Cog):
 
-    TATSU_CD = 20  # in seconds
-    tatsu_dates = {}
-
     def __init__(self, bot):
         self.bot = bot
         self.db: aiosqlite.Connection = DBConnection().get_db()
-    
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        if not (message.author.id in BRIDGE_BOT_IDS and message.channel.id in BRIDGE_CHANNEL_IDS):
-            return
-        if len(message.embeds) < 1:
-            return
-
-        ign = message.embeds[0].author.name
-
-        if not isinstance(ign, str):
-            return
-
-        if ign.find(' ') > 0:
-            return
-        if self.ensure_cooldown(ign):
-            return
-
-        await self.db.execute(User.add_to_tatsu(ign, weighted_randint(12, 3)))
-        await self.db.commit()
-        self.tatsu_dates[ign] = int(time.time())
 
     @commands.group(name="gtatsu", aliases=["gt"])
     async def gtatsu(self, ctx):
@@ -204,9 +178,6 @@ class GTatsu(commands.Cog):
         view = LeaderboardView('Global', False)
 
         await ctx.reply(embed=embed, view=view)
-
-    def ensure_cooldown(self, ign: str) -> bool:
-        return False if ign not in self.tatsu_dates else self.tatsu_dates[ign] + self.TATSU_CD > int(time.time())
 
 
 class LeaderboardView(View):
