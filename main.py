@@ -17,6 +17,8 @@ intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="+", intents=intents, case_insensitive=True)
 bot.remove_command('help')
 
+trigger_handler = chat_triggers.TriggersFileHandler()
+
 
 @bot.event
 async def on_ready():
@@ -24,6 +26,7 @@ async def on_ready():
 
     await DBConnection().create_db()
     gtatsu.set_up_db()
+    await trigger_handler.load_triggers()
 
     channel = bot.get_channel(ADMIN_CHAT_CHANNEL_ID)
     await channel.send(f"<@&{BOT_OWNER_ROLE_ID}> The Bot has been recently rebooted. "
@@ -187,7 +190,7 @@ async def on_command_error(ctx: commands.Context, exception):
             colour=0xFF0000
         )
         await ctx.reply(embed=embed)
-    elif isinstance(exception, (commands.CommandNotFound, commands.MissingRequiredArgument)):
+    elif isinstance(exception, (commands.CommandNotFound, commands.MissingRequiredArgument, commands.BadArgument)):
         pass
     else:
         try:
@@ -203,8 +206,8 @@ async def on_message(message: discord.Message):
     # Prevents the bot from going through all the if statements unnecessarily
     if warns.is_warn(message.content):
         await warns.handle_warn(message)
-    elif chat_triggers.is_trigger(message.content):
-        await chat_triggers.handle_trigger(message)
+    elif trigger_handler.is_trigger(message.content):
+        await trigger_handler.handle_trigger(message)
     elif gtatsu.is_bridge_message(message):
         await gtatsu.handle_gtatsu(message)
     else:
