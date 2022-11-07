@@ -4,6 +4,8 @@ from utils.constants import JR_MOD_ROLE_ID, MOD_ACTION_LOG_CHANNEL_ID
 
 
 async def handle_warn(message: discord.Message):
+    if message.author.get_role(JR_MOD_ROLE_ID) is None:
+        return
     # Split the message on every space character
     split_msg = message.content.split(' ')
     # If the message is less than 2 words long then it's an invalid warn command, return
