@@ -21,7 +21,7 @@ class TasksCog(commands.Cog):
         dotenv.load_dotenv()
         self.bot = bot
         self.db: aiosqlite.Connection = DBConnection().get_db()
-        self.key = os.getenv('APIKEY')
+        self.key = os.getenv('apikey')
         self.update_members.start()
         self.auto_qotd.start()
         self.backup_db.start()
