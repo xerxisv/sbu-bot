@@ -9,8 +9,23 @@ class Master(commands.Cog):
         self.bot = bot
 
     @commands.command(name='checkreq', aliases=['checkreqs'])
-    async def checkreq(self, ctx: commands.Context, ign: str):
-        requests.get(f"https://sky.shiiyu.moe/api/v2/profile/{ign}")
+    @commands.cooldown(1, 0)
+    async def checkreq(self, ctx: commands.Context, ign: str, cute_name: str = None):
+        await ctx.trigger_typing()
+
+        if cute_name and cute_name.lower() not in ['apple', 'banana', 'blueberry', 'coconut', 'cucumber', 'grapes',
+                                                   'kiwi', 'lemon', 'lime', 'mango', 'orange', 'papaya', 'pear',
+                                                   'peach', 'pineapple', 'pomegranate', 'raspberry', 'strawberry',
+                                                   'tomato', 'watermelon', 'zucchini']:
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid profile.',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        requests.get(f"https://sky.shiiyu.moe/stats/{ign}")
 
         async with aiohttp.ClientSession() as session:
             async with session.get(f'https://sky.shiiyu.moe/api/v2/profile/{ign}') as resp:
@@ -20,13 +35,36 @@ class Master(commands.Cog):
         slayer_xp = 0
         weight = 0
 
-        for profile in profiles["profiles"]:
-            if dungeon_lvl < int(profiles["profiles"][profile]["data"]["dungeons"]["catacombs"]["level"]["level"]):
-                dungeon_lvl = int(profiles["profiles"][profile]["data"]["dungeons"]["catacombs"]["level"]["level"])
-            if slayer_xp < int(profiles["profiles"][profile]["data"]["slayer_xp"]):
-                slayer_xp = int(profiles["profiles"][profile]["data"]["slayer_xp"])
-            if weight < int(profiles["profiles"][profile]["data"]["weight"]["senither"]["overall"]):
-                weight = int(profiles["profiles"][profile]["data"]["weight"]["senither"]["overall"])
+        is_valid_profile = cute_name is None
+
+        for profile in profiles["profiles"].values():
+            if cute_name is not None:
+                if profile["cute_name"].lower() != cute_name.lower():
+                    continue
+                is_valid_profile = True
+            elif not profile["current"]:
+                continue
+
+            try:
+                dungeon_lvl = int(profile["data"]["dungeons"]["catacombs"]["level"]["level"])
+                slayer_xp = int(profile["data"]["slayer_xp"])
+                weight = int(profile["data"]["weight"]["senither"]["overall"])
+            except KeyError:
+                embed = discord.Embed(
+                    title='Error',
+                    description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial',
+                    colour=0xFF0000
+                )
+                await ctx.reply(embed=embed)
+
+        if not is_valid_profile:
+            embed = discord.Embed(
+                title='Error',
+                description=f'You have no {cute_name.title()} profile.',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
 
         passed_reqs = 3
         slayer_req = True
