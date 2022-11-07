@@ -7,6 +7,7 @@ from asyncio import sleep
 import aiohttp
 import aiosqlite
 import discord
+import dotenv
 from discord.ext import commands, tasks
 
 from utils import constants
@@ -17,8 +18,10 @@ from utils.error_utils import exception_to_string
 
 class TasksCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
+        dotenv.load_dotenv()
         self.bot = bot
         self.db: aiosqlite.Connection = DBConnection().get_db()
+        self.key = os.getenv('APIKEY')
         self.update_members.start()
         self.auto_qotd.start()
         self.backup_db.start()
@@ -40,11 +43,11 @@ class TasksCog(commands.Cog):
         for idx, guild in enumerate(constants.GUILDS_INFO.keys()):
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(f'https://api.slothpixel.me/api/guilds/id/'
+                    async with session.get(f'https://api.hypixel.net/guild?key={self.key}&id='
                                            f'{constants.GUILDS_INFO[guild]["guild_uuid"]}') as resp:
                         assert resp.status == 200  # Unless a guild gets deleted this will never raise
 
-                        guild_info = await resp.json()
+                        guild_info = (await resp.json())["guild"]
 
             except AssertionError:
                 await self.bot \
@@ -133,9 +136,9 @@ class TasksCog(commands.Cog):
             guild_uuid = constants.GUILDS_INFO[guild]["guild_uuid"]
 
             async with aiohttp.ClientSession() as session:  # fetch guild members
-                async with session.get(f"https://api.slothpixel.me/api/guilds/id/{guild_uuid}") as resp:
+                async with session.get(f"https://api.hypixel.net/guild?id={guild_uuid}&key={self.key}") as resp:
                     data = await resp.json()
-                    guild_members = data["members"]
+                    guild_members = data["guild"]["members"]
 
             # fetch verified members with specific guild
             await cursor.execute(User.select_rows_with_guild_uuid(guild_uuid))
