@@ -74,7 +74,7 @@ class Master(commands.Cog):
         if dungeon_lvl < 28:
             dungeon_req = False
             passed_reqs -= 1
-        if slayer_xp < 5000000:
+        if slayer_xp < 500000:
             slayer_req = False
             passed_reqs -= 1
         if weight < 3500:
@@ -106,11 +106,11 @@ class Master(commands.Cog):
         p = "**Passed**"
         np = "**Not Passed**"
 
-        embed.add_field(name="Your Stats", value=f"Slayer Req: 400000 xp | "
+        embed.add_field(name="Your Stats", value=f"Slayer Req: 500000 xp | "
                                                  f"Your Slayers: **{slayer_xp}** | {p if slayer_req else np} \n"
-                                                 f"Cata req: level 0 | "
+                                                 f"Cata req: level 28 | "
                                                  f"Your Cata: **{dungeon_lvl}** | {p if dungeon_req else np} \n"
-                                                 f"Weight req: 2750 senither weight | "
+                                                 f"Weight req: 3500 senither weight | "
                                                  f"Your Weight: {weight} | {p if weight_req else np}", inline=False)
         embed.set_footer(text='SB Masters')
 
