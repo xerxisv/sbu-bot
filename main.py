@@ -29,8 +29,8 @@ async def on_ready():
     await trigger_handler.load_triggers()
 
     channel = bot.get_channel(ADMIN_CHAT_CHANNEL_ID)
-    await channel.send(f"<@&{BOT_OWNER_ROLE_ID}> The Bot has been recently rebooted. "
-                       "Please enable all the necessary cogs.\nhttps://tenor.com/view/hacker-gif-19246062")
+    await channel.send(f"The Bot has been recently rebooted.\n"
+                       "Please enable all the necessary cogs <a:wiggles:917695379485634580>.")
 
 
 @bot.command()

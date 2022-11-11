@@ -32,7 +32,9 @@ class Master(commands.Cog):
                 if resp.status != 200:
                     embed = discord.Embed(
                         title='Error',
-                        description=f'User with IGN `{ign}` not found or API error. Please check manually.',
+                        description=f'User with IGN `{ign}` not found.\n'
+                                    f'If `{ign}` is a valid IGN then it\'s an API error.\n'
+                                    f'Please check manually.',
                         colour=0xFF0000
                     )
                     await ctx.reply(embed=embed)
