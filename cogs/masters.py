@@ -71,13 +71,13 @@ class Master(commands.Cog):
         dungeon_req = True
         weight_req = True
 
-        if dungeon_lvl < 0:
+        if dungeon_lvl < 28:
             dungeon_req = False
             passed_reqs -= 1
-        if slayer_xp < 4000000:
+        if slayer_xp < 5000000:
             slayer_req = False
             passed_reqs -= 1
-        if weight < 2750 :
+        if weight < 3500:
             weight_req = False
             passed_reqs -= 1
 
