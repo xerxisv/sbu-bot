@@ -1,15 +1,15 @@
+import asyncio
+import datetime
 import os
+import tarfile
 
 import aiosqlite
 import discord
 import requests
-import tarfile
-import asyncio
-import datetime
-from typing import Union
 from discord.ext import commands
 
-from utils.constants import GUILDS_INFO, GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID, VERIFIED_ROLE_ID, ADMIN_ROLE_ID, GUILDS_INFO, GUILD_ID, JR_ADMIN_ROLE_ID
+from utils.constants import ADMIN_ROLE_ID, GUILDS_INFO, GUILD_ID, GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID, \
+    JR_ADMIN_ROLE_ID, SBU_GOLD, VERIFIED_ROLE_ID
 from utils.database import DBConnection
 from utils.database.schemas import User
 from utils.error_utils import log_error
@@ -173,12 +173,15 @@ class Verify(commands.Cog):
                               colour=0x008000)
         await ctx.reply(embed=embed)
 
-    @commands.command()
+    @commands.command(name="forcereverify", aliases=["reverify"])
     @commands.has_role(ADMIN_ROLE_ID)
-    async def forcereverify(self, ctx: commands.Context, user: discord.Member):
+    async def force_reverify(self, ctx: commands.Context, user: discord.Member):
+        await ctx.trigger_typing()
+
         cursor: aiosqlite.Cursor = await self.db.cursor()
         await cursor.execute(User.select_row_with_id(user.id))
         data = await cursor.fetchone()
+        await cursor.close()
 
         data = User.dict_from_tuple(data)
         uuid = data["uuid"]
@@ -200,33 +203,51 @@ class Verify(commands.Cog):
         except Exception as exception:  # Log any errors that might araise
             await log_error(ctx, exception)
 
-        
-        if player['socialMedia']['links']['DISCORD'] != str(ctx.author):
-            roles_to_remove = [discord.Object(_id) for _id in
-                                        [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
-                                        VERIFIED_ROLE_ID]]
+        else:
 
-            await self.db.execute(User.unverify_row_with_id(user.id))
-        
-        if guild is None or guild["_id"] != guild_uuid:
-            roles_to_remove = [discord.Object(_id) for _id in
-                                        [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID]]
-            
-            await self.db.execute(User.update_row_with_id(uuid))
-        if roles_to_remove is not None:
-            await user.remove_roles(*roles_to_remove,
-                                            atomic=False,
-                                            reason='check_verified')
+            if player['socialMedia']['links']['DISCORD'] != str(ctx.author):
+                roles_to_remove = [discord.Object(_id) for _id in
+                                   [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
+                                    VERIFIED_ROLE_ID]]
 
-        await self.db.commit()
-        await cursor.close()
+                await self.db.execute(User.unverify_row_with_id(user.id))
 
-        await ctx.reply(f"Reverified {user.mention}")
+            if guild is None or guild["_id"] != guild_uuid:
+                roles_to_remove = [discord.Object(_id) for _id in
+                                   [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID]]
 
-    @commands.command()
+                await self.db.execute(User.update_row_with_id(uuid))
+            if roles_to_remove is not None:
+                await user.remove_roles(*roles_to_remove,
+                                        atomic=False,
+                                        reason='check_verified')
+
+            embed = discord.Embed(
+                title='Success',
+                description=f'Reverified {user.mention}',
+                colour=0x00FF00
+            )
+            await ctx.reply(embed=embed)
+
+    @force_reverify.error
+    async def force_reverify_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+forcereverify <@mention | ID>`.',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
+
+    @commands.command(name="forcereverifyall", aliases=["reverifyall", "reverify_all"])
     @commands.has_role(ADMIN_ROLE_ID)
-    async def forcereverifyall(self, ctx: commands.Context):    
-        await ctx.reply("Reverifing everyone now...")
+    async def force_reverify_all(self, ctx: commands.Context):
+        embed = discord.Embed(
+            description='Reverifying everyone now <a:loading:978732444998070304>.\nThis might take a while.',
+            colour=SBU_GOLD
+        )
+        msg = await ctx.reply(embed=embed)
 
         cursor: aiosqlite.Cursor = await self.db.cursor()
 
@@ -254,54 +275,83 @@ class Verify(commands.Cog):
                     # Check if member is still in server
                     if discord_member:
                         roles_to_remove = [discord.Object(_id) for _id in
-                                        [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
+                                           [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
                                             VERIFIED_ROLE_ID]]
                         await discord_member.remove_roles(*roles_to_remove,
-                                                        atomic=False,
-                                                        reason='check_verified')
+                                                          atomic=False,
+                                                          reason='check_verified')
                         uuids = uuids + (v_member['uuid'],)
         await cursor.execute(User.update_rows_with_ids([f"'{uuid}'" for uuid in uuids]))
         await cursor.close()
         await self.db.commit()
-        await ctx.reply("Everyone has been reverified")
 
+        embed = discord.Embed(
+            title='Success',
+            description='Everyone has been reverified',
+            colour=0x00FF00
+        )
+        await msg.edit(embed=embed)
 
-    @commands.command()
+    @commands.command(name="forceunverify", aliases=["unverifyforce", "unverify_force"])
     @commands.has_role(JR_ADMIN_ROLE_ID)
-    async def forceunverify(self, ctx: commands.Context, user: discord.Member):
+    async def force_unverify(self, ctx: commands.Context, user: discord.Member):
+        await ctx.trigger_typing()
         # make sure the user is still in the server
         if not user:
-            raise commands.BadArgument
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid user. Make sure user is a member of the server',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
 
-        sbu = self.bot.get_guild(GUILD_ID)
-
-        await self.db.execute(User.unverify_row_with_id(user.id)) # unverify the user
-
+        await self.db.execute(User.unverify_row_with_id(user.id))  # unverify the user
         await self.db.commit()
 
         roles_to_remove = [discord.Object(_id) for _id in
-                            [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
+                           [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
                             VERIFIED_ROLE_ID]]
-        
+
         await user.remove_roles(*roles_to_remove,
                                 atomic=False,
                                 reason='check_verified')
 
-        await ctx.reply(f"Unverified {user.mention}")
+        embed = discord.Embed(
+            title='Success',
+            description=f'Unverified {user.mention}',
+            colour=0x00FF00
+        )
+        await ctx.reply(embed=embed)
 
+    @force_unverify.error
+    async def force_unverify_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+forceunverify <@mention | ID>`.',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
+            return
 
-    @commands.command()
+    @commands.command(name="forceunverifyall", aliases=["force_unverify_all", "unverifyall", "unverify_all"])
     @commands.has_role(ADMIN_ROLE_ID)
-    async def forceunverifyall(self, ctx: commands.Context):
+    async def force_unverify_all(self, ctx: commands.Context):
         def check(m: discord.Message):
-                return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
 
-        embed = discord.Embed(color=discord.Color.red(), title="**WARNING**", description='Doing this will unverify **EVERYONE** saved in the database, are you sure you want to do this? \n__**Type "yes" if you are sure, typing anything else or send nothing in 30 seconds this command will be canceled automatically**__')
+        embed = discord.Embed(color=discord.Color.red(), title="**WARNING**",
+                              description='Doing this will unverify **EVERYONE** saved in the database, '
+                                          'are you sure you want to do this? '
+                                          '\n__**Type "yes" if you are sure, '
+                                          'typing anything else or send nothing in 30 seconds this command '
+                                          'will be canceled automatically**__')
         await ctx.reply(embed=embed)
 
         try:
-            msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
-        except asyncio.TimeoutError: 
+            msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+        except asyncio.TimeoutError:
             await ctx.send(f"Command canceled")
             return
         else:
@@ -309,12 +359,19 @@ class Verify(commands.Cog):
                 await ctx.send("Command canceled")
                 return
 
-            await ctx.reply("Unverifying everyone now...")
+            embed = discord.Embed(
+                description='Unverifying everyone now <a:loading:978732444998070304>.\nThis might take a while.',
+                colour=SBU_GOLD
+            )
+            msg = await ctx.reply(embed=embed)
+
             cursor: aiosqlite.Cursor = await self.db.cursor()
-            sbu = self.bot.get_guild(GUILD_ID)
+
             # fetch verified members with specific guild
             await cursor.execute(User.select_all())
             verified_members = await cursor.fetchall()
+
+            sbu = self.bot.get_guild(GUILD_ID)
             # for each verified member
             for v_member in verified_members:
                 # convert tuple to dict
@@ -323,11 +380,11 @@ class Verify(commands.Cog):
                 # Check if member is still in server
                 if discord_member:
                     roles_to_remove = [discord.Object(_id) for _id in
-                                        [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
+                                       [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
                                         VERIFIED_ROLE_ID]]
                     await discord_member.remove_roles(*roles_to_remove,
-                                                        atomic=False,
-                                                        reason='check_verified')
+                                                      atomic=False,
+                                                      reason='check_verified')
             # create a backup of the database
             with tarfile.open(f"./backup/{int(datetime.datetime.now().timestamp())}.tar.gz", "w:gz") as tar_handle:
                 for root, dirs, files in os.walk("./data"):
@@ -338,8 +395,13 @@ class Verify(commands.Cog):
             await cursor.execute(User.unverify_all())
             await cursor.close()
             await self.db.commit()
-            await ctx.reply("Everyone has been unverified")
-        
+            embed = discord.Embed(
+                title='Success',
+                description='Everyone has been unverified',
+                colour=0x00FF00
+            )
+            await msg.reply(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Verify(bot))
