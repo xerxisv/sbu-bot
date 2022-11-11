@@ -29,7 +29,14 @@ class Master(commands.Cog):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(f'https://sky.shiiyu.moe/api/v2/profile/{ign}') as resp:
-                assert resp.status == 200, f'User with IGN `{ign}` not found or API error. Please check manually.'
+                if resp.status != 200:
+                    embed = discord.Embed(
+                        title='Error',
+                        description=f'User with IGN `{ign}` not found or API error. Please check manually.',
+                        colour=0xFF0000
+                    )
+                    await ctx.reply(embed=embed)
+                    return
                 profiles = await resp.json()
 
         dungeon_lvl = 0
@@ -123,14 +130,6 @@ class Master(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+checkreq <IGN>`.\nEx: `+checkreq RealMSpeed`',
-                colour=0xFF0000
-            )
-            await ctx.reply(embed=embed)
-            return
-        elif isinstance(exception, AssertionError):
-            embed = discord.Embed(
-                title='Error',
-                description=exception.args[0],
                 colour=0xFF0000
             )
             await ctx.reply(embed=embed)
