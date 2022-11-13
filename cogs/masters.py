@@ -29,6 +29,16 @@ class Master(commands.Cog):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(f'https://sky.shiiyu.moe/api/v2/profile/{ign}') as resp:
+                if resp.status != 200:
+                    embed = discord.Embed(
+                        title='Error',
+                        description=f'User with IGN `{ign}` not found.\n'
+                                    f'If `{ign}` is a valid IGN then it\'s an API error.\n'
+                                    f'Please check manually.',
+                        colour=0xFF0000
+                    )
+                    await ctx.reply(embed=embed)
+                    return
                 profiles = await resp.json()
 
         dungeon_lvl = 0
@@ -71,13 +81,13 @@ class Master(commands.Cog):
         dungeon_req = True
         weight_req = True
 
-        if dungeon_lvl < 0:
+        if dungeon_lvl < 28:
             dungeon_req = False
             passed_reqs -= 1
-        if slayer_xp < 400000:
+        if slayer_xp < 500000:
             slayer_req = False
             passed_reqs -= 1
-        if weight < 2750:
+        if weight < 3500:
             weight_req = False
             passed_reqs -= 1
 
@@ -106,11 +116,11 @@ class Master(commands.Cog):
         p = "**Passed**"
         np = "**Not Passed**"
 
-        embed.add_field(name="Your Stats", value=f"Slayer Req: 400000 xp | "
+        embed.add_field(name="Your Stats", value=f"Slayer Req: 500000 xp | "
                                                  f"Your Slayers: **{slayer_xp}** | {p if slayer_req else np} \n"
-                                                 f"Cata req: level 0 | "
+                                                 f"Cata req: level 28 | "
                                                  f"Your Cata: **{dungeon_lvl}** | {p if dungeon_req else np} \n"
-                                                 f"Weight req: 2750 senither weight | "
+                                                 f"Weight req: 3500 senither weight | "
                                                  f"Your Weight: {weight} | {p if weight_req else np}", inline=False)
         embed.set_footer(text='SB Masters')
 
