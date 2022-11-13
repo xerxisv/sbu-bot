@@ -32,7 +32,6 @@ async def on_ready():
     await channel.send(f"The Bot has been recently rebooted.\n"
                        "Please enable all the necessary cogs <a:wiggles:917695379485634580>.")
 
-
 @bot.command()
 @commands.has_role(BOT_OWNER_ROLE_ID)
 async def load_all(ctx: commands.Context):
