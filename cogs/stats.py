@@ -5,7 +5,7 @@ import aiosqlite
 from discord.ext import commands
 from discord.ui import Button, View
 
-from utils.constants import SBU_GOLD, SBU_PURPLE, WEIGHT_ROLES_INFO, GUILD_ID
+from utils.constants import SBU_GOLD, SBU_PURPLE, WEIGHT_ROLES_INFO, GUILD_ID, FRESHMAN_ROLE_ID
 from utils.database.schemas import User
 from utils.database import DBConnection
 
@@ -155,6 +155,9 @@ class Accept_Button(Button):
                 r = sbu.get_role(r)
                 roles.append(r)
             await interaction.user.add_roles(*roles, reason="Weight roles")
+
+            role = sbu.get_role(FRESHMAN_ROLE_ID)
+            await interaction.user.remove_roles(*[role], reason="Weight roles")
 
             await interaction.response.edit_message(content="Successfuly updated your roles!", view=None, embed=None)
         else:

@@ -172,37 +172,37 @@ WEIGHT_ROLES_INFO = {
         "role_id": INSTRUCTOR_ROLE_ID,
         "weight_req": 700,
         "name": "Instructor",
-        "previous": {FRESHMAN_ROLE_ID}
+        "previous": {}
     },
     "PROFESSOR": {
         "role_id": PROFESSOR_ROLE_ID,
         "weight_req": 2100,
         "name": "Professor",
-        "previous": {FRESHMAN_ROLE_ID, INSTRUCTOR_ROLE_ID}
+        "previous": {INSTRUCTOR_ROLE_ID}
     },
     "DEAN": {
         "role_id": DEAN_ROLE_ID,
         "weight_req": 4200,
         "name": "Dean",
-        "previous": {FRESHMAN_ROLE_ID, INSTRUCTOR_ROLE_ID, PROFESSOR_ROLE_ID}
+        "previous": {INSTRUCTOR_ROLE_ID, PROFESSOR_ROLE_ID}
     },
     "PROVOST": {
         "role_id": PROVOST_ROLE_ID,
         "weight_req": 8400,
         "name": "Provost",
-        "previous": {FRESHMAN_ROLE_ID, INSTRUCTOR_ROLE_ID, PROFESSOR_ROLE_ID, DEAN_ROLE_ID}
+        "previous": {INSTRUCTOR_ROLE_ID, PROFESSOR_ROLE_ID, DEAN_ROLE_ID}
     },
     "PRIMUS": {
         "role_id": PRIMUS_ROLE_ID,
         "weight_req": 12600,
         "name": "PRIMUS",
-        "previous": {FRESHMAN_ROLE_ID, INSTRUCTOR_ROLE_ID, PROFESSOR_ROLE_ID, DEAN_ROLE_ID, PROVOST_ROLE_ID}
+        "previous": {INSTRUCTOR_ROLE_ID, PROFESSOR_ROLE_ID, DEAN_ROLE_ID, PROVOST_ROLE_ID}
     },
     "LEGATUS": {
         "role_id": PROVOST_ROLE_ID,
         "weight_req": 18800,
         "name": "Legatus",
-        "previous": {FRESHMAN_ROLE_ID, INSTRUCTOR_ROLE_ID, PROFESSOR_ROLE_ID, DEAN_ROLE_ID, PROVOST_ROLE_ID, PRIMUS_ROLE_ID}
+        "previous": {INSTRUCTOR_ROLE_ID, PROFESSOR_ROLE_ID, DEAN_ROLE_ID, PROVOST_ROLE_ID, PRIMUS_ROLE_ID}
     }
 }
 
