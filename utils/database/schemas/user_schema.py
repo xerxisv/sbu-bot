@@ -160,6 +160,14 @@ class User(Schema):
             SET discord_id=1, guild_uuid=NULL
             WHERE discord_id={_id}
         '''
+    
+    @staticmethod
+    def unverify_all():
+        return f'''
+            UPDATE "USERS"
+            SET discord_id=1, guild_uuid=NULL
+            WHERE discord_id != 0
+        '''
 
     @staticmethod
     def select_row_with_id(_id: int) -> str:
@@ -175,6 +183,14 @@ class User(Schema):
             UPDATE "USERS"
             SET "guild_uuid"=NULL
             WHERE "uuid" IN ({', '.join(uuid for uuid in uuids)})
+        '''
+    
+    @staticmethod
+    def update_row_with_id(uuid: str) -> str:
+        return f'''
+            UPDATE "USERS"
+            SET "guild_uuid"=NULL
+            WHERE "uuid"={uuid}
         '''
     
     @staticmethod
@@ -198,6 +214,7 @@ class User(Schema):
         return '''
             SELECT *
             FROM "USERS"
+            WHERE "discord_id" != 0
         '''
     
     @staticmethod
