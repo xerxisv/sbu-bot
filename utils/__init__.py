@@ -1,6 +1,9 @@
 from typing import Optional
 from random import random
 import requests
+from discord.ext import commands
+
+from utils.constants import WEIGHT_BANNED_ROLE_ID
 
 
 class Singleton(type):
@@ -27,3 +30,10 @@ def weighted_randint(end, loops=1) -> int:
         result += round(random() * (end / loops))
 
     return int(result)
+
+
+def check_if_weight_banned(ctx: commands.Context) -> bool:
+    if ctx.author.get_role(WEIGHT_BANNED_ROLE_ID):
+        return False
+
+    return True
