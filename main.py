@@ -7,7 +7,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from handlers import chat_triggers, gtatsu, warns
-from utils.constants import ADMIN_CHAT_CHANNEL_ID, BOT_OWNER_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, \
+from utils.constants import ADMIN_CHAT_CHANNEL_ID, ADMIN_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, \
     CRAFT_REPS_CHANNEL_ID, JR_MOD_ROLE_ID, SBU_BOT_LOGS_CHANNEL_ID, SBU_GOLD
 from utils.database import DBConnection
 from utils.error_utils import exception_to_string, log_error
@@ -32,8 +32,9 @@ async def on_ready():
     await channel.send(f"The Bot has been recently rebooted.\n"
                        "Please enable all the necessary cogs <a:wiggles:917695379485634580>.")
 
+
 @bot.command()
-@commands.has_role(BOT_OWNER_ROLE_ID)
+@commands.has_role(ADMIN_ROLE_ID)
 async def load_all(ctx: commands.Context):
     for filename in os.listdir('./cogs'):
         if not filename.endswith('.py'):
@@ -45,7 +46,7 @@ async def load_all(ctx: commands.Context):
 
 
 @bot.command()
-@commands.has_role(BOT_OWNER_ROLE_ID)
+@commands.has_role(ADMIN_ROLE_ID)
 async def load(ctx: commands.Context, extension):
     if extension == 'all':
         await bot.get_command('load_all').invoke(ctx)
@@ -61,7 +62,7 @@ async def load(ctx: commands.Context, extension):
 
 
 @bot.command()
-@commands.has_role(BOT_OWNER_ROLE_ID)
+@commands.has_role(ADMIN_ROLE_ID)
 async def unload(ctx: commands.Context, extension):
     try:
         bot.unload_extension(f'cogs.{extension}')
@@ -74,7 +75,7 @@ async def unload(ctx: commands.Context, extension):
 
 
 @bot.command()
-@commands.has_role(BOT_OWNER_ROLE_ID)
+@commands.has_role(ADMIN_ROLE_ID)
 async def reload(ctx: commands.Context):
     for filename1 in os.listdir('./cogs'):
         if not filename1.endswith('.py'):
@@ -152,7 +153,7 @@ async def modhelp(ctx: commands.Context):
 
 
 @bot.command()
-@commands.has_role(BOT_OWNER_ROLE_ID)
+@commands.has_role(ADMIN_ROLE_ID)
 async def dm(ctx: commands.Context, user: discord.User, *, message: str):
     try:
         await user.send(message)
