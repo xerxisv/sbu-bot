@@ -117,14 +117,14 @@ class Verify(commands.Cog):
             is_in_guild = True
 
         await member \
-            .add_roles(*[discord.Object(_id) for _id in [VERIFIED_ROLE_ID, GUILD_MEMBER_ROLE_ID]],
+            .add_roles(*[discord.Object(_id) for _id in [VERIFIED_ROLE_ID]],
                        reason='Verification Complete', atomic=False)
 
         verified_member = User(uuid, member.id, ign)
 
         if is_in_guild:
             await member \
-                .add_roles(discord.Object(GUILDS_INFO[guild["name"].upper()]['role_id']), atomic=False)
+                .add_roles(*[discord.Object(GUILDS_INFO[guild["name"].upper()]['role_id']), discord.Object(GUILD_MEMBER_ROLE_ID)], atomic=False)
 
             embed = discord.Embed(title=f'Verification',
                                   description=f'You have been verified as a member of {guild["name"]}',

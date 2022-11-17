@@ -119,19 +119,24 @@ Please continue below.
 done1 = "You are done with the course. Ping <@&801634222577156097> to start the test or ask questions"
 
 
-lookuplist = ["shachi", "Rvon", "ItsFijit", "someonestolemypc", "jpgaming55", "LordZarach",
-              "Skeldow", "AvidYodaMain", "LavenderHeights", "MartinNemi03", "69mn", "zStrelizia",
-              "Adviceful", "Zykm", "russiandeniss", "wr4pp1ng", "FantasmicGalaxy", "urra"
-    , "Iwolf05", "noscope_", "luvanion", "Thesensational18", "43110s", "dukioooo", "CoruptKun"
-    , "Teunman", "302q", "Furiousmatt", "jexh", "Royalist", "McMuffinLover", "o600", "jjww2", "n0twanted"
-    , "yuricamp", "gxth__", "Yarnzy_", "ih8grinding", "sumgoodvibess", "metalcupcake5", "Legendofhub"
-    , "Spectrov", "_YungGravy", "wigner", "Trinitro480"]
-lookuplistans = ["Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer",
-                 "Scammer"
-    , "Not Scammer", "Scammer", "Scammer", "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer"
-    , "Scammer", "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer", "Scammer"
-    , "Scammer", "Not Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Not Scammer", "Scammer"
-    , "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer"]
+lookuplist = ["shachi", "Rvon", "Fijit", "someonestolemypc", "jpgaming55", "LordZarach",
+                "Skeldow", "FDRR", "LavenderHeights", "MartinNemi03", "69mn", "zStrelizia",
+                "Adviceful", "Zykm", "russiandeniss", "spedwick", "FantasmicGalaxy", "urra", 
+                "Iwolf05", "noscope_", "luvanion", "KSavvv18", "43110s", "dukioooo",
+                "CoruptKun", "Teunman", "302q", "Tera_Matt", "jexh", "Royalist",
+                "McMuffinLover", "o600", "jjww2", "n0twanted", "LeaPhant", "Zanjoe",
+                "Yarnzy_", "ih8grinding", "Verychillvibes", "LesbianCatgirl", "Legendofhub", "Spectrov",
+                "_YungGravy", "wigner", "U4BJ"
+                ]
+lookuplistans = ["Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer", "Not Scammer",
+                "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer", 
+                "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer",
+                "Scammer", "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer",
+                "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer",
+                "Scammer", "Not Scammer", "Not Scammer", "Scammer", "Not Scammer", "Scammer", 
+                "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer",
+                "Not Scammer", "Scammer", "Scammer"
+                ]
 
 situations = ["""bith_creative: I can’t seem to be able to do F7, I keep dying, could anyone give me some tips? 
 SoFestivePleasantt: sure
