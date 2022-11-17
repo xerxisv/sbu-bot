@@ -153,11 +153,10 @@ class TasksCog(commands.Cog):
                     # Check if member is still in server
                     if discord_member:
                         roles_to_remove = [discord.Object(_id) for _id in
-                                           [*constants.GUILD_MEMBER_ROLES_IDS, constants.GUILD_MEMBER_ROLE_ID,
-                                            constants.VERIFIED_ROLE_ID]]
+                                           [*constants.GUILD_MEMBER_ROLES_IDS, constants.GUILD_MEMBER_ROLE_ID]]
                         await discord_member.remove_roles(*roles_to_remove,
                                                           atomic=False,
-                                                          reason='check_verified')
+                                                          reason='check verified task')
                         uuids = uuids + (v_member['uuid'],)
         await cursor.execute(User.update_rows_with_ids([f"'{uuid}'" for uuid in uuids]))
         await cursor.close()
