@@ -28,6 +28,7 @@ class TasksCog(commands.Cog):
         self.inactives_check.start()
         self.check_verified.start()
         self.weekly_tatsu.start()
+        self.booster_log.start()
 
     def cog_unload(self):
         self.update_members.cancel()
@@ -36,6 +37,7 @@ class TasksCog(commands.Cog):
         self.inactives_check.cancel()
         self.check_verified.cancel()
         self.weekly_tatsu.cancel()
+        self.booster_log.cancel()
 
     @tasks.loop(hours=1)
     async def update_members(self):
@@ -210,6 +212,35 @@ class TasksCog(commands.Cog):
                                                         .timestamp()
         seconds_until_next_week = (next_week - (next_week % 86400) + 86400) - datetime.datetime.now().timestamp()
         await sleep(seconds_until_next_week)
+    
+    @tasks.loop(hours=24)
+    async def booster_log(self):
+        # Get the booster role
+        sbu = self.bot.get_guild(constants.GUILD_ID)
+        booster_role = sbu.get_role(constants.BOOSTER_ROLE_ID)
+
+        # Put all boosters in a string
+        booster_list = ""
+        for member in booster_role.members:
+            booster_list += f"{member.mention}\n"
+        
+        
+        # Check if boosters changed
+        log_channel = self.bot.get_channel(constants.BOOSTER_LOG_ID)
+        message = self.bot.get_message(log_channel.last_message_id)
+
+        try:
+            if message.embeds[0] != None:
+                previous_list = message.embeds[0].description
+                if previous_list == booster_list[:len(booster_list)-1]:
+                    return
+        except AttributeError:
+            pass
+        
+        # Send a new log
+        role = sbu.get_role(constants.JR_ADMIN_ROLE_ID)
+        embed = discord.Embed(title="Booster Log", description=booster_list, color=constants.SBU_PURPLE)
+        await log_channel.send(role.mention, embed=embed)
 
 
 def setup(bot):
