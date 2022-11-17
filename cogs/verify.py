@@ -63,6 +63,10 @@ class Verify(commands.Cog):
             .remove_roles(*[discord.Object(_id) for _id in GUILD_MEMBER_ROLES_IDS],
                           reason='verification process',
                           atomic=False)
+        await member \
+            .remove_roles(*[discord.Object(GUILD_MEMBER_ROLE_ID)],
+                          reason='verification process',
+                          atomic=False)
 
         try:
             # Fetch player data
