@@ -220,26 +220,46 @@ class TasksCog(commands.Cog):
         booster_role = sbu.get_role(constants.BOOSTER_ROLE_ID)
 
         # Put all boosters in a string
-        booster_list = ""
+        booster_string = ""
+        booster_list = []
         for member in booster_role.members:
-            booster_list += f"{member.mention}\n"
+            booster_string += f"{member.mention}\n"
+            booster_list.append(member.mention)
+
+        
+        embed = discord.Embed(title="Booster Log", description=booster_string, color=constants.SBU_PURPLE)
         
         
         # Check if boosters changed
         log_channel = self.bot.get_channel(constants.BOOSTER_LOG_ID)
         message = self.bot.get_message(log_channel.last_message_id)
-
         try:
             if message.embeds[0] != None:
-                previous_list = message.embeds[0].description
-                if previous_list == booster_list[:len(booster_list)-1]:
-                    return
-        except AttributeError:
-            pass
+                previous_list = message.embeds[0].description.split("\n")
+        except IndexError:
+            previous_list = []
+        x = False
+        added_string = ""
+        for user in booster_list:
+            if user not in previous_list:
+                added_string = f"{user}\n"
+                x = True
+        if x:
+            embed.add_field(name="Added boosters:", value=added_string)
         
+        y = False
+        removed_string = ""
+        for user in previous_list:
+            if user not in booster_list:
+                removed_string = f"{user}\n"
+                y = True
+        if y:
+            embed.add_field(name="Removed boosters", value=removed_string)
+        
+        if not y and not x:
+            return
         # Send a new log
         role = sbu.get_role(constants.JR_ADMIN_ROLE_ID)
-        embed = discord.Embed(title="Booster Log", description=booster_list, color=constants.SBU_PURPLE)
         await log_channel.send(embed=embed)
 
 
