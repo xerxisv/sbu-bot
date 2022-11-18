@@ -240,7 +240,7 @@ class TasksCog(commands.Cog):
         # Send a new log
         role = sbu.get_role(constants.JR_ADMIN_ROLE_ID)
         embed = discord.Embed(title="Booster Log", description=booster_list, color=constants.SBU_PURPLE)
-        await log_channel.send(role.mention, embed=embed)
+        await log_channel.send(embed=embed)
 
 
 def setup(bot):

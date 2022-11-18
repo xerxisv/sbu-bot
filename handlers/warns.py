@@ -22,7 +22,7 @@ async def handle_warn(message: discord.Message):
     # Fetch the member with the specified ID
     member: discord.Member = message.guild.get_member(int(user_id))
 
-    if member is None or member.get_role(JR_MOD_ROLE_ID) is None:
+    if member is None or member.get_role(JR_MOD_ROLE_ID) is not None:
         return
 
     await message.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
