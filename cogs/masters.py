@@ -125,7 +125,7 @@ class Master(commands.Cog):
                                                  f"Your Cata: **{dungeon_lvl}** | {p if dungeon_req else np} \n"
                                                  f"Weight req: 3500 senither weight | "
                                                  f"Your Weight: {weight} | {p if weight_req else np}", inline=False)
-        embed.set_footer(text=f'SB Masters | Selected profile: {selected_profile["cute_name"]}')
+        embed.set_footer(text=f'{ign} | {selected_profile["cute_name"]}')
 
         await ctx.send(embed=embed)
 
