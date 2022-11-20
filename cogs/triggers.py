@@ -244,7 +244,7 @@ class Triggers(commands.Cog):
                 value=f'Owners: *{owners}*\nEnabled: *{triggers[trigger]["enabled"]}*',
                 inline=False
             )
-
+        embed.set_footer(text=f'Page: {page}/{max_page}')
         await ctx.reply(embed=embed)
 
 
