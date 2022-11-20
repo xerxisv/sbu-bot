@@ -123,7 +123,7 @@ class TasksCog(commands.Cog):
         with tarfile.open("./backup/backup.tar.gz", "w:gz") as tar_handle:
             for root, dirs, files in os.walk("./data"):
                 for file in files:
-                    if file.endswith(".db"):
+                    if file.endswith((".db", ".json")):
                         tar_handle.add(os.path.join(root, file), arcname=file)
 
     @tasks.loop(hours=24)
@@ -226,40 +226,40 @@ class TasksCog(commands.Cog):
             booster_string += f"{member.mention}\n"
             booster_list.append(member.mention)
 
-        
         embed = discord.Embed(title="Booster Log", description=booster_string, color=constants.SBU_PURPLE)
-        
-        
+
         # Check if boosters changed
         log_channel = self.bot.get_channel(constants.BOOSTER_LOG_ID)
         message = self.bot.get_message(log_channel.last_message_id)
+        previous_list = []
+
         try:
-            if message.embeds[0] != None:
+            if message.embeds[0] is not None:
                 previous_list = message.embeds[0].description.split("\n")
         except IndexError:
             previous_list = []
-        x = False
+
+        new_booster_added = False
         added_string = ""
         for user in booster_list:
             if user not in previous_list:
                 added_string = f"{user}\n"
-                x = True
-        if x:
+                new_booster_added = True
+        if new_booster_added:
             embed.add_field(name="Added boosters:", value=added_string)
         
-        y = False
+        was_booster_removed = False
         removed_string = ""
         for user in previous_list:
             if user not in booster_list:
                 removed_string = f"{user}\n"
-                y = True
-        if y:
+                was_booster_removed = True
+        if was_booster_removed:
             embed.add_field(name="Removed boosters", value=removed_string)
         
-        if not y and not x:
+        if not was_booster_removed and not new_booster_added:
             return
         # Send a new log
-        role = sbu.get_role(constants.JR_ADMIN_ROLE_ID)
         await log_channel.send(embed=embed)
 
 
