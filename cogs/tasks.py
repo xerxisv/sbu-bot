@@ -234,7 +234,7 @@ class TasksCog(commands.Cog):
         previous_list = []
 
         try:
-            if message.embeds[0] is not None:
+            if message is not None and message.embeds[0] is not None:
                 previous_list = message.embeds[0].description.split("\n")
         except IndexError:
             previous_list = []
