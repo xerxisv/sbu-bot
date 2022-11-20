@@ -43,29 +43,20 @@ class Master(commands.Cog):
 
         dungeon_lvl = 0
         slayer_xp = 0
-        weight = 0
+        weight = 0  # used to store the weight but also find the biggest weight in the profiles
 
         is_valid_profile = cute_name is None
+        selected_profile = None
 
         for profile in profiles["profiles"].values():
             if cute_name is not None:
                 if profile["cute_name"].lower() != cute_name.lower():
                     continue
                 is_valid_profile = True
-            elif not profile["current"]:
-                continue
-
-            try:
-                dungeon_lvl = int(profile["data"]["dungeons"]["catacombs"]["level"]["level"])
-                slayer_xp = int(profile["data"]["slayer_xp"])
-                weight = int(profile["data"]["weight"]["senither"]["overall"])
-            except KeyError:
-                embed = discord.Embed(
-                    title='Error',
-                    description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial',
-                    colour=0xFF0000
-                )
-                await ctx.reply(embed=embed)
+                selected_profile = profile
+            elif profile["data"]["weight"]["senither"]["overall"] > weight:
+                weight = profile["data"]["weight"]["senither"]["overall"]
+                selected_profile = profile
 
         if not is_valid_profile:
             embed = discord.Embed(
@@ -75,6 +66,18 @@ class Master(commands.Cog):
             )
             await ctx.reply(embed=embed)
             return
+
+        try:
+            dungeon_lvl = int(selected_profile["data"]["dungeons"]["catacombs"]["level"]["level"])
+            slayer_xp = int(selected_profile["data"]["slayer_xp"])
+            weight = int(selected_profile["data"]["weight"]["senither"]["overall"])
+        except KeyError:
+            embed = discord.Embed(
+                title='Error',
+                description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial',
+                colour=0xFF0000
+            )
+            await ctx.reply(embed=embed)
 
         passed_reqs = 3
         slayer_req = True
@@ -122,7 +125,7 @@ class Master(commands.Cog):
                                                  f"Your Cata: **{dungeon_lvl}** | {p if dungeon_req else np} \n"
                                                  f"Weight req: 3500 senither weight | "
                                                  f"Your Weight: {weight} | {p if weight_req else np}", inline=False)
-        embed.set_footer(text='SB Masters')
+        embed.set_footer(text=f'SB Masters | Selected profile: {selected_profile["cute_name"]}')
 
         await ctx.send(embed=embed)
 
