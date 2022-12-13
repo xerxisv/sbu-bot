@@ -4,7 +4,7 @@ from math import ceil
 import discord
 from discord.ext import commands
 
-from utils.constants import JR_MOD_ROLE_ID, QOTD_PATH, SBU_GOLD, SBU_LOGO_URL
+from utils.constants import JR_MOD_ROLE_ID, QOTD_PATH, SBU_ERROR, SBU_GOLD, SBU_LOGO_URL, SBU_SUCCESS
 
 
 class QOTD(commands.Cog):
@@ -63,7 +63,7 @@ class QOTD(commands.Cog):
 
     @qotd.command(name='list', aliases=['show', 'print'])
     @commands.has_role(JR_MOD_ROLE_ID)
-    async def list_(self, ctx: commands.Context, page: int = 0):
+    async def list_(self, ctx: commands.Context, page: int = 1):
         with open(QOTD_PATH) as fp:
             questions = json.load(fp)
 
@@ -76,15 +76,15 @@ class QOTD(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                colour=0xFF0000
+                colour=SBU_ERROR
             )
             await ctx.reply(embed=embed)
             return
 
         # Set the questions' start and end index
-        start = questions_max * page  # Skips the first `questions_max * page` objects
+        start = questions_max * (page- 1)  # Skips the first `questions_max * page` objects
         # Keeps 24 objects skipping the rest and ensuring that we are within index bounds
-        end = (questions_max * page) + min(questions_max, q_len - (max_page * page))
+        end = (questions_max * (page- 1)) + min(questions_max, q_len - (max_page * (page- 1)))
 
         questions = questions[start:end]
 
@@ -97,7 +97,7 @@ class QOTD(commands.Cog):
             qotd_embed.add_field(name=f'QOTD: {index + 1}', value=qotd['qotd'], inline=False)
 
         qotd_embed.set_thumbnail(url=SBU_LOGO_URL)
-        qotd_embed.set_footer(text=f'Page: {page + 1}/{max_page}')
+        qotd_embed.set_footer(text=f'Page: {page}/{max_page}')
 
         await ctx.reply(embed=qotd_embed)
 
@@ -117,6 +117,11 @@ class QOTD(commands.Cog):
                       indent=4,
                       separators=(',', ': '))
 
+        embed = discord.Embed(
+            title='Success',
+            description='Question successfully removed.',
+            color=SBU_SUCCESS
+        )
         await ctx.reply("Successfully removed that qotd")
 
 
