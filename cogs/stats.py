@@ -110,7 +110,17 @@ class Stats(commands.Cog):
 
         data = User.dict_from_tuple(data)
         view = View()
-        profiles = requests.get(f'https://sky.shiiyu.moe/api/v2/profile/{data["ign"]}').json()
+
+        res = requests.get(f'https://sky.shiiyu.moe/api/v2/profile/{data["ign"]}')
+        if res.status_code != 200:
+            embed = discord.Embed(
+                title='Error',
+                description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial.',
+                color=SBU_ERROR
+            )
+            await ctx.reply(embed=embed)
+
+        profiles = res.json()
         profile = None
 
         is_valid_profile = cute_name is None
@@ -136,7 +146,18 @@ class Stats(commands.Cog):
             await ctx.reply(embed=embed)
             return
 
-        weight = int(profile["data"]["weight"]["senither"]["overall"])
+        try:
+            weight = int(profile["data"]["weight"]["senither"]["overall"])
+
+        except KeyError:
+            embed = discord.Embed(
+                title='Error',
+                description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial',
+                colour=SBU_ERROR
+            )
+            await ctx.reply(embed=embed)
+            return
+
         has_previous_role = False
         max_role = None
         for role in WEIGHT_ROLES_INFO:

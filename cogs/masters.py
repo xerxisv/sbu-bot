@@ -3,6 +3,8 @@ import discord
 import requests
 from discord.ext import commands
 
+from utils.constants import SBU_ERROR
+
 
 class Master(commands.Cog):
     def __init__(self, bot):
@@ -48,15 +50,25 @@ class Master(commands.Cog):
         is_valid_profile = cute_name is None
         selected_profile = None
 
-        for profile in profiles["profiles"].values():
-            if cute_name is not None:
-                if profile["cute_name"].lower() != cute_name.lower():
-                    continue
-                is_valid_profile = True
-                selected_profile = profile
-            elif profile["data"]["weight"]["senither"]["overall"] > weight:
-                weight = profile["data"]["weight"]["senither"]["overall"]
-                selected_profile = profile
+        try:
+            for profile in profiles["profiles"].values():
+                if cute_name is not None:
+                    if profile["cute_name"].lower() != cute_name.lower():
+                        continue
+                    is_valid_profile = True
+                    selected_profile = profile
+                elif profile["data"]["weight"]["senither"]["overall"] > weight:
+                    weight = profile["data"]["weight"]["senither"]["overall"]
+                    selected_profile = profile
+
+        except KeyError:
+            embed = discord.Embed(
+                title='Error',
+                description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial',
+                colour=SBU_ERROR
+            )
+            await ctx.reply(embed=embed)
+            return
 
         if not is_valid_profile:
             embed = discord.Embed(
