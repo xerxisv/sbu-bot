@@ -1,4 +1,5 @@
 import asyncio
+import math
 import os
 
 import discord
@@ -169,7 +170,7 @@ async def on_command_error(ctx: commands.Context, exception):
     if isinstance(exception, commands.CommandOnCooldown):
         embed = discord.Embed(
             title='Error',
-            description=f'Command is on cooldown. Try again in {exception.retry_after} seconds',
+            description=f'Command is on cooldown. Try again in {int(exception.retry_after)} seconds',
             colour=0xFF0000
         )
         await ctx.reply(embed=embed)
