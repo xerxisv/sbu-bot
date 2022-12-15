@@ -169,7 +169,7 @@ async def on_command_error(ctx: commands.Context, exception):
     if isinstance(exception, commands.CommandOnCooldown):
         embed = discord.Embed(
             title='Error',
-            description='Command is on cooldown',
+            description=f'Command is on cooldown. Try again in {exception.retry_after} seconds',
             colour=0xFF0000
         )
         await ctx.reply(embed=embed)
