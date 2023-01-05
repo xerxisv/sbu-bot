@@ -225,7 +225,7 @@ tutoring1.add_field(name="What is tutoring?", value=mhmtutor, inline=False)
 tutoring1.add_field(name="Thank you", value=tutor2, inline=False)
 tutoring1.add_field(name="The End", value=done1, inline=False)
 
-lookuplist = ["shachi", "Rvon", "ItsFijit", "someonestolemypc", "jpgaming55", "LordZarach",
+lookuplist = ["shachi", "Rvon", "SleepyBestLegit", "someonestolemypc", "jpgaming55", "LordZarach",
               "Skeldow", "AvidYodaMain", "LavenderHeights", "MartinNemi03", "69mn", "zStrelizia",
               "Adviceful", "Zykm", "russiandeniss", "wr4pp1ng", "FantasmicGalaxy", "urra"
     , "Iwolf05", "noscope_", "luvanion", "Thesensational18", "43110s", "dukioooo", "CoruptKun"
