@@ -47,6 +47,7 @@ UNI_BRIDGE_ROLE_ID = 0
 ALPHA_BRIDGE_ROLE_ID = 0
 KAPPA_BRIDGE_ROLE_ID = 0
 DELTA_BRIDGE_ROLE_ID = 0
+LAMBDA_BRIDGE_ROLE_ID = 0
 MASTERS_BRIDGE_ROLE_ID = 0
 EVERYONE_ROLE_ID = 0
 
@@ -123,6 +124,7 @@ if os.getenv('MODE') == 'PRODUCTION':
     ALPHA_BRIDGE_ROLE_ID = 1023302352591126600
     KAPPA_BRIDGE_ROLE_ID = 1025482652570103849
     DELTA_BRIDGE_ROLE_ID = 1025477430078603316
+    LAMBDA_BRIDGE_ROLE_ID = 1023329530334687254
     MASTERS_BRIDGE_ROLE_ID = 1027671227357204532
     EVERYONE_ROLE_ID = 764326796736856066
 
@@ -307,17 +309,23 @@ GUILDS_INFO = {
         "bridge_uuid": 'a42c79f6f60841c38ae6ee1bf2eb7d35',
         "vc_id": ALPHA_VC_ID
     },
-    "SB KAPPA ETA": {
-        "role_id": SB_KAPPA_MEMBER_ROLE_ID,
-        "guild_uuid": '607a0d7c8ea8c9c0ff983976',
-        "bridge_uuid": '384248632f3942069a80327a94150f6d',
-        "vc_id": KAPPA_VC_ID
-    },
-    "SB DELTA OMEGA": {
-        "role_id": SB_DELTA_MEMBER_ROLE_ID,
-        "guild_uuid": '608d91e98ea8c9925cdb91b7',
-        "bridge_uuid": 'd35172fc9191404c9671532569b62585',
-        "vc_id": DELTA_VC_ID
+    # "SB KAPPA ETA": {
+    #     "role_id": SB_KAPPA_MEMBER_ROLE_ID,
+    #     "guild_uuid": '607a0d7c8ea8c9c0ff983976',
+    #     "bridge_uuid": '384248632f3942069a80327a94150f6d',
+    #     "vc_id": KAPPA_VC_ID
+    # },
+    # "SB DELTA OMEGA": {
+    #     "role_id": SB_DELTA_MEMBER_ROLE_ID,
+    #     "guild_uuid": '608d91e98ea8c9925cdb91b7',
+    #     "bridge_uuid": 'd35172fc9191404c9671532569b62585',
+    #     "vc_id": DELTA_VC_ID
+    # },
+    "SB LAMBDA PI": {
+        "role_id": SB_LAMBDA_MEMBER_ROLE_ID,
+        "guild_uuid": '60a16b088ea8c9bb7f6d9052',
+        "bridge_uuid": '382b64daa73d46cb81759bcd4e13ce9f',
+        "vc_id": LAMBDA_VC_ID
     },
     "SB MASTERS": {
         "role_id": SB_MASTERS_MEMBER_ROLE_ID,
