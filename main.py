@@ -12,6 +12,8 @@ from utils.constants import ADMIN_CHAT_CHANNEL_ID, ADMIN_ROLE_ID, CARRY_SERVICE_
 from utils.database import DBConnection
 from utils.error_utils import exception_to_string, log_error
 from utils.setup import run_setup
+from utils import info_reload
+
 
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="+", intents=intents, case_insensitive=True)
@@ -27,6 +29,7 @@ async def on_ready():
     await DBConnection().create_db()
     gtatsu.set_up_db()
     await trigger_handler.load_triggers()
+    await info_reload(bot)
 
     channel = bot.get_channel(ADMIN_CHAT_CHANNEL_ID)
     await channel.send(f"The Bot has been recently rebooted.\n"

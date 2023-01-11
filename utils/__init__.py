@@ -3,7 +3,11 @@ from random import random
 import requests
 from discord.ext import commands
 
-from utils.constants import WEIGHT_BANNED_ROLE_ID
+from utils.constants import WEIGHT_BANNED_ROLE_ID, INFO_EMBED_DESCRIPTION, INFO_CHANNEL_ID, SBU_GOLD, BUTTON_STRINGS
+from utils.components import info_button
+
+import discord
+from discord.ui import View
 
 
 class Singleton(type):
@@ -37,3 +41,36 @@ def check_if_weight_banned(ctx: commands.Context) -> bool:
         return False
 
     return True
+
+async def info_reload(bot):
+    channel = await bot.fetch_channel(INFO_CHANNEL_ID)
+    if channel.last_message_id is not None:
+        message = await channel.fetch_message(channel.last_message_id)
+    else:
+        message = None
+    
+
+    embed = discord.Embed(title="Info", description=INFO_EMBED_DESCRIPTION, color=SBU_GOLD)
+    
+    view = View()
+    i = 0
+    j = 0
+    for button in BUTTON_STRINGS:
+        i += 1
+        label = button
+        description = BUTTON_STRINGS[button]["description"]
+        button_view = BUTTON_STRINGS[button]["view"]
+        image = BUTTON_STRINGS[button]["image"]
+
+        view.add_item(info_button(bot, label, description, button_view, image, row=j))
+        if i == 5:
+            i = 0
+            j += 1
+    
+    try:
+        if message is not None:
+            await message.edit(embed=embed, view=view)
+        else: 
+            await channel.send(embed=embed, view=view)
+    except discord.Forbidden:
+        await channel.send(embed=embed, view=view)
