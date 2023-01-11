@@ -10,7 +10,7 @@ import requests
 from discord.ext import commands
 
 from utils import extract_uuid
-from utils.constants import GUILDS_INFO, MODERATOR_ROLE_ID, SBU_GOLD
+from utils.constants import GUILDS_INFO, JR_MOD_ROLE_ID, SBU_GOLD
 from utils.database import DBConnection
 from utils.database.schemas import User
 from utils.error_utils import log_error
@@ -46,15 +46,15 @@ class InactiveList(commands.Cog):
                         inline=False)
         embed.add_field(name='Check the inactive players in a guild',
                         value='`+inactive check <guild>`\n'
-                              '*__Moderator__ command*',
+                              '*__Junior Moderator__ command*',
                         inline=False)
         embed.add_field(name='Add a player to the inactivity list',
                         value='`+inactive mod add <IGN> <time>`\n'
-                              '*__Moderator__ command*',
+                              '*__Junior Moderator__ command*',
                         inline=False)
         embed.add_field(name='Remove a player from the inactivity list',
                         value='`+inactive mod remove <IGN>`\n'
-                              '*__Moderator__ command*',
+                              '*__Junior Moderator__ command*',
                         inline=False)
         embed.add_field(name='Command aliases list',
                         value='`+inactive aliases`',
@@ -140,7 +140,7 @@ class InactiveList(commands.Cog):
 
     @inactive.command()
     @commands.cooldown(1, 30)
-    @commands.has_role(MODERATOR_ROLE_ID)
+    @commands.has_role(JR_MOD_ROLE_ID)
     async def check(self, ctx: commands.Context, *, guild: str):
         # If inputted guild is invalid
         if guild.upper() not in GUILDS_INFO.keys():
@@ -233,7 +233,7 @@ class InactiveList(commands.Cog):
             await ctx.send(embed=embed)
 
     @inactive.group(name='mod', aliases=['moderator'], case_insensitive=True)
-    @commands.has_role(MODERATOR_ROLE_ID)
+    @commands.has_role(JR_MOD_ROLE_ID)
     async def mod(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('inactive help').invoke(ctx)
