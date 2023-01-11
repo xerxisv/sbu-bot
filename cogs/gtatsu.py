@@ -174,7 +174,9 @@ class GTatsu(commands.Cog):
             embed.add_field(name=user['ign'],
                             value=f"*Weekly GTatsu:* **{user['tatsu_score'] - user['weekly_tatsu_score']}**",
                             inline=False)
-        
+        if len(users) < 1:
+            embed.description = "Nothing to display"
+
         view = LeaderboardView('Global', False)
 
         await ctx.reply(embed=embed, view=view)
@@ -248,10 +250,9 @@ class SisterhoodSelectionMenu(Select):
         super().__init__(placeholder='Select Guild',
                          options=[
                              discord.SelectOption(label='Global', default=guild == 'Global'),
-                             discord.SelectOption(label='SB Uni', default=guild == 'SB Uni'),
+                             discord.SelectOption(label='SB University', default=guild == 'SB Uni'),
                              discord.SelectOption(label='SB Alpha Psi', default=guild == 'SB Alpha Psi'),
-                             discord.SelectOption(label='SB Kappa Eta', default=guild == 'SB Kappa Eta'),
-                             discord.SelectOption(label='SB Delta Omega', default=guild == 'SB Delta Omega'),
+                             discord.SelectOption(label='SB Lambda Pi', default=guild == 'SB Lambda Pi'),
                              discord.SelectOption(label='SB Masters', default=guild == 'SB Masters'),
                          ])
         self.guild = guild
