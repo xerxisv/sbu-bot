@@ -2,7 +2,8 @@
 import discord
 from discord.ext import commands
 
-from utils.constants import CRISIS_IGNORED_CATEGORIES, CRISIS_IGNORED_ROLES, CRISIS_REMOVE_VIEW_PERMS_CHANNELS, \
+from utils.constants import ADMIN_ROLE_ID, CRISIS_IGNORED_CATEGORIES, CRISIS_IGNORED_ROLES, \
+    CRISIS_REMOVE_VIEW_PERMS_CHANNELS, \
     EVERYONE_ROLE_ID, JR_ADMIN_ROLE_ID, SBU_ERROR, SBU_GOLD, SBU_PURPLE, SBU_SUCCESS
 
 CHANNEL_CHANGES: dict[int, list[int]] = {}
@@ -156,6 +157,11 @@ class Raid(commands.Cog):
 
         await ctx.trigger_typing()
 
+    @crisis.command(name='help')
+    @commands.has_role(JR_ADMIN_ROLE_ID)
+    async def help(self, ctx: commands.Context):
+        pass
+
     @crisis.command(name='start', aliases=['init', 'begin'])
     @commands.cooldown(1, 600, commands.BucketType.guild)
     async def start(self, ctx: commands.Context):
@@ -202,6 +208,7 @@ class Raid(commands.Cog):
         is_crisis_loading = False
 
     @crisis.command(name='restore', aliases=['rs', 'rst'])
+    @commands.has_role(ADMIN_ROLE_ID)
     async def restore(self, ctx: commands.Context):
         embed = discord.Embed(
             title='',
@@ -226,7 +233,7 @@ class Raid(commands.Cog):
         if is_crisis_loading:
             embed = discord.Embed(
                 title='Error',
-                description='A crisis is initializing',
+                description='A crisis is initializing. Please wait',
                 color=SBU_ERROR
             )
             await reply.edit(embed=embed)
@@ -247,6 +254,70 @@ class Raid(commands.Cog):
         )
         is_crisis_active = False
         await reply.edit(embed=embed)
+
+    @crisis.command(name='add', aliases=['a', 'include'])
+    async def channel_add(self, ctx: commands.Context, channel: discord.TextChannel):
+        if not is_crisis_active:
+            embed = discord.Embed(
+                title='Error',
+                description='No ongoing crisis',
+                color=SBU_ERROR
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        if is_crisis_loading:
+            embed = discord.Embed(
+                title='Error',
+                description='A crisis is initializing. Please wait',
+                color=SBU_ERROR
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        everyone_role = ctx.guild.get_role(EVERYONE_ROLE_ID)
+        channel_name = channel.name
+        overwrites = channel.overwrites
+
+        if everyone_role not in overwrites.keys():  # default @everyone overwrites might not be present (??)
+            embed = discord.Embed(
+                title='Error',
+                description='Channel securing failed. Please secure manually',
+                color=SBU_ERROR
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        overwrites[everyone_role].update(view_channel=False)
+
+        if not channel_name.endswith('-☆'):  # add asterisk if not present already
+            channel_name += '-☆'
+
+        await channel.edit(overwrites=overwrites, name=channel_name)
+
+        if channel.id not in TICKET_CHANNEL_CHANGES.keys():
+            TICKET_CHANNEL_CHANGES[channel.id] = []
+
+        # cache changes to revert view perms on restore
+        TICKET_CHANNEL_CHANGES[channel.id].append(EVERYONE_ROLE_ID)
+
+        embed = discord.Embed(
+            title='Success',
+            description=f'{channel.mention} has been secured',
+            color=SBU_SUCCESS
+        )
+        await ctx.reply(embed=embed)
+
+    @channel_add.error
+    async def channel_add_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+crisis add <channel>`',
+                color=SBU_ERROR
+            )
+
+            await ctx.reply(embed=embed)
 
     @crisis.group(name='show', aliases=['print', 'list'])
     async def show(self, ctx: commands.Context):
