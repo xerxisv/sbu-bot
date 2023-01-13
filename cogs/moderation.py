@@ -51,7 +51,7 @@ class Moderation(commands.Cog):
 
     @ban.error
     async def ban_error(self, ctx: commands.Context, exception: Exception):
-        if isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+        if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+ban <@mention | ID> [reason]`',
@@ -83,7 +83,7 @@ class Moderation(commands.Cog):
 
     @unban.error
     async def unban_error(self, ctx: commands.Context, exception: Exception):
-        if isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+        if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+unban <@mention | ID> [reason]`',
@@ -121,8 +121,6 @@ class Moderation(commands.Cog):
         duration = datetime.timedelta(seconds=timespan)
 
         await member.timeout_for(duration=duration, reason=reason)
-        await member.send("You have been muted in Skyblock University.\n\n"
-                          "If you would like to appeal your mute, please create a ticket using <@575252669443211264>")
         await ctx.reply(f"{member.mention} has been muted for {duration} | Reason {reason}")
 
         await ctx.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
@@ -132,9 +130,12 @@ class Moderation(commands.Cog):
             f"Duration: {duration} \n"
             f"Reason: {reason}")
 
+        await member.send("You have been muted in Skyblock University.\n\n"
+                          "If you would like to appeal your mute, please create a ticket using <@575252669443211264>")
+
     @mute.error
     async def mute_error(self, ctx: commands.Context, exception: Exception):
-        if isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+        if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+mute <@mention | ID> <time> <reason>`',
@@ -157,7 +158,7 @@ class Moderation(commands.Cog):
 
     @unmute.error
     async def check_error(self, ctx, exception):
-        if isinstance(exception, commands.BadArgument) or isinstance(exception, commands.MissingRequiredArgument):
+        if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+unmute <@mention | ID> [reason]`',
