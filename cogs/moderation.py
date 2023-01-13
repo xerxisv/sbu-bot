@@ -157,7 +157,7 @@ class Moderation(commands.Cog):
                   f"Reason: {reason}")
 
     @unmute.error
-    async def check_error(self, ctx, exception):
+    async def unmute_error(self, ctx, exception):
         if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
@@ -165,6 +165,46 @@ class Moderation(commands.Cog):
                 colour=0xFF0000
             )
             await ctx.reply(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if is_warn(message.content):
+            await handle_warn(message)
+
+
+async def handle_warn(message: discord.Message):
+    if message.author.get_role(JR_MOD_ROLE_ID) is None:
+        return
+    # Split the message on every space character
+    split_msg = message.content.split(' ')
+    # If the message is less than 2 words long then it's an invalid warn command, return
+    if len(split_msg) < 3:
+        return
+
+    # Else remove the discord formatting characters from the mention
+    user_id = split_msg[1].replace('<', '').replace('@', '').replace('>', '')
+
+    # And check if it was indeed a mention
+    if not user_id.isnumeric():
+        return
+
+    # Fetch the member with the specified ID
+    member: discord.Member = message.guild.get_member(int(user_id))
+
+    if member is None or member.get_role(JR_MOD_ROLE_ID) is not None:
+        return
+
+    await message.guild.get_channel(MOD_ACTION_LOG_CHANNEL_ID).send(
+        f"Moderator: {message.author.mention} \n"
+        f"User: {member.mention} \n"
+        f"Action: Warn \n"
+        f"Reason: {' '.join(split_msg[2:])}")
+
+    await message.channel.send("Log created")
+
+
+def is_warn(message: str):
+    return message.startswith("!warn")
 
 
 def setup(bot):

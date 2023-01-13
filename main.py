@@ -6,7 +6,6 @@ import discord.utils
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from handlers import chat_triggers, gtatsu, warns
 from utils.constants import ADMIN_CHAT_CHANNEL_ID, ADMIN_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, \
     CRAFT_REPS_CHANNEL_ID, JR_MOD_ROLE_ID, SBU_BOT_LOGS_CHANNEL_ID, SBU_GOLD
 from utils.database import DBConnection
@@ -17,16 +16,12 @@ intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="+", intents=intents, case_insensitive=True)
 bot.remove_command('help')
 
-trigger_handler = chat_triggers.TriggersFileHandler()
-
 
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready")
 
     await DBConnection().create_db()
-    gtatsu.set_up_db()
-    await trigger_handler.load_triggers()
 
     channel = bot.get_channel(ADMIN_CHAT_CHANNEL_ID)
     await channel.send(f"The Bot has been recently rebooted.\n"
@@ -203,15 +198,7 @@ async def on_command_error(ctx: commands.Context, exception):
 
 @bot.event
 async def on_message(message: discord.Message):
-    # Prevents the bot from going through all the if statements unnecessarily
-    if warns.is_warn(message.content):
-        await warns.handle_warn(message)
-    elif trigger_handler.is_trigger(message.content):
-        await trigger_handler.handle_trigger(message)
-    elif gtatsu.is_bridge_message(message):
-        await gtatsu.handle_gtatsu(message)
-    else:
-        await bot.process_commands(message)
+    await bot.process_commands(message)
 
 
 if __name__ == '__main__':
