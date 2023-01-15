@@ -6,8 +6,7 @@ import discord.utils
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from utils.constants import ADMIN_CHAT_CHANNEL_ID, ADMIN_ROLE_ID, CARRY_SERVICE_REPS_CHANNEL_ID, \
-    CRAFT_REPS_CHANNEL_ID, JR_MOD_ROLE_ID, SBU_BOT_LOGS_CHANNEL_ID, SBU_GOLD
+from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.error_utils import exception_to_string, log_error
 from utils.setup import run_setup
@@ -16,20 +15,34 @@ intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="+", intents=intents, case_insensitive=True)
 bot.remove_command('help')
 
+ConfigHandler().load_config()
+config = ConfigHandler().get_config()
+
+
+def load_cogs():
+    for filename in os.listdir('./cogs'):
+        if not filename.endswith('.py'):
+            continue
+
+        name = filename[:-3]
+
+        if config['modules'][name] is not True:
+            continue
+
+        print(f'\033[1mLoading \033[36;4m{name}\033[0;1m extension...\033[0m')
+        bot.load_extension(f'cogs.{name}')
+
 
 @bot.event
 async def on_ready():
-    print(f"{bot.user} is ready")
-
     await DBConnection().create_db()
 
-    channel = bot.get_channel(ADMIN_CHAT_CHANNEL_ID)
-    await channel.send(f"The Bot has been recently rebooted.\n"
-                       "Please enable all the necessary cogs <a:wiggles:917695379485634580>.")
+    load_cogs()
+    print(f"\033[1;4;34m{bot.user} is ready\033[0m")
 
 
 @bot.command()
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_role(config['admin_role_id'])
 async def load_all(ctx: commands.Context):
     for filename in os.listdir('./cogs'):
         if not filename.endswith('.py'):
@@ -41,7 +54,7 @@ async def load_all(ctx: commands.Context):
 
 
 @bot.command()
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_role(config['admin_role_id'])
 async def load(ctx: commands.Context, extension):
     if extension == 'all':
         await bot.get_command('load_all').invoke(ctx)
@@ -57,7 +70,7 @@ async def load(ctx: commands.Context, extension):
 
 
 @bot.command()
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_role(config['admin_role_id'])
 async def unload(ctx: commands.Context, extension):
     try:
         bot.unload_extension(f'cogs.{extension}')
@@ -70,7 +83,7 @@ async def unload(ctx: commands.Context, extension):
 
 
 @bot.command()
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_role(config['admin_role_id'])
 async def reload(ctx: commands.Context):
     for filename1 in os.listdir('./cogs'):
         if not filename1.endswith('.py'):
@@ -101,7 +114,7 @@ async def help(ctx: commands.Context):
         title='Help',
         description='All the help commands are listed below.\n'
                     'Options inside "<>" are required while options inside "[]" are optional.',
-        colour=SBU_GOLD
+        color=config['colors']['primary']
     )
     embed.add_field(name="Ping the bot.", value="`+ping`", inline=False)
     embed.add_field(name="Link your discord and hypixel accounts.", value="`+verify <IGN>`", inline=False)
@@ -109,10 +122,7 @@ async def help(ctx: commands.Context):
     embed.add_field(name="Lists hypixel stats.", value="`+hypixel <IGN>`", inline=False)
     embed.add_field(name="Check if you meet reqs for SB Masters.", value="`+checkreq <IGN>`", inline=False)
     embed.add_field(name="Suggest something.", value="`+suggest <suggestion>`", inline=False)
-    embed.add_field(name="Give reputation to a user.",
-                    value='`+rep give <@mention> <comments>`\n'
-                          f'*It can only be used in <#{CRAFT_REPS_CHANNEL_ID}> or '
-                          f'<#{CARRY_SERVICE_REPS_CHANNEL_ID}>*', inline=False)
+    embed.add_field(name="Give reputation to a user.", value='`+rep give <@mention> <comments>`\n', inline=False)
     embed.add_field(name="Add yourself to the inactivity list.", value="`+inactive add <time>`\n"
                                                                        "*Time is in days, __min 7__, __max 30__\n"
                                                                        "**Ex**: `+inactive add 25d`*", inline=False)
@@ -121,34 +131,32 @@ async def help(ctx: commands.Context):
 
 
 @bot.command()
-@commands.has_role(JR_MOD_ROLE_ID)
+@commands.has_role(config['jr_mod_role_id'])
 async def modhelp(ctx: commands.Context):
     embed = discord.Embed(
         title='Moderation Commands',
         description='All the moderation commands are listed below.\n'
                     'Options inside "<>" are required while options inside "[]" are optional.',
-        colour=SBU_GOLD
+        color=config['colors']['primary']
     )
     embed.set_footer(text='Skyblock University Bot')
-    embed.add_field(name="Ban", value="`+ban <@mention | ID> [reason]`", inline=False)
-    embed.add_field(name="Mute", value="`+mute <@mention | ID> <time> [reason]`\n"
+    embed.add_field(name="Ban", value="`+ban <@mention> [reason]`", inline=False)
+    embed.add_field(name="Mute", value="`+mute <@mention> <time> [reason]`\n"
                                        "*Max mute duration is 28 days.\n"
-                                       "Mods **can** mute each other but **should not** unless "
-                                       "specifically asked to*", inline=False)
-    embed.add_field(name="Unmute", value="`+unmute <@mention | ID> [reason]`", inline=False)
+                                       "Mods can mute themselves.*", inline=False)
+    embed.add_field(name="Unmute", value="`+unmute <@mention> [reason]`", inline=False)
     embed.add_field(name="Reputation specific commands", value="`+rep help`", inline=False)
     embed.add_field(name="Banlist specific commands", value="`+banlist help`", inline=False)
     embed.add_field(name="Inactives specific commands", value="`+inactive help`", inline=False)
     embed.add_field(name="Suggestions specific commands", value="`+suggestions help`", inline=False)
-    embed.add_field(name="Activate crisis mode", value="`+crisis`", inline=False)
-    embed.add_field(name="Deactivate crisis mode", value="`+crisisend`", inline=False)
-    embed.add_field(name="Add a question to the QOTD list", value="`+qotdadd <question>`", inline=False)
-    embed.add_field(name="List all questions", value="`+qotdlist`", inline=False)
+    embed.add_field(name="Crisis specific commands", value="`+crisis help`", inline=False)
+    embed.add_field(name="Qotd specific commands", value="`+qotd help`", inline=False)
+    embed.add_field(name="Triggers specific commands", value='`+trigger help`', inline=False)
     await ctx.reply(embed=embed)
 
 
 @bot.command()
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_role(config['admin_role_id'])
 async def dm(ctx: commands.Context, user: discord.User, *, message: str):
     try:
         await user.send(message)
@@ -165,7 +173,7 @@ async def on_command_error(ctx: commands.Context, exception):
         embed = discord.Embed(
             title='Error',
             description=f'Command is on cooldown. Try again in {int(exception.retry_after)} seconds',
-            colour=0xFF0000
+            color=config['colors']['error']
         )
         await ctx.reply(embed=embed)
 
@@ -174,7 +182,7 @@ async def on_command_error(ctx: commands.Context, exception):
             title='Error',
             description=f'Insufficient permissions, only members '
                         f'with **{ctx.guild.get_role(exception.missing_role).name}** role can run this command',
-            colour=0xFF0000
+            color=config['colors']['error']
         )
         await ctx.reply(embed=embed)
 
@@ -182,7 +190,7 @@ async def on_command_error(ctx: commands.Context, exception):
         embed = discord.Embed(
             title='Error',
             description='Bot does not have permissions to do this.',
-            colour=0xFF0000
+            color=config['colors']['error']
         )
         await ctx.reply(embed=embed)
     elif isinstance(exception, (commands.CommandNotFound, commands.MissingRequiredArgument, commands.BadArgument)):
@@ -191,8 +199,8 @@ async def on_command_error(ctx: commands.Context, exception):
         try:
             await log_error(ctx, exception)
         except AttributeError:
-            await bot.get_channel(SBU_BOT_LOGS_CHANNEL_ID).send('Exception passed to main:\n' +
-                                                                exception_to_string("main", exception))
+            await bot.get_channel(config['bot_log_channel_id']).send('Exception passed to main:\n' +
+                                                                     exception_to_string("main", exception))
             return
 
 

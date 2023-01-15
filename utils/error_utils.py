@@ -1,7 +1,7 @@
 from discord.ext.commands import Context
 import traceback
 
-from utils.constants import SBU_BOT_LOGS_CHANNEL_ID
+from utils.config.config import ConfigHandler
 
 ERROR_MESSAGE = '**Exception raised during the execution of {}**.\n```{}```*URL: <{}>*'
 
@@ -14,5 +14,5 @@ def exception_to_string(command: str, exception: Exception, jump_url: str = None
 
 async def log_error(ctx: Context, exception: Exception):
     await ctx.guild\
-        .get_channel(SBU_BOT_LOGS_CHANNEL_ID)\
+        .get_channel(ConfigHandler().get_config()['bot_log_channel_id'])\
         .send(exception_to_string(ctx.command.name, exception, ctx.message.jump_url))

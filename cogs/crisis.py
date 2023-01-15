@@ -1,10 +1,7 @@
-# TODO create command that adds channels to crisis
 import discord
 from discord.ext import commands
 
-from utils.constants import ADMIN_ROLE_ID, CRISIS_IGNORED_CATEGORIES, CRISIS_IGNORED_ROLES, \
-    CRISIS_REMOVE_VIEW_PERMS_CHANNELS, \
-    EVERYONE_ROLE_ID, JR_ADMIN_ROLE_ID, SBU_ERROR, SBU_GOLD, SBU_PURPLE, SBU_SUCCESS
+from utils.config.config import ConfigHandler
 
 CHANNEL_CHANGES: dict[int, list[int]] = {}
 TICKET_CHANNEL_CHANGES: dict[int, list[int]] = {}
@@ -14,6 +11,8 @@ locked_channels = []
 
 is_crisis_active = False
 is_crisis_loading = False
+
+config = ConfigHandler().get_config()
 
 
 async def secure_everyone_role(everyone_role: discord.Role):
@@ -27,32 +26,32 @@ async def secure_everyone_role(everyone_role: discord.Role):
 async def restore_everyone_role(ctx: commands.Context):
     # Restore everyone role
     try:
-        everyone_perms = ctx.guild.get_role(EVERYONE_ROLE_ID).permissions
+        everyone_perms = ctx.guild.get_role(config['crisis']['everyone_role_id']).permissions
         everyone_perms.update(send_messages=True, send_messages_in_threads=True, connect=True)
 
-        await ctx.guild.get_role(EVERYONE_ROLE_ID).edit(permissions=everyone_perms)
+        await ctx.guild.get_role(config['crisis']['everyone_role_id']).edit(permissions=everyone_perms)
     except discord.HTTPException as exception:
         errors.append((exception.text, '`@everyone`'))
 
 
 async def secure_ticket_channels(ctx: commands.Context, everyone_role: discord.Role):
     # remove viewing perms from ticket creation channels
-    for channel_id in CRISIS_REMOVE_VIEW_PERMS_CHANNELS:
+    for channel_id in config['crisis']['ticket_channels']:
         try:
             channel: discord.TextChannel = ctx.guild.get_channel(channel_id)
             overwrites = channel.overwrites
         except AttributeError as exception:
-            errors.append((exception.name, channel_id))
+            errors.append((exception.name, str(channel_id)))
             continue
 
         TICKET_CHANNEL_CHANGES[channel_id] = []
 
         if overwrites[everyone_role].view_channel is not False:
             overwrites[everyone_role].update(view_channel=False)  # Remove viewing perms from everyone
-            TICKET_CHANNEL_CHANGES[channel_id].append(EVERYONE_ROLE_ID)
+            TICKET_CHANNEL_CHANGES[channel_id].append(config['crisis']['everyone_role_id'])
 
         for role in overwrites:  # Iterate through the channel's overwrites
-            if role.id in CRISIS_IGNORED_ROLES:  # Skip any of the ignored roles
+            if role.id in config['crisis']['ignored_roles']:  # Skip any of the ignored roles
                 continue
             if overwrites[role].view_channel is not False:
                 # Remove viewing perms
@@ -62,7 +61,7 @@ async def secure_ticket_channels(ctx: commands.Context, everyone_role: discord.R
         try:
             await channel.edit(overwrites=overwrites, name=channel.name + '-☆')
         except discord.HTTPException as exception:
-            errors.append((exception.text, channel_id))
+            errors.append((exception.text, str(channel_id)))
         else:
             locked_channels.append(channel.id)
 
@@ -91,8 +90,8 @@ async def restore_ticket_channels(ctx: commands.Context):
 async def secure_text_channels(ctx: commands.Context):
     # remove post perms overwrites from all channels
     for channel in ctx.guild.channels:
-        if (channel.category is not None and channel.category.id in CRISIS_IGNORED_CATEGORIES) or \
-                channel.id in CRISIS_REMOVE_VIEW_PERMS_CHANNELS:
+        if (channel.category is not None and channel.category.id in config['crisis']['ignored_categories']) or \
+                channel.id in config['crisis']['ticket_channels']:
             continue
 
         # flags if the overwrites have been changed
@@ -103,7 +102,7 @@ async def secure_text_channels(ctx: commands.Context):
             CHANNEL_CHANGES[channel.id] = []
 
             for role in overwrites:  # iterates through all the role/member overwrites
-                if role.id in CRISIS_IGNORED_ROLES:  # ignores some default roles
+                if role.id in config['crisis']['ignored_roles']:  # ignores some default roles
                     continue
 
                 if overwrites[role].send_messages is True:  # if there is any role that forcefully gives speaking perms
@@ -145,22 +144,17 @@ async def restore_text_channels(ctx: commands.Context):
             errors.append((str(exception), str(channel_id)))
 
 
-class Raid(commands.Cog):
+class Crisis(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.group(name='crisis', aliases=['cannibalism', 'lockdown'])
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     async def crisis(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             return
 
         await ctx.trigger_typing()
-
-    @crisis.command(name='help')
-    @commands.has_role(JR_ADMIN_ROLE_ID)
-    async def help(self, ctx: commands.Context):
-        pass
 
     @crisis.command(name='start', aliases=['init', 'begin'])
     @commands.cooldown(1, 600, commands.BucketType.guild)
@@ -173,7 +167,7 @@ class Raid(commands.Cog):
             embed = discord.Embed(
                 title='',
                 description='A crisis is already active.',
-                color=SBU_PURPLE
+                color=config['colors']['secondary']
             )
             await ctx.reply(embed=embed)
             return
@@ -181,7 +175,7 @@ class Raid(commands.Cog):
         embed = discord.Embed(
             title='',
             description='Crisis Initializing <a:loading:978732444998070304>',
-            color=SBU_PURPLE
+            color=config['colors']['secondary']
         )
         reply = await ctx.reply(embed=embed)
 
@@ -191,7 +185,7 @@ class Raid(commands.Cog):
         is_crisis_active = True
         is_crisis_loading = True
 
-        everyone_role = ctx.guild.get_role(EVERYONE_ROLE_ID)
+        everyone_role = ctx.guild.get_role(config['crisis']['everyone_role_id'])
 
         await secure_everyone_role(everyone_role)
 
@@ -202,18 +196,18 @@ class Raid(commands.Cog):
         embed = discord.Embed(
             title='',
             description='Crisis Initialized',
-            color=SBU_SUCCESS
+            color=config['colors']['success']
         )
         await reply.edit(embed=embed)
         is_crisis_loading = False
 
     @crisis.command(name='restore', aliases=['rs', 'rst'])
-    @commands.has_role(ADMIN_ROLE_ID)
+    @commands.has_role(config['admin_role_id'])
     async def restore(self, ctx: commands.Context):
         embed = discord.Embed(
             title='',
             description='Restoring Crisis Changes <a:loading:978732444998070304>',
-            color=SBU_PURPLE
+            color=config['colors']['secondary']
         )
 
         reply = await ctx.reply(embed=embed)
@@ -225,7 +219,7 @@ class Raid(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='No ongoing crisis',
-                color=SBU_ERROR
+                color=config['colors']['error']
             )
             await reply.edit(embed=embed)
             return
@@ -234,7 +228,7 @@ class Raid(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='A crisis is initializing. Please wait',
-                color=SBU_ERROR
+                color=config['colors']['error']
             )
             await reply.edit(embed=embed)
             return
@@ -250,7 +244,7 @@ class Raid(commands.Cog):
         embed = discord.Embed(
             title='',
             description='Crisis Restored',
-            color=SBU_SUCCESS
+            color=config['colors']['success']
         )
         is_crisis_active = False
         await reply.edit(embed=embed)
@@ -261,7 +255,7 @@ class Raid(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='No ongoing crisis',
-                color=SBU_ERROR
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -270,12 +264,12 @@ class Raid(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='A crisis is initializing. Please wait',
-                color=SBU_ERROR
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
-        everyone_role = ctx.guild.get_role(EVERYONE_ROLE_ID)
+        everyone_role = ctx.guild.get_role(config['crisis']['everyone_role_id'])
         channel_name = channel.name
         overwrites = channel.overwrites
 
@@ -283,7 +277,7 @@ class Raid(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Channel securing failed. Please secure manually',
-                color=SBU_ERROR
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -299,12 +293,12 @@ class Raid(commands.Cog):
             TICKET_CHANNEL_CHANGES[channel.id] = []
 
         # cache changes to revert view perms on restore
-        TICKET_CHANNEL_CHANGES[channel.id].append(EVERYONE_ROLE_ID)
+        TICKET_CHANNEL_CHANGES[channel.id].append(config['crisis']['everyone_role_id'])
 
         embed = discord.Embed(
             title='Success',
             description=f'{channel.mention} has been secured',
-            color=SBU_SUCCESS
+            color=config['colors']['success']
         )
         await ctx.reply(embed=embed)
 
@@ -314,7 +308,7 @@ class Raid(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+crisis add <channel>`',
-                color=SBU_ERROR
+                color=config['colors']['error']
             )
 
             await ctx.reply(embed=embed)
@@ -343,7 +337,7 @@ class Raid(commands.Cog):
         embed = discord.Embed(
             title='Crisis',
             description=channels_string,
-            color=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         await ctx.reply(embed=embed)
@@ -361,11 +355,11 @@ class Raid(commands.Cog):
         embed = discord.Embed(
             title='Crisis',
             description=errors_string,
-            color=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         await ctx.reply(embed=embed)
 
 
 def setup(bot: commands.Bot):
-    bot.add_cog(Raid(bot))
+    bot.add_cog(Crisis(bot))

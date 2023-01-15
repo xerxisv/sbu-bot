@@ -1,14 +1,16 @@
+# TODO remove type field
 from math import ceil
 
 import aiosqlite
 import discord
 from discord.ext import commands
 
-from utils.constants import CARRY_SERVICE_REPS_CHANNEL_ID, CRAFT_REPS_CHANNEL_ID, JR_ADMIN_ROLE_ID, SBU_GOLD, \
-    SBU_LOGO_URL, SBU_PURPLE
+from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.database.schemas import RepCommand
 from utils.error_utils import log_error
+
+config = ConfigHandler().get_config()
 
 
 class Reputations(commands.Cog):
@@ -19,36 +21,34 @@ class Reputations(commands.Cog):
     @commands.group(name='rep', aliases=['reputation'], case_insensitive=True)
     async def rep(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
-            await self.bot.get_command('rep help').invoke(ctx)
+            await self.bot.get_command('rep give').invoke(ctx)
             return
         await ctx.trigger_typing()
 
     @rep.command(name='help', aliases=['commands'])
+    @commands.has_role(config['jr_admin_role_id'])
     async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command Help',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
         embed.add_field(name='Give reputation to a user.',
-                        value='`+rep give <@mention> <comments>`\n'
-                              f'*It can only be used in <#{CRAFT_REPS_CHANNEL_ID}> or '
-                              f'<#{CARRY_SERVICE_REPS_CHANNEL_ID}>*',
+                        value='`+rep give <@mention> <comments>`\n',
                         inline=False)
         embed.add_field(name='Remove a reputation from a user.',
                         value='`+rep remove <rep_ID>`\n'
                               '*__Jr. Admin__ command*',
                         inline=False)
         embed.add_field(name='Show the reputation a user has received.',
-                        value='`+rep show receiver <@mention | ID> [page]`\n'
+                        value='`+rep show receiver <@mention> [page]`\n'
                               '*__Jr. Admin__ command*',
                         inline=False)
         embed.add_field(name='Show the reputation a user has given.',
-                        value='`+rep show provider <@mention | ID:> [page]`\n'
+                        value='`+rep show provider <@mention> [page]`\n'
                               '*__Jr. Admin__ command*',
                         inline=False)
         embed.add_field(name='Give reputation to a user as another user',
-                        value='`+rep admin give <@mention | ID> <@mention | ID> '
-                              '<type: craft | carry> <comments>`\n'
+                        value='`+rep admin give <@mention> <@mention> <comments>`\n'
                               '*__Jr. Admin__ command*',
                         inline=False)
         embed.add_field(name='Command aliases list',
@@ -61,7 +61,7 @@ class Reputations(commands.Cog):
     async def alias(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command aliases',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name='rep', value='"reputation"', inline=False)
@@ -77,22 +77,11 @@ class Reputations(commands.Cog):
     @rep.command(aliases=['add'])
     @commands.cooldown(1, 5)
     async def give(self, ctx: commands.Context, receiver: discord.Member, *, comments: str):
-        if ctx.channel.id not in [CRAFT_REPS_CHANNEL_ID, CARRY_SERVICE_REPS_CHANNEL_ID]:
-            embed = discord.Embed(
-                title='Error',
-                description='This command cannot be used here.\n'
-                            f'Use in <#{CARRY_SERVICE_REPS_CHANNEL_ID}> if you want to give rep for a carry,\n'
-                            f'or in <#{CRAFT_REPS_CHANNEL_ID}> for crafting/lending/reforging.',
-                colour=0xFF0000
-            )
-            await ctx.reply(embed=embed)
-            return
-
         if ctx.author.id == receiver.id:
             embed = discord.Embed(
                 title='Error',
                 description='You can\'t rep yourself.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.send(embed=embed, delete_after=15)
             await ctx.message.delete(delay=15)
@@ -102,7 +91,7 @@ class Reputations(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Rep can\'t be longer than 500 characters.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.send(embed=embed, delete_after=15)
             await ctx.message.delete(delay=15)
@@ -112,23 +101,22 @@ class Reputations(commands.Cog):
         await cursor.execute(RepCommand.get_max_rep_id())
 
         rep_id = (await cursor.fetchone())[0] + 1
-        rep_type = 'carry' if ctx.channel.id == CARRY_SERVICE_REPS_CHANNEL_ID else 'craft'
 
         rep_embed = discord.Embed(
-            title=f'{rep_type.title()} Reputation Given',
-            colour=SBU_PURPLE
+            title=f'Craft Reputation Given',
+            color=config['colors']['secondary']
         )
 
         rep_embed.set_author(name=f'Reputation by {ctx.message.author.name}')
         rep_embed.add_field(name='Receiver', value=receiver.mention, inline=True)
         rep_embed.add_field(name='Comments', value=comments, inline=False)
         rep_embed.set_footer(text=f'Rep ID: {rep_id}')
-        rep_embed.set_thumbnail(url=SBU_LOGO_URL)
+        rep_embed.set_thumbnail(url=config['logo_url'])
 
-        message = await ctx.message.channel \
-            .send(embed=rep_embed)
+        rep_log_channel = ctx.guild.get_channel(config['rep']['rep_log_channel_id'])
+        message = await rep_log_channel.send(embed=rep_embed)
 
-        rep = RepCommand(rep_id, receiver.id, ctx.author.id, comments, rep_type, message.id)
+        rep = RepCommand(rep_id, receiver.id, ctx.author.id, comments, 'craft', message.id)
 
         await cursor.execute(*(rep.insert()))
         await cursor.close()
@@ -137,7 +125,7 @@ class Reputations(commands.Cog):
         embed = discord.Embed(
             title='Success',
             description=f'Successfully gave rep to {receiver.mention}',
-            colour=0x00FF00
+            color=config['colors']['success']
         )
 
         await ctx.reply(embed=embed, delete_after=15)
@@ -148,8 +136,8 @@ class Reputations(commands.Cog):
         if isinstance(exception, (commands.MissingRequiredArgument, commands.BadArgument)):
             embed = discord.Embed(
                 title='Error',
-                description='Incorrect format. Use `+rep give <@mention | ID> <comments>`',
-                colour=0xFF0000
+                description='Incorrect format. Use `+rep give <@mention> <comments>`',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed, delete_after=15)
             await ctx.message.delete(delay=15)
@@ -157,14 +145,14 @@ class Reputations(commands.Cog):
         elif isinstance(exception, commands.UserNotFound):
             embed = discord.Embed(
                 title='Error',
-                description='Invalid user. Use `+rep show provider <@mention | ID> [page]`',
-                colour=0xFF0000
+                description='Invalid user. Use `+rep give <@mention> <comments>`',
+                color=config['colors']['error']
             )
-            await ctx.reply(embed=embed, delete_after=15)
-            await ctx.message.delete(delay=15)
+
+            await ctx.reply(embed=embed)
 
     @rep.command(name='remove', aliases=['rm', 'delete', 'del'])
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     @commands.cooldown(1, 5)
     async def remove(self, ctx: commands.Context, rep_id: int):
         cursor = await self.db.cursor()
@@ -172,9 +160,11 @@ class Reputations(commands.Cog):
         rep_tuple = await cursor.fetchone()
 
         if rep_tuple is None:
-            embed = discord.Embed(title='Error',
-                                  description=f'Reputation with id {rep_id} not found.',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title='Error',
+                description=f'Reputation with id {rep_id} not found.',
+                color=config['colors']['error']
+            )
             await ctx.send(embed=embed, delete_after=15)
             await ctx.message.delete(delay=15)
             return
@@ -184,7 +174,7 @@ class Reputations(commands.Cog):
         await cursor.execute(RepCommand.delete_row_with_id(rep_id))
 
         embed = None
-        channel_id = CARRY_SERVICE_REPS_CHANNEL_ID if rep['type'] == 'carry' else CRAFT_REPS_CHANNEL_ID
+        channel_id = config['rep']['rep_log_channel_id']
 
         try:
             await ctx.guild \
@@ -193,19 +183,22 @@ class Reputations(commands.Cog):
                 .delete()
         except discord.NotFound as exception:
             await log_error(ctx, exception)
-            embed = discord.Embed(title=f'Partial Deletion', description=f'Reputation with id {rep_id} removed from'
-                                                                         f' database but not from <#{channel_id}>.',
-                                  colour=0xFFFF00)
+            embed = discord.Embed(
+                title=f'Partial Deletion',
+                description=f'Reputation with id {rep_id} removed from'
+                            f' database but not from <#{channel_id}>.',
+                color=config['colors']['secondary']
+            )
         else:
-            embed = discord.Embed(title=f'Successful Deletion', description=f'Reputation with id {rep_id} removed'
-                                                                            f' from <#{channel_id}>.',
-                                  colour=0x00FF00)
+            embed = discord.Embed(
+                title=f'Successful Deletion',
+                description=f'Reputation with id {rep_id} removed'
+                            f' from <#{channel_id}>.',
+                color=config['colors']['success']
+            )
         finally:
-            delete = ctx.message.channel.id in [CRAFT_REPS_CHANNEL_ID, CARRY_SERVICE_REPS_CHANNEL_ID]
-
-            await ctx.send(embed=embed, delete_after=15 if delete else None)
-            if delete:
-                await ctx.message.delete(delay=15)
+            await ctx.send(embed=embed, delete_after=15)
+            await ctx.message.delete(delay=15)
 
     @remove.error
     async def remove_error(self, ctx: commands.Context, exception):
@@ -213,7 +206,7 @@ class Reputations(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Incorrect format. Use `+rep remove <rep_id>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed, delete_after=15)
             await ctx.message.delete(delay=15)
@@ -234,8 +227,8 @@ class Reputations(commands.Cog):
         if rows == 0:
             embed = discord.Embed(
                 title='204',
-                description='User has not received any reps <a:confusion:1023126211586707547>',
-                colour=SBU_GOLD
+                description='User has not received any reps.',
+                color=config['colors']['primary']
             )
             await ctx.reply(embed=embed)
             return
@@ -246,7 +239,7 @@ class Reputations(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -257,7 +250,7 @@ class Reputations(commands.Cog):
 
         embed = discord.Embed(
             title=f'Reps Received by {receiver.display_name}',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         for rep_tuple in res:
@@ -266,7 +259,6 @@ class Reputations(commands.Cog):
 
             embed.add_field(name=f"__Rep #{rep['rep_id']}__",
                             value=f"`{rep['comments']}`\n"
-                                  f"*Type: {rep['type'].title()}*\n"
                                   f"*By: {provider.mention}*",
                             inline=False)
 
@@ -279,15 +271,15 @@ class Reputations(commands.Cog):
         if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
-                description='Incorrect format. Use `+rep show receiver <@mention | ID> [page]`',
-                colour=0xFF0000
+                description='Incorrect format. Use `+rep show receiver <@mention> [page]`',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
         elif isinstance(exception, commands.UserNotFound):
             embed = discord.Embed(
                 title='Error',
-                description='Invalid user. Use `+rep show receiver <@mention | ID> [page]`',
-                colour=0xFF0000
+                description='Invalid user. Use `+rep show receiver <@mention> [page]`',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
@@ -302,8 +294,8 @@ class Reputations(commands.Cog):
         if rows == 0:
             embed = discord.Embed(
                 title='204',
-                description='User has not provided any reps <a:confusion:1023126211586707547>',
-                colour=SBU_GOLD
+                description='User has not provided any reps.',
+                color=config['colors']['primary']
             )
             await ctx.reply(embed=embed)
             return
@@ -314,7 +306,7 @@ class Reputations(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -325,7 +317,7 @@ class Reputations(commands.Cog):
 
         embed = discord.Embed(
             title=f'Reps Given by {provider.display_name}',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         for rep_tuple in res:
@@ -334,7 +326,6 @@ class Reputations(commands.Cog):
 
             embed.add_field(name=f"__Rep #{rep['rep_id']}__",
                             value=f"`{rep['comments']}`\n"
-                                  f"*Type: {rep['type'].title()}*\n"
                                   f"*To: {receiver.mention}*",
                             inline=False)
 
@@ -347,39 +338,27 @@ class Reputations(commands.Cog):
         if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
             embed = discord.Embed(
                 title='Error',
-                description='Incorrect format. Use `+rep show provider <@mention | ID: integer> [page: integer]`',
-                colour=0xFF0000
+                description='Incorrect format. Use `+rep show provider <@mention> [page]`',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
         elif isinstance(exception, commands.UserNotFound):
             embed = discord.Embed(
                 title='Error',
-                description='Invalid user. Use `+rep show provider <@mention | ID: integer> [page: integer]`',
-                colour=0xFF0000
+                description='Invalid user. Use `+rep show provider <@mention> [page]`',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
     @rep.group(name='admin', aliases=['administrator', 'fatman'], case_insensitive=True)
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     async def admin(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('rep help').invoke(ctx)
 
     @admin.command(name='give', aliases=['add'])
     @commands.cooldown(1, 5)
-    async def give_from(self, ctx: commands.Context, receiver: discord.User, provider: discord.User, rep_type: str, *,
-                        comments: str):
-        rep_type = rep_type.lower()
-        if rep_type not in ['craft', 'carry']:
-            embed = discord.Embed(
-                title='Error',
-                description='Invalid rep type. Must be either `carry` or `craft`.\n'
-                            'Run `+rep help` for more information.',
-                colour=0xFF0000
-            )
-            await ctx.reply(embed=embed)
-            return
-
+    async def give_from(self, ctx: commands.Context, receiver: discord.User, provider: discord.User, *, comments: str):
         if len(comments) > 500:
             embed = discord.Embed(
                 title='Error',
@@ -395,21 +374,19 @@ class Reputations(commands.Cog):
         rep_id = (await cursor.fetchone())[0] + 1
 
         rep_embed = discord.Embed(
-            title=f'{rep_type.title()} Reputation Given',
-            colour=SBU_PURPLE
+            title=f'Craft Reputation Given',
+            color=config['colors']['secondary']
         )
 
         rep_embed.set_author(name=f'Reputation by {provider.display_name}')
         rep_embed.add_field(name='Receiver', value=receiver.mention, inline=False)
         rep_embed.add_field(name='Comments', value=comments, inline=False)
         rep_embed.set_footer(text=f'Rep ID: {rep_id}')
-        rep_embed.set_thumbnail(url=SBU_LOGO_URL)
+        rep_embed.set_thumbnail(url=config['logo_url'])
 
-        msg = await ctx.guild \
-            .get_channel(CARRY_SERVICE_REPS_CHANNEL_ID if rep_type == 'carry' else CRAFT_REPS_CHANNEL_ID) \
-            .send(embed=rep_embed)
+        msg = await ctx.guild.get_channel(config['rep']['rep_log_channel_id']).send(embed=rep_embed)
 
-        rep = RepCommand(rep_id, receiver.id, provider.id, comments, rep_type, msg.id)
+        rep = RepCommand(rep_id, receiver.id, provider.id, comments, 'craft', msg.id)
 
         await cursor.execute(*(rep.insert()))
         await cursor.close()
@@ -418,7 +395,7 @@ class Reputations(commands.Cog):
         embed = discord.Embed(
             title='Success',
             description=f'Rep added successfully for {receiver.mention} by {provider.mention}',
-            colour=0x00FF00
+            color=config['colors']['success']
         )
 
         await ctx.reply(embed=embed)
@@ -429,18 +406,16 @@ class Reputations(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Incorrect format.\n'
-                            'Use `+rep admin give <@mention | ID: integer> <@mention | ID: integer> '
-                            '<type: craft | carry> <comments: text>`',
-                colour=0xFF0000
+                            'Use `+rep admin give <@mention_receiver> <@mention_provider> <comments>`',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
         elif isinstance(exception, commands.UserNotFound):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid user.\n'
-                            'Use `+rep admin give <@mention | ID: integer> <@mention | ID: integer> '
-                            '<type: craft | carry> <comments: text>`',
-                colour=0xFF0000
+                            'Use `+rep admin give <@mention_receiver> <@mention_provider> <comments>`',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 

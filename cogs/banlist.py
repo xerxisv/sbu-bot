@@ -3,9 +3,11 @@ import discord
 from discord.ext import commands
 
 from utils import extract_uuid
-from utils.constants import BANNED_LIST_CHANNEL_ID, MODERATOR_ROLE_ID, SBU_GOLD
+from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.database.schemas import BannedMember
+
+config = ConfigHandler().get_config()
 
 
 class BanList(commands.Cog):
@@ -24,7 +26,7 @@ class BanList(commands.Cog):
     async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command help',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
         embed.add_field(name='Check if a user if banned',
                         value='`+banlist check <IGN>`')
@@ -50,7 +52,7 @@ class BanList(commands.Cog):
     async def alias(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command aliases',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name='banlist', value='"bl"', inline=False)
@@ -61,7 +63,7 @@ class BanList(commands.Cog):
         await ctx.reply(embed=embed)
 
     @banlist.command(name='add')
-    @commands.has_role(MODERATOR_ROLE_ID)
+    @commands.has_role(config['mod_role_id'])
     @commands.cooldown(1, 5)
     async def add(self, ctx: commands.Context, banned_ign: str, *, reason: str = 'None'):
         banned_id = extract_uuid(banned_ign)
@@ -70,7 +72,7 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid IGN',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -84,7 +86,7 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Operation Canceled',
                 description='User is already banned',
-                colour=0xFFFF00
+                color=config['colors']['secondary']
             )
             await ctx.reply(embed=embed)
             return
@@ -93,7 +95,7 @@ class BanList(commands.Cog):
         banned_embed = discord.Embed(
             title='Banned Member',
             description='',
-            colour=discord.Colour.light_gray()
+            color=config['colors']['secondary']
         )
 
         banned_embed.set_footer(text='SBU Banned List')
@@ -102,13 +104,13 @@ class BanList(commands.Cog):
         banned_embed.add_field(name='UUID Converter', value=f'https://mcuuid.net/?q={banned_id}', inline=False)
 
         msg = await ctx.guild \
-            .get_channel(BANNED_LIST_CHANNEL_ID) \
+            .get_channel(config['banlist']['channel_id']) \
             .send(embed=banned_embed)
 
         response_embed = discord.Embed(
             title='Success',
-            description=f'User `{banned_ign}` added to <#{BANNED_LIST_CHANNEL_ID}>',
-            colour=0x00FF00
+            description=f"User `{banned_ign}` added to <#{config['banlist']['channel_id']}>",
+            color=config['colors']['success']
         )
 
         banned_member = BannedMember(banned_id, reason, ctx.author.id, msg.id)  # Create banned member instance
@@ -121,9 +123,14 @@ class BanList(commands.Cog):
         await self.db.commit()
 
     @add.error
-    async def add_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Incorrect format. Use `+banlist add <IGN> [reason]`")
+    async def add_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, commands.MissingRequiredArgument):
+            embed = discord.Embed(
+                title='Error',
+                description='Incorrect format. Use `+banlist add <IGN> [reason]`',
+                color=config['colors']['error']
+            )
+            await ctx.reply(embed=embed)
 
     @banlist.command(name='check', aliases=['c'])
     async def check(self, ctx: commands.Context, banned_ign: str):
@@ -133,7 +140,7 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid IGN',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -146,7 +153,7 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Clear',
                 description='User is not present in our banned list',
-                colour=0x00FF00
+                color=config['colors']['success']
             )
         else:
             mod = await self.bot.get_or_fetch_user(banned['moderator'])
@@ -154,7 +161,7 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Not clear',
                 description='User is present in our banned list',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             embed.add_field(name='Reason', value=f'{banned["reason"]}', inline=False)
             embed.set_footer(text=f'Banned by {mod if mod is not None else banned["moderator"]}')
@@ -167,12 +174,12 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Incorrect format. Use `+banlist check <IGN>`\nEx: `+banlist check RealMSpeed`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
     @banlist.command(name='remove', aliases=['del', 'delete', 'rm'])
-    @commands.has_role(MODERATOR_ROLE_ID)
+    @commands.has_role(config['mod_role_id'])
     @commands.cooldown(1, 5)
     async def remove(self, ctx: commands.Context, ign: str):
         banned_uuid = extract_uuid(ign)
@@ -181,7 +188,7 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid IGN',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -192,14 +199,14 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='User is not present in our database',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
         msg_id = banned['message']
         try:
-            await ctx.guild.get_channel(BANNED_LIST_CHANNEL_ID).get_partial_message(msg_id).delete()
+            await ctx.guild.get_channel(config['banlist']['channel_id']).get_partial_message(msg_id).delete()
         except discord.HTTPException:
             pass
 
@@ -207,8 +214,8 @@ class BanList(commands.Cog):
 
         embed = discord.Embed(
             title='Success',
-            description=f'User `{ign}` was removed from <#{BANNED_LIST_CHANNEL_ID}>',
-            colour=0x00FF00
+            description=f"User `{ign}` was removed from <#{config['banlist']['channel_id']}>",
+            color=config['colors']['success']
         )
 
         await ctx.reply(embed=embed)
@@ -220,12 +227,12 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Incorrect format. Use `+banlist remove <IGN>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
     @banlist.command(name='info')
-    @commands.has_role(MODERATOR_ROLE_ID)
+    @commands.has_role(config['mod_role_id'])
     async def info(self, ctx: commands.Context, ign: str):
         banned_uuid = extract_uuid(ign)
 
@@ -233,7 +240,7 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid IGN',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -244,14 +251,14 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='User is not present in our database',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
         embed = discord.Embed(
             title='Banned User Info',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         moderator = await self.bot.get_or_fetch_user(banned['moderator'])
@@ -270,7 +277,7 @@ class BanList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Incorrect format. Use `+banlist check <IGN>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
@@ -288,5 +295,5 @@ async def fetch_user_from_db(uuid: str):
     return BannedMember.dict_from_tuple(res)
 
 
-def setup(bot):
+def setup(bot: discord.Bot):
     bot.add_cog(BanList(bot))

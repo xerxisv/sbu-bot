@@ -3,7 +3,9 @@ import discord
 import requests
 from discord.ext import commands
 
-from utils.constants import SBU_ERROR
+from utils.config.config import ConfigHandler
+
+config = ConfigHandler().get_config()
 
 
 class Master(commands.Cog):
@@ -22,7 +24,7 @@ class Master(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid profile.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -37,7 +39,7 @@ class Master(commands.Cog):
                         description=f'User with IGN `{ign}` not found.\n'
                                     f'If `{ign}` is a valid IGN then it\'s an API error.\n'
                                     f'Please check manually.',
-                        colour=0xFF0000
+                        color=config['colors']['error']
                     )
                     await ctx.reply(embed=embed)
                     return
@@ -64,8 +66,9 @@ class Master(commands.Cog):
         except KeyError:
             embed = discord.Embed(
                 title='Error',
-                description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial',
-                colour=SBU_ERROR
+                description='Something went wrong. Make sure your APIs in on.\n'
+                            'If this problem continues, open a technical difficulties ticket.',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -74,7 +77,7 @@ class Master(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'You have no {cute_name.title()} profile.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -86,8 +89,9 @@ class Master(commands.Cog):
         except KeyError:
             embed = discord.Embed(
                 title='Error',
-                description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial',
-                colour=0xFF0000
+                description='Something went wrong. Make sure your APIs in on.\n'
+                            'If this problem continues, open a technical difficulties ticket.',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
@@ -110,21 +114,21 @@ class Master(commands.Cog):
             embed = discord.Embed(
                 title='Masters Requirements',
                 description='',
-                colour=discord.Colour.purple()
+                color=discord.Colour.purple()
             )
             embed.add_field(name="Hold Up", value=f"You meet {passed_reqs}/3 of the requirements.", inline=False)
         elif passed_reqs == 0:
             embed = discord.Embed(
                 title='Masters Requirements',
                 description='',
-                colour=discord.Colour.red()
+                color=discord.Colour.red()
             )
             embed.add_field(name="No requirements met", value="You dont meet any of the requirements", inline=False)
         else:
             embed = discord.Embed(
                 title='Masters Requirements',
                 description='',
-                colour=discord.Colour.blue()
+                color=discord.Colour.blue()
             )
             embed.add_field(name="Congratulations!", value="You meet all the requirements", inline=False)
 
@@ -147,7 +151,7 @@ class Master(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+checkreq <IGN>`.\nEx: `+checkreq RealMSpeed`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return

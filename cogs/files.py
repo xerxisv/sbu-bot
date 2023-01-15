@@ -3,14 +3,17 @@ import os
 import discord
 from discord.ext import commands
 
-from utils.constants import ADMIN_CHANNELS_CATEGORY_ID, JR_ADMIN_ROLE_ID
+from utils.config.config import ConfigHandler
+
+config = ConfigHandler().get_config()
+
 
 class Files(commands.Cog):
     def __int__(self, bot):
         self.bot = bot
 
     @commands.group(name='files', aliases=['f', 'fl'])
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     async def files(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             return
@@ -19,7 +22,7 @@ class Files(commands.Cog):
 
     @files.command(name='get', aliases=['g', 'fetch', 'f'])
     async def get(self, ctx: commands.Context, *, f_name: str):
-        if ctx.channel.category.id != ADMIN_CHANNELS_CATEGORY_ID:
+        if ctx.channel.category.id != config['files']['allowed_category']:
             await ctx.reply('This can only be used in admin channels.')
             return
         try:

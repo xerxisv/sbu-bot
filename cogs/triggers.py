@@ -8,7 +8,9 @@ import discord
 from discord.ext import commands
 
 from utils import Singleton
-from utils.constants import JR_ADMIN_ROLE_ID, SBU_GOLD
+from utils.config.config import ConfigHandler
+
+config = ConfigHandler().get_config()
 
 
 class Triggers(commands.Cog):
@@ -19,7 +21,7 @@ class Triggers(commands.Cog):
 
     @commands.group(name='trigger', aliases=['ct', 'triggers'])
     @commands.cooldown(1, 5)
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     async def trigger(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('trigger help').invoke(ctx)
@@ -30,7 +32,7 @@ class Triggers(commands.Cog):
     async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command Help',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name='Create a new trigger.',
@@ -63,7 +65,7 @@ class Triggers(commands.Cog):
     async def aliases(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command aliases',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name='trigger', value='"triggers", "ct"')
@@ -85,7 +87,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'Trigger `{trigger}` already exists. Use `+trigger replace`.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
@@ -93,7 +95,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Success',
                 description='Chat trigger added successfully',
-                colour=0x00FF00
+                color=config['colors']['success']
             )
             await ctx.reply(embed=embed)
 
@@ -103,7 +105,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'Invalid owners. Use discord IDs',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -111,7 +113,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+trigger replace <trigger> | <owner_id> | <response>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -123,13 +125,13 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Success',
                 description=f'Removed trigger `{trigger_name}`.',
-                colour=0x00FF00
+                color=config['colors']['success']
             )
         else:
             embed = discord.Embed(
                 title='Error',
                 description=f'Trigger `{trigger_name}` not found.',
-                colour=0xFF0000
+                color=config['colors']['success']
             )
 
         await ctx.reply(embed=embed)
@@ -140,7 +142,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+trigger remove <trigger>`',
-                colour=0xFF0000
+                color=config['colors']['success']
             )
             await ctx.reply(embed=embed)
             return
@@ -156,7 +158,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'Trigger `{trigger_name}` does not exist. Use `+trigger create`.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
@@ -164,7 +166,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Success',
                 description='Chat trigger replaced successfully',
-                colour=0x00FF00
+                color=config['colors']['success']
             )
             await ctx.reply(embed=embed)
 
@@ -174,7 +176,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'Invalid owners. Use discord IDs',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -182,7 +184,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+trigger replace <trigger> | <owner_id> | <response>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -195,13 +197,13 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'Trigger `{trigger_name}` not found.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
         else:
             embed = discord.Embed(
                 title='Success',
                 description=f'Trigger is now {"enabled" if is_enabled else "disabled"}.',
-                colour=0x00FF00
+                color=config['colors']['success']
             )
 
         await ctx.reply(embed=embed)
@@ -212,7 +214,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+trigger toggle <trigger>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -228,7 +230,7 @@ class Triggers(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -238,7 +240,7 @@ class Triggers(commands.Cog):
 
         embed = discord.Embed(
             title='Chat Triggers List',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         for index, trigger in enumerate(triggers.keys()):

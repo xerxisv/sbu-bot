@@ -4,7 +4,9 @@ from math import ceil
 import discord
 from discord.ext import commands
 
-from utils.constants import JR_MOD_ROLE_ID, QOTD_PATH, SBU_ERROR, SBU_GOLD, SBU_LOGO_URL, SBU_SUCCESS
+from utils.config.config import ConfigHandler
+
+config = ConfigHandler().get_config()
 
 
 class QOTD(commands.Cog):
@@ -12,7 +14,7 @@ class QOTD(commands.Cog):
         self.bot = bot
 
     @commands.group(name='qotd', aliases=["q"])
-    @commands.has_role(JR_MOD_ROLE_ID)
+    @commands.has_role(config['jr_mod_role_id'])
     async def qotd(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('qotd help').invoke(ctx)
@@ -20,11 +22,11 @@ class QOTD(commands.Cog):
         await ctx.trigger_typing()
 
     @qotd.command(name="help", aliases=["commands"])
-    @commands.has_role(JR_MOD_ROLE_ID)
-    async def help(self, ctx):
+    @commands.has_role(config['jr_mod_role_id'])
+    async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command help',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name="Add a QOTD", value="`+qotd add <QOTD>`", inline=False)
@@ -34,12 +36,9 @@ class QOTD(commands.Cog):
         await ctx.reply(embed=embed)
 
     @qotd.command(name="add", aliases=["a"])
-    @commands.has_role(JR_MOD_ROLE_ID)
-    async def add(self, ctx, *, qotd):
-        if ctx.author.id == 0:
-            await ctx.send("Banned from qotd")
-            return
-        with open(QOTD_PATH) as fp:
+    @commands.has_role(config['jr_mod_role_id'])
+    async def add(self, ctx: commands.Context, *, qotd):
+        with open('./data/qotd.json') as fp:
             list_obj = json.load(fp)
 
         data = {
@@ -48,23 +47,35 @@ class QOTD(commands.Cog):
         list_var = list(list_obj)
         list_var.append(data)
 
-        with open(QOTD_PATH, 'w') as json_file:
+        with open('./data/qotd.json', 'w') as json_file:
             json.dump(list_var, json_file,
                       indent=4,
                       separators=(',', ': '))
+
         qotd_embed = discord.Embed(
-            title=f'Qotd Added',
+            title='Qotd Added',
             description=f'{qotd}',
-            colour=0x8F49EA
+            color=config['colors']['primary']
         )
-        qotd_embed.set_thumbnail(
-            url=SBU_LOGO_URL)
+
+        qotd_embed.set_thumbnail(url=config['logo_url'])
         await ctx.send(embed=qotd_embed)
 
+    @add.error
+    async def add_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, commands.MissingRequiredArgument):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+qotd add <question>`',
+                color=config['colors']['error']
+            )
+
+            await ctx.reply(embed=embed)
+
     @qotd.command(name='list', aliases=['show', 'print'])
-    @commands.has_role(JR_MOD_ROLE_ID)
+    @commands.has_role(config['jr_mod_role_id'])
     async def list_(self, ctx: commands.Context, page: int = 1):
-        with open(QOTD_PATH) as fp:
+        with open('./data/qotd.json') as fp:
             questions = json.load(fp)
 
         q_len = len(questions)  # The length of the questions array
@@ -76,43 +87,54 @@ class QOTD(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                colour=SBU_ERROR
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
         # Set the questions' start and end index
-        start = questions_max * (page- 1)  # Skips the first `questions_max * page` objects
+        start = questions_max * (page - 1)  # Skips the first `questions_max * page` objects
         # Keeps 24 objects skipping the rest and ensuring that we are within index bounds
-        end = (questions_max * (page- 1)) + min(questions_max, q_len - (max_page * (page- 1)))
+        end = (questions_max * (page - 1)) + min(questions_max, q_len - (max_page * (page - 1)))
 
         questions = questions[start:end]
 
         qotd_embed = discord.Embed(
             title=f'QOTD List',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         for index, qotd in enumerate(questions):
             qotd_embed.add_field(name=f'QOTD: {index + 1}', value=qotd['qotd'], inline=False)
 
-        qotd_embed.set_thumbnail(url=SBU_LOGO_URL)
+        qotd_embed.set_thumbnail(url=config['logo_url'])
         qotd_embed.set_footer(text=f'Page: {page}/{max_page}')
 
         await ctx.reply(embed=qotd_embed)
 
+    @list_.error
+    async def list_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, commands.BadArgument):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+qotd list [page]`',
+                color=config['colors']['error']
+            )
+
+            await ctx.reply(embed=embed)
+
     @qotd.command(name="remove", aliases=["del", "delete", "rm"])
-    @commands.has_role(JR_MOD_ROLE_ID)
+    @commands.has_role(config['jr_mod_role_id'])
     async def remove(self, ctx: commands.Context, i: int):
         # Read all the questions
-        with open(QOTD_PATH) as f:
+        with open('./data/qotd.json') as f:
             qotds = json.load(f)
 
         # Remove the question at index i-1
         qotds.pop(i - 1)
 
         # Write questions
-        with open(QOTD_PATH, "w") as f:
+        with open('./data/qotd.json', "w") as f:
             json.dump(qotds, f,
                       indent=4,
                       separators=(',', ': '))
@@ -120,9 +142,20 @@ class QOTD(commands.Cog):
         embed = discord.Embed(
             title='Success',
             description='Question successfully removed.',
-            color=SBU_SUCCESS
+            color=config['colors']['success']
         )
-        await ctx.reply("Successfully removed that qotd")
+        await ctx.reply(embed=embed)
+
+    @remove.error
+    async def remove_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, (commands.MissingRequiredArgument, commands.BadArgument)):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+qotd remove <question_id>`',
+                color=config['colors']['error']
+            )
+
+            await ctx.reply(embed=embed)
 
 
 def setup(bot):
