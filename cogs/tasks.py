@@ -218,11 +218,12 @@ class TasksCog(commands.Cog):
         await cursor.execute(User.select_top_tatsu())
         users = await cursor.fetchall()
 
-        max_tatsu = {
-            "tatsu": 0,
-            "id": 0,
-            "ign": None
-        }
+        guild = self.bot.get_guild(constants.GUILD_ID)
+        role = guild.get_role(constants.TOP_GUILD_ACTIVE_ROLE_ID)
+        for member in role.members:
+            await member.remove_roles(role)
+        
+        user = User.dict_from_tuple(users[0])
 
         for user in users:
             user = User.dict_from_tuple(user)
@@ -240,6 +241,9 @@ class TasksCog(commands.Cog):
                 await member.remove_roles(role)
             member = guild.get_member(max_tatsu["id"])
             await member.add_roles(role)
+        
+        await self.db.execute(User.set_last_week_tatsu_all())
+        await self.db.commit()
 
     @weekly_tatsu.before_loop
     async def wait_until_next_week(self):
@@ -282,7 +286,7 @@ class TasksCog(commands.Cog):
         added_string = ""
         for user in booster_list:
             if user not in previous_list:
-                added_string = f"{user}\n"
+                added_string += f"{user}\n"
                 new_booster_added = True
         if new_booster_added:
             embed.add_field(name="Added boosters:", value=added_string)
@@ -291,7 +295,7 @@ class TasksCog(commands.Cog):
         removed_string = ""
         for user in previous_list:
             if user not in booster_list:
-                removed_string = f"{user}\n"
+                removed_string += f"{user}\n"
                 was_booster_removed = True
         if was_booster_removed:
             embed.add_field(name="Removed boosters", value=removed_string)
@@ -301,6 +305,11 @@ class TasksCog(commands.Cog):
         # Send a new log
         await log_channel.send(embed=embed)
 
+    @booster_log.before_loop
+    async def wait_until_next(self):
+        next_midnight = datetime.datetime.now().timestamp() - (datetime.datetime.now().timestamp() % 86400) + 86400
+        seconds_until_next = next_midnight - datetime.datetime.now().timestamp()
+        await sleep(seconds_until_next)
 
 def setup(bot):
     bot.add_cog(TasksCog(bot))

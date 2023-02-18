@@ -268,10 +268,9 @@ class SisterhoodSelectionMenu(Select):
         super().__init__(placeholder='Select Guild',
                          options=[
                              discord.SelectOption(label='Global', default=guild == 'Global'),
-                             discord.SelectOption(label='SB Uni', default=guild == 'SB Uni'),
+                             discord.SelectOption(label='SB University', default=guild == 'SB Uni'),
                              discord.SelectOption(label='SB Alpha Psi', default=guild == 'SB Alpha Psi'),
-                             discord.SelectOption(label='SB Kappa Eta', default=guild == 'SB Kappa Eta'),
-                             discord.SelectOption(label='SB Delta Omega', default=guild == 'SB Delta Omega'),
+                             discord.SelectOption(label='SB Lambda Pi', default=guild == 'SB Lambda Pi'),
                              discord.SelectOption(label='SB Masters', default=guild == 'SB Masters'),
                          ])
         self.guild = guild

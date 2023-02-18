@@ -47,15 +47,15 @@ class InactiveList(commands.Cog):
                         inline=False)
         embed.add_field(name='Check the inactive players in a guild',
                         value='`+inactive check <guild>`\n'
-                              '*__Moderator__ command*',
+                              '*__Junior Moderator__ command*',
                         inline=False)
         embed.add_field(name='Add a player to the inactivity list',
                         value='`+inactive mod add <IGN> <time>`\n'
-                              '*__Moderator__ command*',
+                              '*__Junior Moderator__ command*',
                         inline=False)
         embed.add_field(name='Remove a player from the inactivity list',
                         value='`+inactive mod remove <IGN>`\n'
-                              '*__Moderator__ command*',
+                              '*__Junior Moderator__ command*',
                         inline=False)
         embed.add_field(name='Command aliases list',
                         value='`+inactive aliases`',

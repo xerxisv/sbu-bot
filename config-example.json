@@ -54,7 +54,8 @@
         "suggestions": false,
         "tasks": false,
         "triggers": false,
-        "verify": false
+        "verify": false,
+        "info": false
     },
 
     "banlist": {
@@ -130,6 +131,9 @@
 
     "qotd": {
         "qotd_channel_id": 0
+    },
+    "info": {
+        "info_channel_id": 0
     }
 
 }

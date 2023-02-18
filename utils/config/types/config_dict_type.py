@@ -92,6 +92,9 @@ class Verify(TypedDict):
     guild_member_roles: list[int]
     verified_role_id: int
 
+class Info(TypedDict):
+    info_channel_id: int
+
 
 class Config(TypedDict, total=False):
     logo_url: str | None
@@ -124,3 +127,4 @@ class Config(TypedDict, total=False):
     tasks: Tasks
     qotd: Qotd
     verify: Verify
+    info: Info

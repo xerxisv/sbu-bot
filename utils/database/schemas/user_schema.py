@@ -120,6 +120,13 @@ class User(Schema):
             SET "last_week_tatsu"={tatsu}
             WHERE UPPER(ign)='{ign.upper()}'
         '''
+    
+    @staticmethod
+    def set_last_week_tatsu_all() -> str:
+        return f'''
+            UPDATE "USERS"
+            SET "last_week_tatsu" = tatsu_score
+        '''
 
     @staticmethod
     def set_modifier(ign: str, modifier: float) -> str:
