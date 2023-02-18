@@ -1,12 +1,27 @@
-import discord
-from discord.ext import commands
-from discord.ui import View, Button, Select
+import time
+from random import random
 
 import aiosqlite
+import discord
+from discord.ext import commands
+from discord.ui import Button, Select, View
 
-from utils.constants import GUILDS_INFO, JR_ADMIN_ROLE_ID, SBU_GOLD
+from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.database.schemas import User
+
+TATSU_CD = 20  # in seconds
+tatsu_dates = {}
+
+config = ConfigHandler().get_config()
+
+
+def weighted_randint(end, loops=1) -> int:
+    result = 0
+    for _ in range(loops):
+        result += round(random() * (end / loops))
+
+    return int(result)
 
 
 class GTatsu(commands.Cog):
@@ -26,7 +41,7 @@ class GTatsu(commands.Cog):
     async def help(self, ctx):
         embed = discord.Embed(
             title='Command help',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name="Check your gtatsu", value="`gtatsu rank <IGN>`", inline=False)
@@ -36,18 +51,18 @@ class GTatsu(commands.Cog):
                                                     "*__Jr. Admin__ command*", inline=False)
         embed.add_field(name="Set gtatsu", value="`gtatsu set <IGN> <tatsu>`\n"
                                                  "*__Jr. Admin__ command*", inline=False)
-    
+
         await ctx.reply(embed=embed)
-    
+
     @gtatsu.command(name="set")
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     async def set_(self, ctx, ign: str, tatsu: int):
         await self.db.execute(User.set_tatsu(ign, tatsu))
 
         embed = discord.Embed(
             title='Success',
             description=f'{ign} now has {tatsu} gtatsu',
-            colour=0x00FF00
+            color=config['colors']['success']
         )
         await ctx.reply(embed=embed)
 
@@ -57,13 +72,13 @@ class GTatsu(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+gtatsu set <IGN> <amount>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
     @gtatsu.command(name="add")
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     async def add(self, ctx, ign: str, tatsu: int):
         await self.db.execute(User.add_to_tatsu_static(ign, tatsu))
         await self.db.commit()
@@ -71,7 +86,7 @@ class GTatsu(commands.Cog):
         embed = discord.Embed(
             title='Success',
             description=f'{tatsu} gtatsu points added to {ign}',
-            colour=0x00FF00
+            color=config['colors']['success']
         )
         await ctx.reply(embed=embed)
 
@@ -81,13 +96,13 @@ class GTatsu(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+gtatsu add <IGN> <amount>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
     @gtatsu.command(name="remove")
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     async def remove(self, ctx, ign: str, tatsu: int):
         await self.db.execute(User.add_to_tatsu_static(ign, -tatsu))
         await self.db.commit()
@@ -95,7 +110,7 @@ class GTatsu(commands.Cog):
         embed = discord.Embed(
             title='Success',
             description=f'{tatsu} gtatsu points removed from {ign}',
-            colour=0x00FF00
+            color=config['colors']['success']
         )
         await ctx.reply(embed=embed)
 
@@ -105,13 +120,13 @@ class GTatsu(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+gtatsu remove <IGN> <amount>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
     @gtatsu.command(name='modifier')
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     async def modifier(self, ctx: commands.Context, ign: str, modifier: float):
         await self.db.execute(User.set_modifier(ign, modifier))
         await self.db.commit()
@@ -119,7 +134,7 @@ class GTatsu(commands.Cog):
         embed = discord.Embed(
             title='Success',
             description=f'{ign}\'s modifier has been set to {modifier}',
-            colour=0x00FF00
+            color=config['colors']['success']
         )
         await ctx.reply(embed=embed)
 
@@ -129,7 +144,7 @@ class GTatsu(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+gtatsu modifier <IGN> <modifier>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -148,7 +163,7 @@ class GTatsu(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'User with IGN `{ign}` not found.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -159,27 +174,30 @@ class GTatsu(commands.Cog):
         embed = discord.Embed(
             title=f'{ign} GTatsu Score',
             description=f"All time: {user['tatsu_score']}\nThis week: {user['weekly_tatsu_score']}",
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
         await ctx.reply(embed=embed)
-    
+
     @gtatsu.command(name="leaderboard", aliases=["l"])
     async def leaderboard(self, ctx: commands.Context):
 
         users = await get_users('Global', True)
 
-        embed = discord.Embed(title='Global GTatsu Leaderboard', color=SBU_GOLD)
+        embed = discord.Embed(title='Global GTatsu Leaderboard', color=config['colors']['primary'])
 
         for user in users:
             embed.add_field(name=user['ign'],
                             value=f"*Weekly GTatsu:* **{user['tatsu_score'] - user['weekly_tatsu_score']}**",
                             inline=False)
-        if len(users) < 1:
-            embed.description = "Nothing to display"
 
         view = LeaderboardView('Global', False)
 
         await ctx.reply(embed=embed, view=view)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if is_bridge_message(message):
+            await handle_gtatsu(message, self.db)
 
 
 class LeaderboardView(View):
@@ -197,13 +215,13 @@ class TotalButton(Button):
         self.total_disabled = total_disabled
 
     async def callback(self, interaction):
-        embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard', color=SBU_GOLD)
+        embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard', color=config['colors']['primary'])
 
         users = await get_users(self.guild, False)
         if len(users) < 1:
             embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard',
                                   description='Nothing to display',
-                                  color=SBU_GOLD)
+                                  color=config['colors']['primary'])
 
             view = LeaderboardView(self.guild, not self.total_disabled)
             await interaction.response.edit_message(embed=embed, view=view)
@@ -224,13 +242,13 @@ class WeeklyButton(Button):
         self.total_disabled = total_disabled
 
     async def callback(self, interaction):
-        embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard', color=SBU_GOLD)
+        embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard', color=config['colors']['primary'])
 
         users = await get_users(self.guild, True)
         if len(users) < 1:
             embed = discord.Embed(title=f'{self.guild} GTatsu Leaderboard',
                                   description='Nothing to display',
-                                  color=SBU_GOLD)
+                                  color=config['colors']['primary'])
 
             view = LeaderboardView(self.guild, not self.total_disabled)
             await interaction.response.edit_message(embed=embed, view=view)
@@ -259,13 +277,13 @@ class SisterhoodSelectionMenu(Select):
         self.total_disabled = total_disabled
 
     async def callback(self, interaction):
-        embed = discord.Embed(title=f'{self.values[0]} GTatsu Leaderboard', color=SBU_GOLD)
+        embed = discord.Embed(title=f'{self.values[0]} GTatsu Leaderboard', color=config['colors']['primary'])
 
         users = await get_users(self.values[0], not self.total_disabled)
         if len(users) < 1:
             embed = discord.Embed(title=f'{self.values[0]} GTatsu Leaderboard',
                                   description='Nothing to display',
-                                  color=SBU_GOLD)
+                                  color=config['colors']['primary'])
 
             view = LeaderboardView(self.values[0], self.total_disabled)
             await interaction.response.edit_message(embed=embed, view=view)
@@ -283,11 +301,37 @@ class SisterhoodSelectionMenu(Select):
 
 async def get_users(guild: str, weekly: bool):
     cursor: aiosqlite.Cursor = await DBConnection().get_db().cursor()
-    await cursor.execute(User.select_top_tatsu(None if guild == 'Global' else GUILDS_INFO[guild.upper()]['guild_uuid'],
-                                               weekly))
+    await cursor.execute(
+        User.select_top_tatsu(None if guild == 'Global' else config['guilds'][guild.upper()]['guild_uuid'],
+                              weekly))
     users = await cursor.fetchall()
 
     return [User.dict_from_tuple(user) for user in users]
+
+
+async def handle_gtatsu(message: discord.Message, db: aiosqlite.Connection):
+    ign = message.embeds[0].author.name
+
+    if not isinstance(ign, str):
+        return
+
+    if ign.find(' ') > 0:
+        return
+    if ensure_cooldown(ign):
+        return
+
+    await db.execute(User.add_to_tatsu(ign, weighted_randint(12, 3)))
+    await db.commit()
+    tatsu_dates[ign] = int(time.time())
+
+
+def is_bridge_message(message: discord.Message):
+    return message.author.id in config['gtatsu']['bridge_bot_ids'] and message.channel.id in config['gtatsu'][
+        'bridge_channel_ids'] and len(message.embeds) > 0
+
+
+def ensure_cooldown(ign: str) -> bool:
+    return False if ign not in tatsu_dates else tatsu_dates[ign] + TATSU_CD > int(time.time())
 
 
 def setup(bot):

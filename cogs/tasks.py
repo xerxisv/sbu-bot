@@ -10,10 +10,12 @@ import discord
 import dotenv
 from discord.ext import commands, tasks
 
-from utils import constants
+from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.database.schemas import User
 from utils.error_utils import exception_to_string
+
+config = ConfigHandler().get_config()
 
 
 class TasksCog(commands.Cog):
@@ -22,7 +24,7 @@ class TasksCog(commands.Cog):
         self.bot = bot
         self.db: aiosqlite.Connection = DBConnection().get_db()
         self.key = os.getenv('apikey')
-        self.update_members.start()
+        self.update_member_count.start()
         self.auto_qotd.start()
         self.backup_db.start()
         self.inactives_check.start()
@@ -31,7 +33,7 @@ class TasksCog(commands.Cog):
         self.booster_log.start()
 
     def cog_unload(self):
-        self.update_members.cancel()
+        self.update_member_count.cancel()
         self.auto_qotd.cancel()
         self.backup_db.cancel()
         self.inactives_check.cancel()
@@ -40,52 +42,67 @@ class TasksCog(commands.Cog):
         self.booster_log.cancel()
 
     @tasks.loop(hours=1)
-    async def update_members(self):
+    async def update_member_count(self):
         total_members = 0  # Stores the member count of all the guilds combined
-        for idx, guild in enumerate(constants.GUILDS_INFO.keys()):
+        for idx, guild in enumerate(config['guilds'].keys()):
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(f'https://api.hypixel.net/guild?key={self.key}&id='
-                                           f'{constants.GUILDS_INFO[guild]["guild_uuid"]}') as resp:
+                    async with session.get(f"https://api.hypixel.net/guild?key={self.key}&id="
+                                           f"{config['guilds'][guild]['guild_uuid']}") as resp:
                         assert resp.status == 200  # Unless a guild gets deleted this will never raise
 
                         guild_info = (await resp.json())["guild"]
 
             except AssertionError:
                 await self.bot \
-                    .get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID) \
-                    .send(f'Guild info fetch with id `{constants.GUILDS_INFO[guild]["guild_uuid"]}` '
-                          'did not return a 200.')
+                    .get_channel(config['bot_log_channel_id']) \
+                    .send(f"Guild info fetch with id `{config['guilds'][guild]['guild_uuid']}` "
+                          "did not return a 200.")
 
             except Exception as exception:
                 await self.bot \
-                    .get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID) \
+                    .get_channel(config['bot_log_channel_id']) \
                     .send(exception_to_string('update_member task', exception))
 
             else:
                 new_name = f'{guild_info["name"]}: {str(len(guild_info["members"]))}'
                 total_members += int(len(guild_info["members"]))
 
-                vc = self.bot.get_channel(constants.GUILDS_INFO[guild]['vc_id'])
+                vc = self.bot.get_channel(config['guilds'][guild]['member_count_channel_id'])
+
+                if vc is None:
+                    await self.bot \
+                        .get_channel(config['bot_log_channel_id']) \
+                        .send(f"Could not fetch channel with id {config['guilds'][guild]['member_count_channel_id']}")
+
+                    return
 
                 await vc.edit(name=new_name)
 
-        total_member_vc = self.bot.get_channel(constants.TOTAL_MEMBER_COUNT_VC_ID)
+        total_member_vc = self.bot.get_channel(config['tasks']['total_members_channel_id'])
         new_name = "Guild members: " + str(total_members)
+
+        if total_member_vc is None:
+            await self.bot \
+                .get_channel(config['bot_log_channel_id']) \
+                .send(f"Could not fetch channel with id {config['tasks']['total_members_channel_id']}")
+
+            return
+
         await total_member_vc.edit(name=new_name)
 
     @tasks.loop(hours=24)
     async def auto_qotd(self):
-        qotd_channel = self.bot.get_channel(constants.QOTD_CHANNEL_ID)
-        mod_chat = self.bot.get_channel(constants.MOD_CHAT_CHANNEL_ID)
+        qotd_channel = self.bot.get_channel(config['qotd']['qotd_channel_id'])
+        mod_chat = self.bot.get_channel(config['mod_chat_channel_id'])
 
-        with open(constants.QOTD_PATH) as f:
+        with open('./data/qotd.json') as f:
             qotd_obj = json.load(f)
 
         qotd_list = list(qotd_obj)
         if len(qotd_list) < 1:
             await mod_chat.send(
-                f"<@&{constants.JR_MOD_ROLE_ID}> no QOTD's left in the archive. Automatic qotd canceled.\n"
+                f"<@&{config['jr_mod_role_id']}> no QOTD's left in the archive. Automatic qotd canceled.\n"
                 f"Please add more using `+qotd add`.")
             return
 
@@ -95,12 +112,12 @@ class TasksCog(commands.Cog):
         except AttributeError:
             pass
 
-        message = await qotd_channel.send(qotd_list[0]["qotd"] + f" <@&{constants.QOTD_ROLE_ID}>")
+        message = await qotd_channel.send(qotd_list[0]["qotd"] + f" <@&{config['qotd']['qotd_role_id']}>")
         await message.create_thread(name="QOTD")
 
         qotd_list.pop(0)
 
-        with open(constants.QOTD_PATH, 'w') as json_file:
+        with open('./data/qotd.json', 'w') as json_file:
             json.dump(qotd_list, json_file,
                       indent=4,
                       separators=(',', ': '))
@@ -109,7 +126,7 @@ class TasksCog(commands.Cog):
 
         if num1 < 3:
             await mod_chat.send(
-                f"<@&{constants.JR_MOD_ROLE_ID}> QOTD's Running Low. Only {num1} remain.\n"
+                f"<@&{config['jr_mod_role_id']}> QOTD's Running Low. Only {num1} remain.\n"
                 f"Please add more using `+qotd add`.")
 
     @auto_qotd.before_loop
@@ -130,17 +147,35 @@ class TasksCog(commands.Cog):
     async def check_verified(self):
         cursor: aiosqlite.Cursor = await self.db.cursor()
 
-        sbu = self.bot.get_guild(constants.GUILD_ID)
+        sbu = self.bot.get_guild(config['server_id'])
         uuids: tuple = ()
 
         # loop for each guild
-        for guild in constants.GUILDS_INFO:
-            guild_uuid = constants.GUILDS_INFO[guild]["guild_uuid"]
+        for guild in config['guilds']:
+            guild_uuid = config['guilds'][guild]["guild_uuid"]
 
-            async with aiohttp.ClientSession() as session:  # fetch guild members
-                async with session.get(f"https://api.hypixel.net/guild?id={guild_uuid}&key={self.key}") as resp:
-                    data = await resp.json()
+            try:
+                # fetch guild members
+                async with aiohttp.ClientSession() as session:
+                    res = await session.get(f"https://api.hypixel.net/guild?id={guild_uuid}&key={self.key}")
+
+                    assert res.status == 200
+
+                    data = await res.json()
                     guild_members = data["guild"]["members"]
+
+            except AssertionError:
+                await self.bot \
+                    .get_channel(config['bot_log_channel_id']) \
+                    .send(f"Guild info fetch with id `{config['guilds'][guild]['guild_uuid']}` "
+                          "did not return a 200.")
+                continue
+
+            except Exception as exception:
+                await self.bot \
+                    .get_channel(config['bot_log_channel_id']) \
+                    .send(exception_to_string('update_member task', exception))
+                continue
 
             # fetch verified members with specific guild
             await cursor.execute(User.select_rows_with_guild_uuid(guild_uuid))
@@ -155,7 +190,8 @@ class TasksCog(commands.Cog):
                     # Check if member is still in server
                     if discord_member:
                         roles_to_remove = [discord.Object(_id) for _id in
-                                           [*constants.GUILD_MEMBER_ROLES_IDS, constants.GUILD_MEMBER_ROLE_ID]]
+                                           [*config['verify']['guild_member_roles'],
+                                            config['verify']['member_role_id']]]
                         await discord_member.remove_roles(*roles_to_remove,
                                                           atomic=False,
                                                           reason='check verified task')
@@ -173,7 +209,7 @@ class TasksCog(commands.Cog):
 
         except Exception as exception:
             await self.bot \
-                .get_channel(constants.SBU_BOT_LOGS_CHANNEL_ID) \
+                .get_channel(config['bot_log_channel_id']) \
                 .send(exception_to_string('inactives_check task', exception))
 
     @tasks.loop(hours=168)
@@ -189,8 +225,21 @@ class TasksCog(commands.Cog):
         
         user = User.dict_from_tuple(users[0])
 
-        member = guild.get_member(user["discord_id"])
-        if member is not None:
+        for user in users:
+            user = User.dict_from_tuple(user)
+            weekly_tatsu = user['tatsu_score'] - user['weekly_tatsu_score']
+            if weekly_tatsu > max_tatsu['tatsu']:
+                max_tatsu['tatsu'] = weekly_tatsu
+                max_tatsu['id'] = user['discord_id']
+                max_tatsu['ign'] = user['ign']
+            await self.db.execute(User.set_last_week_tatsu(user["ign"], user["tatsu_score"]))
+
+        if max_tatsu["id"] != 0:
+            guild = self.bot.get_guild(config['server_id'])
+            role = guild.get_role(config['gtatsu']['top_active_role_id'])
+            for member in role.members:
+                await member.remove_roles(role)
+            member = guild.get_member(max_tatsu["id"])
             await member.add_roles(role)
         
         await self.db.execute(User.set_last_week_tatsu_all())
@@ -198,17 +247,17 @@ class TasksCog(commands.Cog):
 
     @weekly_tatsu.before_loop
     async def wait_until_next_week(self):
-        next_week = datetime.datetime.now().replace(day=datetime.datetime.now().day +
-                                                    (7 - datetime.datetime.weekday(datetime.datetime.now())))\
-                                                        .timestamp()
+        next_week = datetime.datetime.now() \
+            .replace(day=datetime.datetime.now().day + (7 - datetime.datetime.weekday(datetime.datetime.now()))) \
+            .timestamp()
         seconds_until_next_week = (next_week - (next_week % 86400) + 86400) - datetime.datetime.now().timestamp()
         await sleep(seconds_until_next_week)
-    
+
     @tasks.loop(hours=24)
     async def booster_log(self):
         # Get the booster role
-        sbu = self.bot.get_guild(constants.GUILD_ID)
-        booster_role = sbu.get_role(constants.BOOSTER_ROLE_ID)
+        sbu = self.bot.get_guild(config['server_id'])
+        booster_role = sbu.get_role(config['tasks']['booster_role_id'])
 
         # Put all boosters in a string
         booster_string = ""
@@ -217,10 +266,13 @@ class TasksCog(commands.Cog):
             booster_string += f"{member.mention}\n"
             booster_list.append(member.mention)
 
-        embed = discord.Embed(title="Booster Log", description=booster_string, color=constants.SBU_PURPLE)
+        embed = discord.Embed(
+            title="Booster Log",
+            description=booster_string,
+            color=config['colors']['secondary'])
 
         # Check if boosters changed
-        log_channel = self.bot.get_channel(constants.BOOSTER_LOG_ID)
+        log_channel = self.bot.get_channel(config['tasks']['booster_log_channel_id'])
         message = self.bot.get_message(log_channel.last_message_id)
         previous_list = []
 
@@ -237,8 +289,8 @@ class TasksCog(commands.Cog):
                 added_string += f"{user}\n"
                 new_booster_added = True
         if new_booster_added:
-            embed.add_field(name="Added boosters:", value=added_string, inline=False)
-        
+            embed.add_field(name="Added boosters:", value=added_string)
+
         was_booster_removed = False
         removed_string = ""
         for user in previous_list:
@@ -246,8 +298,8 @@ class TasksCog(commands.Cog):
                 removed_string += f"{user}\n"
                 was_booster_removed = True
         if was_booster_removed:
-            embed.add_field(name="Removed boosters:", value=removed_string, inline=False)
-        
+            embed.add_field(name="Removed boosters", value=removed_string)
+
         if not was_booster_removed and not new_booster_added:
             return
         # Send a new log

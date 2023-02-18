@@ -5,10 +5,12 @@ import aiosqlite
 import discord
 from discord.ext import commands
 
-from utils.constants import ADMIN_ROLE_ID, SBU_GOLD, SBU_LOGO_URL, SUGGESTIONS_CHANNEL_ID
+from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.database.schemas import Suggestion
 from utils.error_utils import log_error
+
+config = ConfigHandler().get_config()
 
 
 class Suggestions(commands.Cog):
@@ -36,7 +38,7 @@ class Suggestions(commands.Cog):
             title=f'Suggestion',
             description=f'{suggestion_str}',
             timestamp=datetime.datetime.utcnow(),
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         # Set author icon if there is one
@@ -47,12 +49,12 @@ class Suggestions(commands.Cog):
             suggestion_embed.set_author(name=f'Suggested by {ctx.message.author}')
 
         suggestion_embed.set_footer(text=f'Suggestion number {suggestion_num}')
-        suggestion_embed.set_thumbnail(url=SBU_LOGO_URL)
+        suggestion_embed.set_thumbnail(url=config['logo_url'])
 
-        channel = self.bot.get_channel(SUGGESTIONS_CHANNEL_ID)
+        channel = self.bot.get_channel(config['suggestions']['suggestions_channel_id'])
         message = await channel.send(embed=suggestion_embed)
 
-        await ctx.reply(f"Suggestion sent to <#{SUGGESTIONS_CHANNEL_ID}>")
+        await ctx.reply(f"Suggestion sent to <#{config['suggestions']['suggestions_channel_id']}>")
         await message.add_reaction('✅')
         await message.add_reaction('❌')
 
@@ -71,7 +73,7 @@ class Suggestions(commands.Cog):
         raise exception
 
     @commands.group(name='suggestion', aliases=['suggestions', 'sg'], case_insensitive=True)
-    @commands.has_role(ADMIN_ROLE_ID)
+    @commands.has_role(config['admin_role_id'])
     async def suggestion(self, ctx: commands.Context):
         await ctx.trigger_typing()
         if ctx.invoked_subcommand is None:
@@ -81,29 +83,29 @@ class Suggestions(commands.Cog):
     async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command Help',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name='Approve a suggestion',
-                        value='`+suggestion approve <id: integer> [reason: text]`',
+                        value='`+suggestion approve <id> [reason]`',
                         inline=False)
         embed.add_field(name='Deny a suggestion',
-                        value='`+suggestion deny <ID> [reason]`',
+                        value='`+suggestion deny <id> [reason]`',
                         inline=False)
         embed.add_field(name='Delete a suggestion',
-                        value='`+suggestion delete <ID>`',
+                        value='`+suggestion delete <id>`',
                         inline=False)
         embed.add_field(name='List unanswered suggestions',
-                        value='`+suggestion show answered [page]`',
+                        value='`+suggestion show unanswered [page]`',
                         inline=False)
         embed.add_field(name='List approved or denied suggestions',
                         value='`+suggestion show approved [flag] [page]`',
                         inline=False)
         embed.add_field(name='List user specific suggestions',
-                        value='`+suggestion show ideator <@mention | ID>`',
+                        value='`+suggestion show ideator <@mention>`',
                         inline=False)
         embed.add_field(name='List all info related to a suggestion',
-                        value='`+suggestion show info <ID>`')
+                        value='`+suggestion show info <id>`')
         embed.add_field(name='Command aliases list',
                         value='`+suggestion aliases`',
                         inline=False)
@@ -114,7 +116,7 @@ class Suggestions(commands.Cog):
     async def alias(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command aliases',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
         embed.add_field(name='suggestion', value='"suggestions", "sg"', inline=False)
         embed.add_field(name='approve', value='"yes", "accept"', inline=False)
@@ -136,7 +138,12 @@ class Suggestions(commands.Cog):
     @approve.error
     async def on_approve_error(self, ctx: commands.Context, exception):
         if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
-            await ctx.reply('Incorrect format. Use `+suggestion approve <suggestion_id: integer> [reason: text]`')
+            embed = discord.Embed(
+                title='Error',
+                description='Incorrect format. Use `+suggestion approve <suggestion_id> [reason]`',
+                color=config['colors']['error']
+            )
+            await ctx.reply(embed=embed)
             return
 
         raise exception
@@ -149,7 +156,12 @@ class Suggestions(commands.Cog):
     @deny.error
     async def on_deny_error(self, ctx: commands.Context, exception):
         if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
-            await ctx.reply('Incorrect format. Use `+suggestion deny <suggestion_id: integer> [reason: text]`')
+            embed = discord.Embed(
+                title='Error',
+                description='Incorrect format. Use `+suggestion deny <suggestion_id> [reason]`',
+                color=config['colors']['error']
+            )
+            await ctx.reply(embed=embed)
             return
 
         raise exception
@@ -166,7 +178,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'Suggestion with ID {_id} not found',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -181,17 +193,17 @@ class Suggestions(commands.Cog):
         msg = 'Suggestion deleted'
         try:
             await ctx.guild \
-                .get_channel(SUGGESTIONS_CHANNEL_ID) \
+                .get_channel(config['suggestions']['suggestions_channel_id']) \
                 .get_partial_message(suggestion['message_id']) \
                 .delete()
         except discord.HTTPException:
-            msg = f'Suggestion deleted from database but' \
-                  f'was not found in <#{SUGGESTIONS_CHANNEL_ID}>. Please delete manually'
+            msg = f"Suggestion deleted from database but" \
+                  f"was not found in <#{config['suggestions']['suggestions_channel_id']}>. Please delete manually"
 
         embed = discord.Embed(
             title='Success',
             description=msg,
-            colour=0x00FF00
+            color=config['colors']['success']
         )
         await ctx.reply(embed=embed)
 
@@ -201,7 +213,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+suggestion delete <suggestion_id: integer>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -224,8 +236,8 @@ class Suggestions(commands.Cog):
         if rows == 0:
             embed = discord.Embed(
                 title='204',
-                description='There are no unanswered suggestions <:mftea:843937999209365515>',
-                colour=0xc0c09e
+                description='There are no unanswered suggestions',
+                color=config['colors']['primary']
             )
             await ctx.reply(embed=embed)
             return
@@ -238,7 +250,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -250,7 +262,8 @@ class Suggestions(commands.Cog):
 
         # Add a field to the embed for every suggestion
         embed = discord.Embed(
-            title='Unanswered suggestions'
+            title='Unanswered suggestions',
+            color=config['colors']['primary']
         )
 
         for suggestion_tuple in res:
@@ -274,7 +287,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+suggestion list unanswered [page: integer]`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -296,7 +309,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title=f'204',
                 description=f'There are no {"approved" if flag else "denied"} suggestions',
-                colour=SBU_GOLD
+                color=config['colors']['primary']
             )
             await ctx.reply(embed=embed)
             return
@@ -309,7 +322,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -321,7 +334,7 @@ class Suggestions(commands.Cog):
 
         embed = discord.Embed(
             title=f'{"Approved" if flag else "Denied"} Suggestions',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         for suggestion_tuple in res:
@@ -345,7 +358,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+suggestion list answered <flag: bool>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -364,7 +377,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='204',
                 description=f'{suggestion_author.mention} has no suggestions',
-                colour=SBU_GOLD
+                color=config['colors']['primary']
             )
             await ctx.reply(embed=embed)
             return
@@ -375,7 +388,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'There is no page {page}. Valid pages are between 1 and {max_page}',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -387,7 +400,7 @@ class Suggestions(commands.Cog):
         embed = discord.Embed(
             title=f'{suggestion_author.name}\'s Suggestions',
             description='',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         for suggestion_tuple in res:
@@ -409,7 +422,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+suggestion show ideator <@mention | ID: integer> [page: integer]`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -429,7 +442,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Suggestion not found',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -441,7 +454,7 @@ class Suggestions(commands.Cog):
         embed = discord.Embed(
             title=f'Suggestion #{suggestion_id}',
             description=suggestion['suggestion'],
-            color=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name='Author', value=author.mention if author else suggestion['author_id'], inline=False)
@@ -464,7 +477,7 @@ class Suggestions(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+suggestion show info <ID: integer>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -484,13 +497,13 @@ class Suggestions(commands.Cog):
         suggestion = Suggestion.dict_from_tuple(suggestion_tuple)
 
         title = 'Approved' if is_approved else 'Denied'
-        color = 0x00FF00 if is_approved else 0xFF0000
+        color = config['colors']['success'] if is_approved else config['colors']['error']
 
         suggestion_embed = discord.Embed(
             title=title,
             description=f"{suggestion['suggestion']}",
             timestamp=datetime.datetime.utcnow(),
-            colour=color
+            color=color
         )
 
         suggestion_author: discord.User = await self.bot.get_or_fetch_user(suggestion['author_id'])
@@ -500,9 +513,9 @@ class Suggestions(commands.Cog):
         suggestion_embed.add_field(name="Reason", value=f"{reason}", inline=False)
         suggestion_embed.set_footer(text=f'Suggestion number {suggestion_id} | {title} by {ctx.author}')
         suggestion_embed.set_thumbnail(
-            url=SBU_LOGO_URL)
+            url=config['logo_url'])
 
-        channel = self.bot.get_channel(SUGGESTIONS_CHANNEL_ID)
+        channel = self.bot.get_channel(config['suggestions']['suggestions_channel_id'])
         message: discord.Message = await channel.get_partial_message(suggestion['message_id']).fetch()
 
         if message.author.id != self.bot.user.id:
@@ -515,7 +528,7 @@ class Suggestions(commands.Cog):
             title=title,
             description=f'Suggestion number {suggestion_id} {title.lower()} successfully.',
             timestamp=datetime.datetime.utcnow(),
-            colour=color
+            color=config['colors']['success']
         )
         try:
             # Try DMing the user

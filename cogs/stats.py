@@ -5,10 +5,16 @@ import requests
 from discord.ext import commands
 from discord.ui import Button, View
 
-from utils import check_if_weight_banned
-from utils.constants import FRESHMAN_ROLE_ID, GUILD_ID, SBU_ERROR, SBU_GOLD, SBU_PURPLE, SBU_SUCCESS, WEIGHT_ROLES_INFO
+from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.database.schemas import User
+
+config = ConfigHandler().get_config()
+
+
+def check_if_weight_banned(ctx: commands.Context) -> bool:
+    if ctx.author.get_role(config['stats']['weight_banned_role_id']):
+        return False
 
 
 class Stats(commands.Cog):
@@ -24,9 +30,11 @@ class Stats(commands.Cog):
         res = requests.get(f'https://api.slothpixel.me/api/players/{ign}')
 
         if res.status_code != 200:
-            embed = discord.Embed(title=f'Error',
-                                  description='Error fetching information from the API. Try again later',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='Error fetching information from the API. Try again later',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
             return
         player = res.json()
@@ -37,15 +45,20 @@ class Stats(commands.Cog):
         if res.status_code == 404:
             guild = None
         elif res.status_code != 200:
-            embed = discord.Embed(title=f'Error',
-                                  description='Error fetching information from the API. Try again later',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='Error fetching information from the API. Try again later',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
             return
         else:
             guild = res.json()
 
-        embed = discord.Embed(title=f'{ign} Hypixel stats', colour=SBU_GOLD)
+        embed = discord.Embed(
+            title=f'{ign} Hypixel stats',
+            color=config['colors']['primary']
+        )
 
         embed.add_field(name='Rank', value=f'{player["rank"].replace("PLUS", "+").replace("_", "")}', inline=False)
         embed.add_field(name='Level:', value=f'{player["level"]}', inline=False)
@@ -61,8 +74,11 @@ class Stats(commands.Cog):
     @hypixel.error
     async def hypixel_error(self, ctx: commands.Context, error: Exception):
         if isinstance(error, commands.MissingRequiredArgument):
-            embed = discord.Embed(title=f'Error', description='Please enter an IGN\n Ex: `+hypixel RealMSpeed`',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='Please enter an IGN\n Ex: `+hypixel RealMSpeed`',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
             return
 
@@ -73,7 +89,13 @@ class Stats(commands.Cog):
     @skycrypt.error
     async def skycrypt_error(self, ctx: commands.Context, error: Exception):
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.reply('Please enter an IGN\n Ex: `+skycrypt RealMSpeed`')
+            embed = discord.Embed(
+                title='Error',
+                description='Please enter an IGN\n Ex: `+skycrypt RealMSpeed`',
+                color=config['colors']['error']
+            )
+
+            await ctx.reply(embed=embed)
 
     @commands.command(name='weightcheck')
     @commands.check(check_if_weight_banned)
@@ -87,7 +109,7 @@ class Stats(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid profile.',
-                colour=SBU_ERROR
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -103,7 +125,7 @@ class Stats(commands.Cog):
             embed = discord.Embed(
                 title="Error",
                 description="You need to be verified to use this command.\n`+verify <IGN>`",
-                color=SBU_ERROR
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -115,8 +137,9 @@ class Stats(commands.Cog):
         if res.status_code != 200:
             embed = discord.Embed(
                 title='Error',
-                description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial.',
-                color=SBU_ERROR
+                description='Something went wrong. Make sure your APIs in on.\n'
+                            'If this problem continues, please open a technical difficulties ticket.',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
@@ -141,7 +164,7 @@ class Stats(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description=f'You have no {cute_name.title()} profile.',
-                colour=SBU_ERROR
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -152,17 +175,18 @@ class Stats(commands.Cog):
         except KeyError:
             embed = discord.Embed(
                 title='Error',
-                description='Something went wrong. Make sure your APIs in on.\nRun `!enableapi` for the tutorial',
-                colour=SBU_ERROR
+                description='Something went wrong. Make sure your APIs in on.'
+                            'If this problem continues, please open a technical difficulties ticket.',
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
         has_previous_role = False
         max_role = None
-        for role in WEIGHT_ROLES_INFO:
-            if weight > WEIGHT_ROLES_INFO[role]["weight_req"]:
-                if ctx.author.get_role(WEIGHT_ROLES_INFO[role]["role_id"]):
+        for role in config['stats']['weight_roles']:
+            if weight > config['stats']['weight_roles'][role]["weight_req"]:
+                if ctx.author.get_role(config['stats']['weight_roles'][role]["role_id"]):
                     has_previous_role = True
                     continue
                 max_role = role
@@ -176,13 +200,14 @@ class Stats(commands.Cog):
                                 'tutoring and carry systems. Are you interested in providing these things for newer '
                                 'players? Any sort of toxicity in tickets or channels won’t be tolerated and will '
                                 'result in punishment.',
-                    color=SBU_GOLD)
+                    color=config['colors']['primary']
+                )
             else:
                 view.add_item(RoleButton(self.bot, max_role, ctx.author.id))
                 embed = discord.Embed(
                     title='Weight roles',
                     description='You have enough weight for the next role',
-                    color=SBU_GOLD
+                    color=config['colors']['primary']
                 )
             view.add_item(CancelButton(ctx.author.id))
 
@@ -190,7 +215,8 @@ class Stats(commands.Cog):
             embed = discord.Embed(
                 title='Weight roles',
                 description='You dont have enough weight for any of the next weight roles',
-                color=SBU_PURPLE)
+                color=config['colors']['secondary']
+            )
 
         embed.set_footer(text=f'{data["ign"]} - {profile["cute_name"]}')
 
@@ -202,18 +228,18 @@ class Stats(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='You have been banned from applying for weight roles.',
-                colour=SBU_ERROR
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
 
 class RoleButton(Button):
-    def __init__(self, bot, role, user):
-        super().__init__(label=WEIGHT_ROLES_INFO[role]["name"], style=discord.ButtonStyle.blurple)
+    def __init__(self, bot: discord.Bot, role: str, user_id: int):
+        super().__init__(label=config['stats']['weight_roles'][role]["name"], style=discord.ButtonStyle.blurple)
         self.bot = bot
         self.role = role
-        self.user = user
+        self.user = user_id
 
     async def callback(self, interaction):
         if interaction.user.id == self.user:
@@ -221,12 +247,13 @@ class RoleButton(Button):
             view.add_item(AcceptButton(self.bot, self.role, self.user))
             view.add_item(CancelButton(self.user))
 
-            name = WEIGHT_ROLES_INFO[self.role]["role_id"]
+            name = config['stats']['weight_roles'][self.role]["role_id"]
 
-            embed = discord.Embed(title="Weight roles",
-                                  description=f"By clicking *'Accept'* you will be given the <@&{name}> "
-                                              f"role.",
-                                  color=SBU_GOLD)
+            embed = discord.Embed(
+                title="Weight roles",
+                description=f"By clicking *'Accept'* you will be given the <@&{name}> role.",
+                color=config['colors']['primary']
+            )
 
             await interaction.response.edit_message(embed=embed, view=view)
         else:
@@ -234,30 +261,31 @@ class RoleButton(Button):
 
 
 class AcceptButton(Button):
-    def __init__(self, bot, role, user):
+    def __init__(self, bot: discord.Bot, role: str, user_id: int):
         super().__init__(label='Accept', style=discord.ButtonStyle.green)
         self.bot = bot
         self.role = role
-        self.user = user
+        self.user = user_id
 
     async def callback(self, interaction):
         if interaction.user.id == self.user:
-            sbu = self.bot.get_guild(GUILD_ID)
+            sbu: discord.Guild = self.bot.get_guild(interaction.guild.id)
             roles = []
-            role = sbu.get_role(WEIGHT_ROLES_INFO[self.role]["role_id"])
+            role: discord.Role = sbu.get_role(config['stats']['weight_roles'][self.role]["role_id"])
             roles.append(role)
-            for r in WEIGHT_ROLES_INFO[self.role]["previous"]:
+
+            for r in config['stats']['weight_roles'][self.role]["previous"]:
                 r = sbu.get_role(r)
                 roles.append(r)
             await interaction.user.add_roles(*roles, reason="Weight roles")
 
-            role = sbu.get_role(FRESHMAN_ROLE_ID)
+            role = sbu.get_role(config['stats']['default_weight_role_id'])
             await interaction.user.remove_roles(*[role], reason="Weight roles")
 
             embed = discord.Embed(
                 title='Success',
                 description='Successfully updated your roles!',
-                colour=SBU_SUCCESS
+                color=config['colors']['success']
             )
 
             await interaction.response.edit_message(view=None, embed=embed)
@@ -273,7 +301,7 @@ class CancelButton(Button):
             embed = discord.Embed(
                 title='Weight Roles',
                 description='Command canceled.',
-                color=SBU_PURPLE
+                color=config['colors']['secondary']
             )
             await interaction.response.edit_message(view=None, embed=embed)
 

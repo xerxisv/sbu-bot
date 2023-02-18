@@ -4,15 +4,17 @@ import discord
 from discord.ext import commands
 from petpetgif import petpet
 
-from utils.constants import ACTIVE_ROLE_ID
+from utils.config.config import ConfigHandler
+
+config = ConfigHandler().get_config()
 
 
-class Pat(commands.Cog):
-    def __init__(self, bot):
+class Misc(commands.Cog):
+    def __init__(self, bot: discord.Bot):
         self.bot = bot
 
     @commands.command()
-    @commands.has_role(ACTIVE_ROLE_ID)
+    @commands.has_role(config['misc']['allowed_role_id'])
     @commands.cooldown(1, 20, commands.BucketType.member)
     async def pat(self, ctx: commands.Context, member: discord.User = None):
         if member is None:
@@ -28,12 +30,10 @@ class Pat(commands.Cog):
         await ctx.send(file=discord.File(dest, filename=f"{image[0]}-petpet.gif"))
 
     @pat.error
-    async def check_error(self, ctx, error):
-        if isinstance(error, commands.MissingRole):
-            await ctx.send("Insufficient Permissions, you need active role or higher to use this command.")
-        elif isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(error)
+    async def check_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, commands.BadArgument):
+            await self.bot.get_command("pat").invoke(ctx)
 
 
 def setup(bot):
-    bot.add_cog(Pat(bot))
+    bot.add_cog(Misc(bot))

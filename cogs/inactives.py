@@ -10,12 +10,13 @@ import requests
 from discord.ext import commands
 
 from utils import extract_uuid
-from utils.constants import GUILDS_INFO, JR_MOD_ROLE_ID, SBU_GOLD
+from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.database.schemas import User
 from utils.error_utils import log_error
 
 dotenv.load_dotenv()
+config = ConfigHandler().get_config()
 
 
 class InactiveList(commands.Cog):
@@ -37,7 +38,7 @@ class InactiveList(commands.Cog):
     async def help(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command Help',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name='Add yourself to the inactivity list',
@@ -66,7 +67,7 @@ class InactiveList(commands.Cog):
     async def alias(self, ctx: commands.Context):
         embed = discord.Embed(
             title='Command aliases',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
 
         embed.add_field(name='inactive', value='"inactives"', inline=False)
@@ -84,19 +85,20 @@ class InactiveList(commands.Cog):
             afk_time = humanfriendly.parse_timespan(afk_time)
             if afk_time < 604800 or afk_time > 2592000:
                 embed = discord.Embed(
-                    title=f'Error',
+                    title='Error',
                     description='Invalid Time \nEnter time in days.\n Min 7, max 30. Ex: 10d for 10 days\n'
                                 '`+inactive add 10d`',
-                    colour=0xFF0000
+                    color=config['colors']['error']
                 )
                 await ctx.reply(embed=embed)
                 return
 
         except humanfriendly.InvalidTimespan:
-            embed = discord.Embed(title=f'Error',
-                                  description='Invalid Time \nEnter time in days Ex: 10d for 10 days\n'
-                                              '`+inactive add 10d`',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='Invalid Time \nEnter time in days Ex: 10d for 10 days\n`+inactive add 10d`',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
             return
 
@@ -107,10 +109,11 @@ class InactiveList(commands.Cog):
         await cursor.close()
 
         if member is None:
-            embed = discord.Embed(title=f'Error',
-                                  description='You need to be verified to run this command.\n'
-                                              'Run `+verify <IGN>`',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='You need to be verified to run this command.\nRun `+verify <IGN>`',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
             return
 
@@ -122,31 +125,37 @@ class InactiveList(commands.Cog):
         await self.db.execute(User.add_inactive(member['uuid'], int(afk_time)))
         await self.db.commit()
 
-        embed = discord.Embed(title=f'Success',
-                              description=f'You have been added to Inactive list until '
-                                          f'{datetime.datetime.fromtimestamp(afk_time).strftime("%A, %B %d")}',
-                              colour=0x00FF00)
+        embed = discord.Embed(
+            title=f'Success',
+            description=f'You have been added to Inactive list until '
+                        f'{datetime.datetime.fromtimestamp(afk_time).strftime("%A, %B %d")}',
+            color=config['colors']['success']
+        )
 
         await ctx.reply(embed=embed)
 
     @add.error
     async def inactiveadd_error(self, ctx: commands.Context, exception: Exception):
         if isinstance(exception, commands.MissingRequiredArgument):
-            embed = discord.Embed(title=f'Error',
-                                  description='No time inputted \nEnter time in days Ex: 10d for 10 days\n'
-                                              '`+inactive add 10d`',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='No time inputted \nEnter time in days Ex: 10d for 10 days\n'
+                            '`+inactive add 10d`',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
 
     @inactive.command()
     @commands.cooldown(1, 30)
-    @commands.has_role(JR_MOD_ROLE_ID)
+    @commands.has_role(config['jr_mod_role_id'])
     async def check(self, ctx: commands.Context, *, guild: str):
         # If inputted guild is invalid
-        if guild.upper() not in GUILDS_INFO.keys():
-            embed_var = discord.Embed(color=ctx.author.color,
-                                      description=f"Inputted guild is not an SBU guild",
-                                      colour=0xFF0000)
+        if guild.upper() not in config['guilds'].keys():
+            embed_var = discord.Embed(
+                title='Error',
+                description=f"Inputted guild is not an SBU guild",
+                color=config['colors']['error']
+            )
             await ctx.send(embed=embed_var)
             return
 
@@ -169,10 +178,11 @@ class InactiveList(commands.Cog):
                 "name": guild
             }).json()
 
-        embed_var = discord.Embed(color=ctx.author.color,
-                                  title=f"Inactive List for {data['guild']['name']}",
-                                  description=f"<a:loading:978732444998070304> Skyblock University is thinking",
-                                  colour=0xFFFF00)
+        embed_var = discord.Embed(
+            title=f"Inactive List for {data['guild']['name']}",
+            description=f"<a:loading:978732444998070304> Skyblock University is thinking",
+            color=config['colors']['secondary']
+        )
         await ctx.trigger_typing()
         message = await ctx.send(embed=embed_var)
 
@@ -205,9 +215,6 @@ class InactiveList(commands.Cog):
             else:  # Else
                 # Continue if player has logged in the last 7 days
                 try:
-                    print(hypixel_prof['player']['lastLogin'])
-                    print(hypixel_prof['player']['lastLogin'] + 604800)
-                    print(int(time.time()))
                     if (hypixel_prof['player']['lastLogin'] / 1000) + 604800 > time.time():
                         continue
                 except KeyError:
@@ -218,22 +225,26 @@ class InactiveList(commands.Cog):
 
             total_inactive += 1  # Increment the inactive total
 
-        embed_var = discord.Embed(color=0x00FF00,
-                                  title=f"Inactive List for {data['guild']['name']}",
-                                  description=f"{total_inactive} members were found to be inactive."
-                                              + f"\n\n{embed_msg}")
+        embed_var = discord.Embed(
+            title=f"Inactive List for {data['guild']['name']}",
+            description=f"{total_inactive} members were found to be inactive."
+                        + f"\n\n{embed_msg}",
+            color=config['colors']['primary']
+        )
         await message.edit(embed=embed_var)
 
     @check.error
     async def inactive_error(self, ctx: commands.Context, exception: Exception):
         if isinstance(exception, commands.MissingRequiredArgument):
-            embed = discord.Embed(color=ctx.author.color,
-                                  description=f"No guild inputted, `+inactive check <guild>`",
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title='Error',
+                description=f"No guild inputted, `+inactive check <guild>`",
+                color=config['colors']['error']
+            )
             await ctx.send(embed=embed)
 
     @inactive.group(name='mod', aliases=['moderator'], case_insensitive=True)
-    @commands.has_role(JR_MOD_ROLE_ID)
+    @commands.has_role(config['jr_mod_role_id'])
     async def mod(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await self.bot.get_command('inactive help').invoke(ctx)
@@ -248,16 +259,18 @@ class InactiveList(commands.Cog):
                     title=f'Error',
                     description='Invalid Time \nEnter time in days.\n Min 7, max 30. Ex: 10d for 10 days\n'
                                 '`+inactive add 10d`',
-                    colour=0xFF0000
+                    color=config['colors']['error']
                 )
                 await ctx.reply(embed=embed)
                 return
 
         except humanfriendly.InvalidTimespan:
-            embed = discord.Embed(title=f'Error',
-                                  description='Invalid Time \nEnter time in days Ex: 10d for 10 days\n'
-                                              '`+inactive add 10d`',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='Invalid Time \nEnter time in days Ex: 10d for 10 days\n'
+                            '`+inactive add 10d`',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
             return
 
@@ -267,7 +280,7 @@ class InactiveList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='User not found',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -279,7 +292,7 @@ class InactiveList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='User either not found, or is not in a guild',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -290,7 +303,7 @@ class InactiveList(commands.Cog):
             title='Success',
             description=f'Successfully added {ign} to the inactive list until '
                         f'{datetime.datetime.fromtimestamp(int(time.time()) + afk_time).strftime("%A, %B %d")}',
-            colour=0x00FF00
+            color=config['colors']['success']
         )
 
         await self.db.commit()
@@ -302,7 +315,7 @@ class InactiveList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Incorrect format. Use `+inactive mod add <IGN> <afk_time>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 
@@ -315,7 +328,7 @@ class InactiveList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Player not found',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
@@ -325,7 +338,7 @@ class InactiveList(commands.Cog):
         embed = discord.Embed(
             title='Success',
             description=f'Successfully removed {ign} from inactives.',
-            colour=0x00FF00
+            color=config['colors']['success']
         )
 
         await self.db.commit()
@@ -337,7 +350,7 @@ class InactiveList(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Incorrect format. Use `+inactive mod remove <IGN>`',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
 

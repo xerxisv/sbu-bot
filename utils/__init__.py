@@ -1,9 +1,4 @@
-from typing import Optional
-from random import random
 import requests
-from discord.ext import commands
-
-from utils.constants import WEIGHT_BANNED_ROLE_ID, INFO_EMBED_DESCRIPTION, INFO_CHANNEL_ID, SBU_GOLD, BUTTON_STRINGS
 from utils.components import info_button
 
 import discord
@@ -19,29 +14,13 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-def extract_uuid(ign: str) -> Optional[str]:
+def extract_uuid(ign: str) -> str | None:
     uuid = None
 
     res = requests.get(f'https://api.mojang.com/users/profiles/minecraft/{ign}')
     if res.status_code == 200:
         uuid = res.json()['id']
     return uuid
-
-
-def weighted_randint(end, loops=1) -> int:
-    result = 0
-    for _ in range(loops):
-        result += round(random() * (end / loops))
-
-    return int(result)
-
-
-def check_if_weight_banned(ctx: commands.Context) -> bool:
-    if ctx.author.get_role(WEIGHT_BANNED_ROLE_ID):
-        return False
-
-    return True
-
 async def info_reload(bot):
     channel = await bot.fetch_channel(INFO_CHANNEL_ID)
     if channel.last_message_id is not None:

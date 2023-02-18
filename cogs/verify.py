@@ -8,15 +8,18 @@ import discord
 import requests
 from discord.ext import commands
 
-from utils.constants import ADMIN_ROLE_ID, GUILDS_INFO, GUILD_ID, GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID, \
-    JR_ADMIN_ROLE_ID, SBU_GOLD, VERIFIED_ROLE_ID
+from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.database.schemas import User
 from utils.error_utils import log_error
 
-error_embed = discord.Embed(title=f'Error',
-                            description='Something went wrong. Please try again later',
-                            colour=0xFF0000)
+config = ConfigHandler().get_config()
+
+error_embed = discord.Embed(
+    title=f'Error',
+    description='Something went wrong. Please try again later',
+    color=config['colors']['error']
+)
 
 
 class Verify(commands.Cog):
@@ -31,8 +34,11 @@ class Verify(commands.Cog):
         await ctx.trigger_typing()
 
         if ign is None:  # No IGN was inputted
-            embed = discord.Embed(title=f'Error', description='Please enter a user \n `+verify RealMSpeed`',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='Please enter a user \n `+verify RealMSpeed`',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
             return
 
@@ -45,10 +51,11 @@ class Verify(commands.Cog):
             uuid = response.json()['id']
             ign = response.json()["name"]
         except AssertionError:  # In case of a 204
-            embed = discord.Embed(title=f'Error',
-                                  description='Error fetching information from the API. Recheck the spelling of your '
-                                              'IGN',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='Error fetching information from the API. Recheck the spelling of your IGN',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
             return
         except Exception as exception:  # In case of anything else
@@ -60,11 +67,11 @@ class Verify(commands.Cog):
         # Remove the previous guild member role from the command invoker
         member: discord.Member = ctx.message.author
         await member \
-            .remove_roles(*[discord.Object(_id) for _id in GUILD_MEMBER_ROLES_IDS],
+            .remove_roles(*[discord.Object(_id) for _id in config['verify']['guild_member_roles']],
                           reason='verification process',
                           atomic=False)
         await member \
-            .remove_roles(*[discord.Object(GUILD_MEMBER_ROLE_ID)],
+            .remove_roles(*[discord.Object(config['verify']['member_role_id'])],
                           reason='verification process',
                           atomic=False)
 
@@ -87,18 +94,22 @@ class Verify(commands.Cog):
 
         try:
             if player['socialMedia']['links']['DISCORD'] != str(ctx.author):
-                embed = discord.Embed(title=f'Error',
-                                      description='The discord linked with your hypixel account is not the same as '
-                                                  'the one you are trying to verify with. \n You can connect your '
-                                                  'discord following https://youtu.be/6ZXaZ-chzWI',
-                                      colour=0xFF0000)
+                embed = discord.Embed(
+                    title=f'Error',
+                    description='The discord linked with your hypixel account is not the same as the one you are '
+                                'trying to verify with. '
+                                '\n You can connect your discord following https://youtu.be/6ZXaZ-chzWI',
+                    color=config['colors']['error']
+                )
                 await ctx.reply(embed=embed)
                 return
         except KeyError:
-            embed = discord.Embed(title=f'Error',
-                                  description='You haven\'t linked your discord with your hypixel account yet\n'
-                                              'You can connect your discord following https://youtu.be/6ZXaZ-chzWI',
-                                  colour=0xFF0000)
+            embed = discord.Embed(
+                title=f'Error',
+                description='You haven\'t linked your discord with your hypixel account yet\n'
+                            'You can connect your discord following https://youtu.be/6ZXaZ-chzWI',
+                color=config['colors']['error']
+            )
             await ctx.reply(embed=embed)
             return
         except Exception as exception:
@@ -111,28 +122,34 @@ class Verify(commands.Cog):
 
         is_in_guild = False
 
-        if guild is None or guild["name"].upper() not in GUILDS_INFO.keys():
-            embed = discord.Embed(title=f'Verification',
-                                  description='You are not in any of the SBU guilds. You are now verified without '
-                                              'the guild member roles.',
-                                  colour=0x800080)
+        if guild is None or guild["name"].upper() not in config['guilds'].keys():
+            embed = discord.Embed(
+                title=f'Verification',
+                description='You are not in any of the SBU guilds. You are now verified without '
+                            'the guild member roles.',
+                color=config['colors']['secondary']
+            )
 
         else:
             is_in_guild = True
 
         await member \
-            .add_roles(*[discord.Object(_id) for _id in [VERIFIED_ROLE_ID]],
+            .add_roles(*[discord.Object(_id) for _id in [config['verify']['verified_role_id']]],
                        reason='Verification Complete', atomic=False)
 
         verified_member = User(uuid, member.id, ign)
 
         if is_in_guild:
-            await member \
-                .add_roles(*[discord.Object(GUILDS_INFO[guild["name"].upper()]['role_id']), discord.Object(GUILD_MEMBER_ROLE_ID)], atomic=False)
+            await member.add_roles(
+                *[discord.Object(config['guilds'][guild["name"].upper()]['member_role_id']),
+                  discord.Object(config['verify']['member_role_id'])],
+                atomic=False)
 
-            embed = discord.Embed(title=f'Verification',
-                                  description=f'You have been verified as a member of {guild["name"]}',
-                                  colour=0x008000)
+            embed = discord.Embed(
+                title=f'Verification',
+                description=f'You have been verified as a member of {guild["name"]}',
+                color=config['colors']['primary']
+            )
 
             verified_member.guild_uuid = guild['_id']
 
@@ -165,7 +182,8 @@ class Verify(commands.Cog):
 
         await member \
             .remove_roles(*[discord.Object(_id) for _id in
-                            [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID, VERIFIED_ROLE_ID]],
+                            [*config['verify']['guild_member_roles'], config['verify']['member_role_id'],
+                             config['verify']['verified_role_id']]],
                           atomic=False
                           )
 
@@ -178,7 +196,7 @@ class Verify(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name="forcereverify", aliases=["reverify"])
-    @commands.has_role(ADMIN_ROLE_ID)
+    @commands.has_role(config['admin_role_id'])
     async def force_reverify(self, ctx: commands.Context, user: discord.Member):
         await ctx.trigger_typing()
 
@@ -211,14 +229,14 @@ class Verify(commands.Cog):
 
             if player['socialMedia']['links']['DISCORD'] != str(ctx.author):
                 roles_to_remove = [discord.Object(_id) for _id in
-                                   [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
-                                    VERIFIED_ROLE_ID]]
+                                   [*config['verify']['guild_member_roles'], config['verify']['member_role_id'],
+                                    config['verify']['verified_role_id']]]
 
                 await self.db.execute(User.unverify_row_with_id(user.id))
 
             if guild is None or guild["_id"] != guild_uuid:
                 roles_to_remove = [discord.Object(_id) for _id in
-                                   [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID]]
+                                   [*config['verify']['guild_member_roles'], config['verify']['guild_member_roles']]]
 
                 await self.db.execute(User.update_row_with_id(uuid))
             if roles_to_remove is not None:
@@ -229,7 +247,7 @@ class Verify(commands.Cog):
             embed = discord.Embed(
                 title='Success',
                 description=f'Reverified {user.mention}',
-                colour=0x00FF00
+                color=config['colors']['success']
             )
             await ctx.reply(embed=embed)
 
@@ -239,28 +257,28 @@ class Verify(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+forcereverify <@mention | ID>`.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
     @commands.command(name="forcereverifyall", aliases=["reverifyall", "reverify_all"])
-    @commands.has_role(ADMIN_ROLE_ID)
+    @commands.has_role(config['admin_role_id'])
     async def force_reverify_all(self, ctx: commands.Context):
         embed = discord.Embed(
             description='Reverifying everyone now <a:loading:978732444998070304>.\nThis might take a while.',
-            colour=SBU_GOLD
+            color=config['colors']['primary']
         )
         msg = await ctx.reply(embed=embed)
 
         cursor: aiosqlite.Cursor = await self.db.cursor()
 
-        sbu = self.bot.get_guild(GUILD_ID)
+        sbu = ctx.guild
         uuids: tuple = ()
 
         # loop for each guild
-        for guild in GUILDS_INFO:
-            guild_uuid = GUILDS_INFO[guild]["guild_uuid"]
+        for guild in config['guilds']:
+            guild_uuid = config['guilds'][guild]["guild_uuid"]
 
             resp = requests.get(f"https://api.slothpixel.me/api/guilds/id/{guild_uuid}")
             data = resp.json()
@@ -279,8 +297,8 @@ class Verify(commands.Cog):
                     # Check if member is still in server
                     if discord_member:
                         roles_to_remove = [discord.Object(_id) for _id in
-                                           [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
-                                            VERIFIED_ROLE_ID]]
+                                           [*config['verify']['guild_member_roles'], config['verify']['member_role_id'],
+                                            config['verify']['verified_role_id']]]
                         await discord_member.remove_roles(*roles_to_remove,
                                                           atomic=False,
                                                           reason='check_verified')
@@ -297,7 +315,7 @@ class Verify(commands.Cog):
         await msg.edit(embed=embed)
 
     @commands.command(name="forceunverify", aliases=["unverifyforce", "unverify_force"])
-    @commands.has_role(JR_ADMIN_ROLE_ID)
+    @commands.has_role(config['jr_admin_role_id'])
     async def force_unverify(self, ctx: commands.Context, user: discord.Member):
         await ctx.trigger_typing()
         # make sure the user is still in the server
@@ -314,8 +332,8 @@ class Verify(commands.Cog):
         await self.db.commit()
 
         roles_to_remove = [discord.Object(_id) for _id in
-                           [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
-                            VERIFIED_ROLE_ID]]
+                           [*config['verify']['guild_member_roles'], config['verify']['member_role_id'],
+                            config['verify']['verified_role_id']]]
 
         await user.remove_roles(*roles_to_remove,
                                 atomic=False,
@@ -324,7 +342,7 @@ class Verify(commands.Cog):
         embed = discord.Embed(
             title='Success',
             description=f'Unverified {user.mention}',
-            colour=0x00FF00
+            color=config['colors']['success']
         )
         await ctx.reply(embed=embed)
 
@@ -334,23 +352,26 @@ class Verify(commands.Cog):
             embed = discord.Embed(
                 title='Error',
                 description='Invalid format. Use `+forceunverify <@mention | ID>`.',
-                colour=0xFF0000
+                color=config['colors']['error']
             )
             await ctx.reply(embed=embed)
             return
 
     @commands.command(name="forceunverifyall", aliases=["force_unverify_all", "unverifyall", "unverify_all"])
-    @commands.has_role(ADMIN_ROLE_ID)
+    @commands.has_role(config['admin_role_id'])
     async def force_unverify_all(self, ctx: commands.Context):
         def check(m: discord.Message):
             return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
 
-        embed = discord.Embed(color=discord.Color.red(), title="**WARNING**",
-                              description='Doing this will unverify **EVERYONE** saved in the database, '
-                                          'are you sure you want to do this? '
-                                          '\n__**Type "yes" if you are sure, '
-                                          'typing anything else or send nothing in 30 seconds this command '
-                                          'will be canceled automatically**__')
+        embed = discord.Embed(
+            title="**WARNING**",
+            description='Doing this will unverify **EVERYONE** saved in the database, '
+                        'are you sure you want to do this? '
+                        '\n__**Type "yes" if you are sure, '
+                        'typing anything else or send nothing in 30 seconds this command '
+                        'will be canceled automatically**__',
+            color=config['colors']['error']
+        )
         await ctx.reply(embed=embed)
 
         try:
@@ -365,7 +386,7 @@ class Verify(commands.Cog):
 
             embed = discord.Embed(
                 description='Unverifying everyone now <a:loading:978732444998070304>.\nThis might take a while.',
-                colour=SBU_GOLD
+                color=config['colors']['primary']
             )
             msg = await ctx.reply(embed=embed)
 
@@ -375,17 +396,16 @@ class Verify(commands.Cog):
             await cursor.execute(User.select_all())
             verified_members = await cursor.fetchall()
 
-            sbu = self.bot.get_guild(GUILD_ID)
             # for each verified member
             for v_member in verified_members:
                 # convert tuple to dict
                 v_member = User.dict_from_tuple(v_member)
-                discord_member = sbu.get_member(v_member["discord_id"])
+                discord_member = ctx.guild.get_member(v_member["discord_id"])
                 # Check if member is still in server
                 if discord_member:
                     roles_to_remove = [discord.Object(_id) for _id in
-                                       [*GUILD_MEMBER_ROLES_IDS, GUILD_MEMBER_ROLE_ID,
-                                        VERIFIED_ROLE_ID]]
+                                       [*config['verify']['guild_member_roles'], config['verify']['member_role_id'],
+                                        config['verify']['verified_role_id']]]
                     await discord_member.remove_roles(*roles_to_remove,
                                                       atomic=False,
                                                       reason='check_verified')
@@ -402,7 +422,7 @@ class Verify(commands.Cog):
             embed = discord.Embed(
                 title='Success',
                 description='Everyone has been unverified',
-                colour=0x00FF00
+                color=config['colors']['success']
             )
             await msg.reply(embed=embed)
 

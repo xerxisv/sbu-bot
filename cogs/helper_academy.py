@@ -1,10 +1,12 @@
-import asyncio
-import discord
-import time
-from discord.ext import commands
 import random
+
+import discord
+from discord.ext import commands
 from discord.utils import get
-from utils.constants import MODERATOR_ROLE_ID
+
+from utils.config.config import ConfigHandler
+
+config = ConfigHandler().get_config()
 
 #######################
 #                     #
@@ -75,7 +77,6 @@ Type the command -done when finished reading
 **
 """
 
-
 body4 = """
 > Report disruptive people
 > Understand when to report 
@@ -118,25 +119,24 @@ Please continue below.
 
 done1 = "You are done with the course. Ping <@&801634222577156097> to start the test or ask questions"
 
-
 lookuplist = ["shachi", "Rvon", "Fijit", "someonestolemypc", "jpgaming55", "LordZarach",
-                "Skeldow", "FDRR", "LavenderHeights", "MartinNemi03", "69mn", "zStrelizia",
-                "Adviceful", "Zykm", "russiandeniss", "spedwick", "FantasmicGalaxy", "urra", 
-                "Iwolf05", "noscope_", "luvanion", "KSavvv18", "43110s", "dukioooo",
-                "CoruptKun", "Teunman", "302q", "Tera_Matt", "jexh", "Royalist",
-                "McMuffinLover", "o600", "jjww2", "n0twanted", "LeaPhant", "Zanjoe",
-                "Yarnzy_", "ih8grinding", "Verychillvibes", "LesbianCatgirl", "Legendofhub", "Spectrov",
-                "_YungGravy", "wigner", "U4BJ"
-                ]
+              "Skeldow", "FDRR", "LavenderHeights", "MartinNemi03", "69mn", "zStrelizia",
+              "Adviceful", "Zykm", "russiandeniss", "spedwick", "FantasmicGalaxy", "urra",
+              "Iwolf05", "noscope_", "luvanion", "KSavvv18", "43110s", "dukioooo",
+              "CoruptKun", "Teunman", "302q", "Tera_Matt", "jexh", "Royalist",
+              "McMuffinLover", "o600", "jjww2", "n0twanted", "LeaPhant", "Zanjoe",
+              "Yarnzy_", "ih8grinding", "Verychillvibes", "LesbianCatgirl", "Legendofhub", "Spectrov",
+              "_YungGravy", "wigner", "U4BJ"
+              ]
 lookuplistans = ["Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer", "Not Scammer",
-                "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer", 
-                "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer",
-                "Scammer", "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer",
-                "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer",
-                "Scammer", "Not Scammer", "Not Scammer", "Scammer", "Not Scammer", "Scammer", 
-                "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer",
-                "Not Scammer", "Scammer", "Scammer"
-                ]
+                 "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer",
+                 "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer",
+                 "Scammer", "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer",
+                 "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer",
+                 "Scammer", "Not Scammer", "Not Scammer", "Scammer", "Not Scammer", "Scammer",
+                 "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer",
+                 "Not Scammer", "Scammer", "Scammer"
+                 ]
 
 situations = ["""bith_creative: I can’t seem to be able to do F7, I keep dying, could anyone give me some tips? 
 SoFestivePleasantt: sure
@@ -259,7 +259,6 @@ situationsans = [
     """Report smhmyhead in <#765927458314387498> for toxicity""",
     """Report 9876543bombdiffused in <#765927458314387498> for scamming"""]
 
-
 #######################
 #                     #
 #       EMBEDS        #
@@ -275,8 +274,6 @@ reporte1.set_footer(text='SBU Rank Academy')
 reporte1.add_field(name="Belief", value=report, inline=False)
 reporte1.add_field(name="Against Rules", value=body1, inline=False)
 reporte1.add_field(name="Disclaimer", value=end, inline=False)
-
-
 
 reporte2 = discord.Embed(
     title='Example 1',
@@ -294,8 +291,6 @@ reporte2a = discord.Embed(
 reporte2a.set_footer(text='SBU Rank Academy')
 reporte2a.add_field(name="2.", value=report2, inline=False)
 
-
-
 reporte3 = discord.Embed(
     title='Example 3',
     description='',
@@ -304,8 +299,6 @@ reporte3 = discord.Embed(
 reporte3.set_footer(text='SBU Rank Academy')
 reporte3.add_field(name="3.", value=report3, inline=False)
 
-
-
 reporte4 = discord.Embed(
     title='Example 4',
     description='',
@@ -313,8 +306,6 @@ reporte4 = discord.Embed(
 )
 reporte4.set_footer(text='SBU Rank Academy')
 reporte4.add_field(name="4.", value=report4, inline=False)
-
-
 
 kindness1 = discord.Embed(
     title='Kindness Academy',
@@ -327,8 +318,6 @@ kindness1.add_field(name="SBU Example", value=kindness, inline=False)
 kindness1.add_field(name="What to do if you get annoyed.", value=body3, inline=False)
 kindness1.add_field(name="The end for Seniors", value=end1, inline=False)
 
-
-
 helper1 = discord.Embed(
     title='Helper Academy',
     description='',
@@ -336,8 +325,6 @@ helper1 = discord.Embed(
 )
 helper1.set_footer(text='SBU Rank Academy')
 helper1.add_field(name="Rank Requirements", value=body4, inline=False)
-
-
 
 guildc = discord.Embed(
     title='Guild Checking academy',
@@ -394,32 +381,32 @@ class HA(commands.Cog):
         def check(m):
             return m.content.lower() == '-done' and m.channel == channel
 
-        msg = await self.bot.wait_for('message', check=check)
-        message = await ctx.send(embed=reporte1)
-        msg = await self.bot.wait_for('message', check=check)
-        message = await ctx.send(embed=reporte2)
-        msg = await self.bot.wait_for('message', check=check)
-        message = await ctx.send(embed=reporte2a)
-        msg = await self.bot.wait_for('message', check=check)
-        message = await ctx.send(embed=reporte3)
-        msg = await self.bot.wait_for('message', check=check)
-        message = await ctx.send(embed=reporte4)
-        msg = await self.bot.wait_for('message', check=check)
-        message = await ctx.send(embed=kindness1)
-        msg = await self.bot.wait_for('message', check=check)
-        message = await ctx.send(embed=guildc)
-        message = await ctx.send(embed=guildc1)
-        message = await ctx.send(embed=guildc2)
-        msg = await self.bot.wait_for('message', check=check)
-        message = await ctx.send(embed=end)
+        await self.bot.wait_for('message', check=check)
+        await ctx.send(embed=reporte1)
+        await self.bot.wait_for('message', check=check)
+        await ctx.send(embed=reporte2)
+        await self.bot.wait_for('message', check=check)
+        await ctx.send(embed=reporte2a)
+        await self.bot.wait_for('message', check=check)
+        await ctx.send(embed=reporte3)
+        await self.bot.wait_for('message', check=check)
+        await ctx.send(embed=reporte4)
+        await self.bot.wait_for('message', check=check)
+        await ctx.send(embed=kindness1)
+        await self.bot.wait_for('message', check=check)
+        await ctx.send(embed=guildc)
+        await ctx.send(embed=guildc1)
+        await ctx.send(embed=guildc2)
+        await self.bot.wait_for('message', check=check)
+        await ctx.send(embed=end)
 
-    @commands.command()
-    @commands.has_role(MODERATOR_ROLE_ID)
-    async def lookupsection(self, ctx):
+    @commands.command(name='lookupsection')
+    @commands.has_role(config['mod_role_id'])
+    async def lookup_section(self, ctx):
         length = len(lookuplist)
-        randomlist = random.sample(range(0, length), 9)
-        channel = self.bot.get_channel(883539648754892910)
-        channelid = ctx.channel.id
+        random_list = random.sample(range(0, length), 9)
+        channel = self.bot.get_channel(config['helper_academy']['ticket_commands_channel_id'])
+
         questions = discord.Embed(
             title='Lookup Section',
             description='',
@@ -435,16 +422,16 @@ class HA(commands.Cog):
                             value="Look up this list of people and mention if they are cleared to enter our guild or not:",
                             inline=False)
         answers.set_footer(text='SBU Rank Academy Answers')
-        templist = ""
-        for banned in randomlist:
+        temp_list = ""
+        for banned in random_list:
             answers.add_field(name=lookuplist[banned], value=lookuplistans[banned], inline=False)
-            templist = templist + "\n" + lookuplist[banned]
-        questions.add_field(name="Lookup: ", value=templist, inline=False)
-        await channel.send(f"Lookup Section Answers for <#{channelid}>")
+            temp_list = temp_list + "\n" + lookuplist[banned]
+        questions.add_field(name="Lookup: ", value=temp_list, inline=False)
+        await channel.send(f"Lookup Section Answers for <#{ctx.channel.id}>")
         await ctx.send(embed=questions)
         await channel.send(embed=answers)
 
-    @lookupsection.error
+    @lookup_section.error
     async def check_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("Insufficient Permissions")
