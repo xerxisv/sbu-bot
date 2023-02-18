@@ -6,12 +6,11 @@ config = ConfigHandler().get_config()
 
 class info_button(Button):
     def __init__(self, bot, label, description, view, image, row):
-        super().__init__(label=label, style=discord.ButtonStyle.blurple, row=row)
+        super().__init__(label=label, style=discord.ButtonStyle.blurple, row=row, custom_id=label)
         self.bot = bot
         self.description = description
         self.embed_view = view
         self.image = image
-        self.custom_id = label
 
     async def callback(self, interaction):
         embed = discord.Embed(title=self.label, description=self.description, color=config["colors"]["primary"])

@@ -220,25 +220,6 @@ class Info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name='info', aliases=[], case_insensitive=True)
-    @commands.has_role(config["admin_role_id"])
-    async def info(self, ctx: commands.Context):
-        if ctx.invoked_subcommand is None:
-            await self.bot.get_command('info help').invoke(ctx)
-            return
-        await ctx.trigger_typing()
-    
-    @info.command(name='reload', aliases=['load'])
-    async def reload(self, ctx: commands.Context):
-        channel = await self.bot.fetch_channel(config["info"]["info_channel_id"])
-        if channel.last_message_id is not None:
-            message = await channel.fetch_message(channel.last_message_id)
-        else:
-            message = None
-        
-
-        embed = discord.Embed(title="Info", description=INFO_EMBED_DESCRIPTION, color=config["colors"]["primary"])
-        
         view = View(timeout=None)
         i = 0
         j = 0
@@ -249,18 +230,27 @@ class Info(commands.Cog):
             button_view = BUTTON_STRINGS[button]["view"]
             image = BUTTON_STRINGS[button]["image"]
 
-            view.add_item(info_button(self.bot, label, description, button_view, image, row=j))
+
+            button = info_button(self.bot, label, description, button_view, image, row=j)
+            view.add_item(button)
+            
             if i == 5:
                 i = 0
                 j += 1
+        bot.add_view(view)
         
-        try:
-            if message is not None:
-                await message.edit(embed=embed, view=view)
-            else: 
-                await channel.send(embed=embed, view=view)
-        except discord.Forbidden:
-            await channel.send(embed=embed, view=view)
+
+    @commands.group(name='info', aliases=[], case_insensitive=True)
+    @commands.has_role(config["admin_role_id"])
+    async def info(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+            await self.bot.get_command('info help').invoke(ctx)
+            return
+        await ctx.trigger_typing()
+    
+    @info.command(name='reload', aliases=['load'])
+    async def reload(self, ctx: commands.Context):
+        await info_reload(self.bot, config)
         
         await ctx.send("Successfuly loaded info buttons")
 
@@ -277,6 +267,41 @@ class Info(commands.Cog):
             await ctx.send("Successfuly unloaded info buttons")
         except discord.Forbidden:
             await ctx.send("Failed to unload info buttons")
+        
+
+async def info_reload(bot, config):
+    channel = await bot.fetch_channel(config["info"]["info_channel_id"])
+    if channel.last_message_id is not None:
+        message = await channel.fetch_message(channel.last_message_id)
+    else:
+        message = None
+    
+
+    embed = discord.Embed(title="Info", description=INFO_EMBED_DESCRIPTION, color=config["colors"]["primary"])
+    
+    view = View(timeout=None)
+    i = 0
+    j = 0
+    for button in BUTTON_STRINGS:
+        i += 1
+        label = button
+        description = BUTTON_STRINGS[button]["description"]
+        button_view = BUTTON_STRINGS[button]["view"]
+        image = BUTTON_STRINGS[button]["image"]
+
+        view.add_item(info_button(self.bot, label, description, button_view, image, row=j))
+        if i == 5:
+            i = 0
+            j += 1
+    
+    try:
+        if message is not None:
+            await message.edit(embed=embed, view=view)
+        else: 
+            await channel.send(embed=embed, view=view)
+    except discord.Forbidden:
+        await channel.send(embed=embed, view=view)
+
         
     
 

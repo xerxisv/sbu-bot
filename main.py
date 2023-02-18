@@ -10,7 +10,6 @@ from utils.config.config import ConfigHandler
 from utils.database import DBConnection
 from utils.error_utils import exception_to_string, log_error
 from utils.setup import run_setup
-from utils import info_reload
 
 
 intents = discord.Intents().all()
@@ -39,7 +38,6 @@ def load_cogs():
 async def on_ready():
     await DBConnection().create_db()
 
-    await info_reload(bot)
 
     load_cogs()
     print(f"\033[1;4;34m{bot.user} is ready\033[0m")
