@@ -20,7 +20,7 @@ config = ConfigHandler().get_config()
 
 
 class InactiveList(commands.Cog):
-    key = os.getenv("apikey")
+    key = os.getenv("APIKEY")
     min_exp = 1
 
     def __init__(self, bot: commands.Bot):

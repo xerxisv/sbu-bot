@@ -26,7 +26,7 @@ class Verify(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db: aiosqlite.Connection = DBConnection().get_db()
-        self.key = os.getenv("apikey")
+        self.key = os.getenv("APIKEY")
 
     @commands.command(description="Add the role if in guild")
     @commands.cooldown(1, 5)
