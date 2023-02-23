@@ -13,8 +13,7 @@ config = ConfigHandler().get_config()
 
 
 def check_if_weight_banned(ctx: commands.Context) -> bool:
-    if ctx.author.get_role(config['stats']['weight_banned_role_id']):
-        return False
+    return ctx.author.get_role(config['stats']['weight_banned_role_id']) is None
 
 
 class Stats(commands.Cog):
