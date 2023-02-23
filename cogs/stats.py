@@ -132,7 +132,7 @@ class Stats(commands.Cog):
         data = User.dict_from_tuple(data)
         view = View()
 
-        res = requests.get(f'https://sky.shiiyu.moe/api/v2/profile/{data["ign"]}')
+        res = requests.get(f'https://sky.shiiyu.moe/api/v2/profile/{data["uuid"]}')
         if res.status_code != 200:
             embed = discord.Embed(
                 title='Error',
