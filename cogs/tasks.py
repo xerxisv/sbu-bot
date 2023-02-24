@@ -223,8 +223,8 @@ class TasksCog(commands.Cog):
         await cursor.execute(User.select_top_tatsu())
         users = await cursor.fetchall()
 
-        guild = self.bot.get_guild(constants.GUILD_ID)
-        role = guild.get_role(constants.TOP_GUILD_ACTIVE_ROLE_ID)
+        guild = self.bot.get_guild(config["server_id"])
+        role = guild.get_role(config["gtatsu"]["top_active_role_id"])
         for member in role.members:
             await member.remove_roles(role)
         

@@ -271,9 +271,9 @@ class Info(commands.Cog):
 
 async def info_reload(bot, config):
     channel = await bot.fetch_channel(config["info"]["info_channel_id"])
-    if channel.last_message_id is not None:
+    try:
         message = await channel.fetch_message(channel.last_message_id)
-    else:
+    except discord.NotFound:
         message = None
     
 
@@ -289,7 +289,7 @@ async def info_reload(bot, config):
         button_view = BUTTON_STRINGS[button]["view"]
         image = BUTTON_STRINGS[button]["image"]
 
-        view.add_item(info_button(self.bot, label, description, button_view, image, row=j))
+        view.add_item(info_button(bot, label, description, button_view, image, row=j))
         if i == 5:
             i = 0
             j += 1
