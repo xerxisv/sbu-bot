@@ -25,12 +25,17 @@ class TasksCog(commands.Cog):
         self.db: aiosqlite.Connection = DBConnection().get_db()
         self.key = os.getenv('APIKEY')
         self.update_member_count.start()
-        self.auto_qotd.start()
         self.backup_db.start()
-        self.inactives_check.start()
-        self.check_verified.start()
-        self.weekly_tatsu.start()
         self.booster_log.start()
+
+        if config['modules']['qotd']:
+            self.auto_qotd.start()
+        if config['modules']['inactives']:
+            self.inactives_check.start()
+        if config['modules']['verify']:
+            self.check_verified.start()
+        if config['modules']['gtatsu']:
+            self.weekly_tatsu.start()
 
     def cog_unload(self):
         self.update_member_count.cancel()
