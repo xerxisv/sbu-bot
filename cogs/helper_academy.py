@@ -404,10 +404,10 @@ class HA(commands.Cog):
 
     @commands.command(name='lookupsection')
     @commands.has_role(config['mod_role_id'])
-    async def lookup_section(self, ctx):
+    async def lookup_section(self, ctx: commands.Context):
         length = len(lookup)
         random_list = random.sample(range(0, length), 9)
-        channel = self.bot.get_channel(config['helper_academy']['ticket_commands_channel_id'])
+        channel = ctx.guild.get_channel(config['helper_academy']['ticket_commands_channel_id'])
 
         questions = discord.Embed(
             title='Lookup Section',
@@ -426,7 +426,8 @@ class HA(commands.Cog):
         answers.set_footer(text='SBU Rank Academy Answers')
         temp_list = ""
         for banned in random_list:
-            answers.add_field(name=list(lookup.keys())[banned], value=list(lookup.values())[banned], inline=False)
+            answers.add_field(name=list(lookup.keys())[banned],
+                              value="Scammer" if list(lookup.values())[banned] else "Not scammer", inline=False)
             temp_list = temp_list + "\n" + list(lookup.keys())[banned]
         questions.add_field(name="Lookup: ", value=temp_list, inline=False)
         await channel.send(f"Lookup Section Answers for <#{ctx.channel.id}>")
