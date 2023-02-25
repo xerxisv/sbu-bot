@@ -15,7 +15,7 @@ config = ConfigHandler().get_config()
 #######################
 
 report = """
-Here at Skyblock University, we believe each and every person deserves to feel comfortable in our guild. However, this does not mean that we allow individuals to bully or treat others poorly in our guilds and server. Unfortunately, our moderation team cannot be everywhere at once, so we need to rely on our Seniors and Instructors to tell us when someone has taken an action that has disturbed them or otherwise made them uncomfortable.
+Here at Skyblock University, we believe each and every person deserves to feel comfortable in our guild. However, this does not mean that we allow individuals to bully or treat others poorly in our guilds and server. Unfortunately, our moderation team cannot be everywhere at once, so we need to rely on our Helpers to tell us when someone has taken an action that has disturbed them or otherwise made them uncomfortable.
 """
 body1 = """
 Here’s a few examples of potential rule breaking that’s reportable:
@@ -32,48 +32,48 @@ This list is not exhaustive, but should give you an idea of some of the things t
 If you find someone doing these actions in game you can report them to our moderation team by opening a “report a user” ticket in get-help. Please be sure to include screenshots of everything you are reporting.
 
 Our lack of knowledge of these situations happening may turn into people thinking we tolerate bad behavior. This is not our intention or what we wish to show new members. The more people report, the more aware we are of people who make everyone else unhappy, the faster we can remove excessively disruptive people and make our guilds and server more comfortable for everyone. You will be our front line in making our server safe for both current and new members.
-**Type the command -done when finished reading**"""
+**Type `-done` after you finish reading this**"""
 
 report1 = """
 Bobby531 recently joined the guild and is asking for a Hyperion for free, then saying they’re just kidding right afterwards. They have repeated this behavior a few times in the past.
 
 It’s never fun to be nagged by guild members for free things. We have “No Begging” in our rules and believe everyone should know that they can be in our guild without 10 people harassing them, asking for free things. Regardless if someone says “just kidding” right after, it’s still annoying to have to deal with on a regular basis, and we don’t want to have to force our members ignore these issues or /ignore add the beggar. Handling them right away by reporting them is the best and fastest way to get someone to stop doing an undesirable behavior.
-**Type the command -done when finished reading**"""
+**Type `-done` after you finish reading this**"""
 
 report2 = """
 Georgina32 and Bobby555 have been talking about drugs for a few minutes, both of them are just simply naming drugs one after another. This started because Bobby555 said he needed more drugs for his dungeon runs(referring to Potions).
 
 Because Mojang’s ToS states the game is for ages 10 and above, we don’t allow talk of illicit substances or likewise, due to the player base being so young. These actions would warrant a report, even if Georgina32 and Bobby555 have already stopped talking about drugs. You will need to take and submit screenshots with your report.
-**Type the command -done when finished reading**
+**Type `-done` after you finish reading this**
 """
 
 report3 = """
 Sopheee, Randy67, and Bobby555 are all getting a bit rowdy. They start to turn to making “deez nuts” jokes to each other. Sopheee sets all the jokes up, and Bobby555 is saying the punchline to each joke.
 
 While "deez nuts" jokes aren’t punishable, if the conversation turns into spamming you should report all 3 of them to our staff
-**Type the command -done when finished reading**"""
+**Type `-done` after you finish reading this**"""
 
 report4 = """  
 Sopheee is upset you “told on” her by reporting her to staff. She’s DMing you telling you how horrible you are for ruining their fun.
 
 This is plain harassment and is not tolerated. Please let us know if you’re every harassed publicly or privately by another member in our server or guilds and we will be sure to handle them immediately. We want everyone to feel safe on our server. You will need to take and submit screenshots with your report.
-**Type the command -done when finished reading**
+**Type `-done` after you finish reading this**
 """
 
 kindness = """
-This academy is an incredibly important piece to how we survive as a guild and server. Our staff need to also be helpful and kind. People that are found being catty or otherwise rude will be stripped of their ranks and reduced to Freshmen moving forward.
+This academy is an incredibly important piece to how we survive as a guild and server. Our staff need to also be helpful and kind. People that are found being catty or otherwise rude will be stripped of their ranks.
 
 We aren’t here to berate confused newcomers into submission by calling them worthless nons and promoting how big and strong we are. The sole purpose of our server and guilds are to help new and mid-game players learn how to play skyblock. Holding yourself above another player due to how much weight, networth, etc you have has absolutely no place here. The idea that you treat others this way needs to be smashed from here on if you wish to have a rank in this server.
 
 """
-body2 = """If you would consider our guild like a college campus, our general chat being our open area where people can congregate, our help channels are like our classrooms, and our tutoring sessions are just that. We are a school here, and where we absolutely do like to have fun, there is still a bit of professionalism that we need to show to the new and confused members of our community. With new members we need to remember that we were new too at one point in time and didn’t have all the information or know where to go. We must put ourselves back in their shoes to treat them with kindness and respect all humans deserve.
+body2 = """If you would consider our guild like a college campus, our general chat being our open area where people can congregate, our help channels are like our classrooms, and our tutoring sessions are just that. We are a school here, and while we absolutely do like to have fun, there is still a bit of professionalism that we need to show to the new and confused members of our community. With new members we need to remember that we were new too at one point in time and didn’t have all the information or know where to go. We must put ourselves back in their shoes to treat them with kindness and respect all humans deserve.
 """
 body3 = """If you feel yourself getting short with someone, irritated or angry - don’t fret! We have plenty of other people who would love to help and take your place. Just step back for a minute and let someone else take over.
 
 """
 end1 = """If you are helping someone that is just asking for free things from you over and over again, please be sure to report beggars to our mod team, so we may handle these situations individually.
 **
-Type the command -done when finished reading
+Type `-done` after you finish reading this
 **
 """
 
@@ -93,7 +93,7 @@ body4 = """
 After you are done reading, you will be tested with several open answer questions to make sure you understand what was covered. You may ask questions before testing.
 
 Once you finish reading all sections of this academy, please ping the Moderator role THEN clarify if you've pinged to ask questions OR if you're ready to be tested.
-**Type the command -done when finished reading**"""
+**Type `-done` after you finish reading this**"""
 
 guildchecking1 = """Check if they are on <@797974550834053203> scammer/irl trader list by performing this command in <#801507439236874290>:
 
@@ -105,38 +105,36 @@ Link to gif if you're having trouble loading: https://i.imgur.com/DzRRdk5.mp4"""
 guildchecking2 = """Use:
 `+banlist check [ign]`
 
-This command searches our <#830188559964307526> channel to ensure this person was not previously banned from our guilds or a scammer.
+This command searches our ban list to ensure this person was not previously banned from our guilds or a scammer.
 
 Link to gif if you're having trouble loading: https://i.imgur.com/1G8oPwT.gif"""
 guildchecking3 = """
-You can use this command to bring up a cheat-sheet on how to look up people in our guilds at any time in the future:
-
-`!bannedlist`
-
-Note: If you are unable to look people up, you will not be able to hold a rank in our guilds.
+If you are unable to look people up, you will not be able to hold a rank in our guilds.
 Please continue below.
-**Type -done after you finish reading this**"""
+**Type `-done` after you finish reading this**"""
+
+bridges = """
+*Passing the academy will also give you access to our bridges*. 
+The use of swear words or words that can be deemed NSFW is **strictly prohibited**.
+Any attempts to mute or sabotage the bridge will result in a **permanent ban**.
+
+**Type `-done` after you finish reading this**
+"""
 
 done1 = "You are done with the course. Ping <@&801634222577156097> to start the test or ask questions"
 
-lookuplist = ["shachi", "Rvon", "Fijit", "someonestolemypc", "jpgaming55", "LordZarach",
-              "Skeldow", "FDRR", "LavenderHeights", "MartinNemi03", "69mn", "zStrelizia",
-              "Adviceful", "Zykm", "russiandeniss", "spedwick", "FantasmicGalaxy", "urra",
-              "Iwolf05", "noscope_", "luvanion", "KSavvv18", "43110s", "dukioooo",
-              "CoruptKun", "Teunman", "302q", "Tera_Matt", "jexh", "Royalist",
-              "McMuffinLover", "o600", "jjww2", "n0twanted", "LeaPhant", "Zanjoe",
-              "Yarnzy_", "ih8grinding", "Verychillvibes", "LesbianCatgirl", "Legendofhub", "Spectrov",
-              "_YungGravy", "wigner", "U4BJ"
-              ]
-lookuplistans = ["Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer", "Not Scammer",
-                 "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer",
-                 "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer",
-                 "Scammer", "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer",
-                 "Scammer", "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer",
-                 "Scammer", "Not Scammer", "Not Scammer", "Scammer", "Not Scammer", "Scammer",
-                 "Scammer", "Scammer", "Scammer", "Not Scammer", "Scammer", "Scammer",
-                 "Not Scammer", "Scammer", "Scammer"
-                 ]
+# True stands for scammer - False stands for not scammer
+lookup = {
+    "shachi": True, "Rvon": True, "Fijit": False, "someonestolemypc": True, "jpgaming55": True, "LordZarach": False,
+    'Skeldow': True, 'FDRR': True, 'LavenderHeights': True, 'MartinNemi03': False, '69mn': True, 'zStrelizia': True,
+    'Adviceful': True, 'Zykm': True, 'russiandeniss': True, 'spedwick': True, 'FantasmicGalaxy': False, 'urra': True,
+    'Iwolf05': True, 'noscope_': True, 'luvanion': True, 'KSavvv18': True, '43110s': True, 'dukioooo': False,
+    'CoruptKun': True, 'Teunman': True, '302q': True, 'Tera_Matt': True, 'jexh': False, 'Royalist': True,
+    'McMuffinLover': True, 'o600': False, 'jjww2': False, 'n0twanted': True, 'LeaPhant': False, 'Zanjoe': True,
+    'Yarnzy_': True, 'ih8grinding': True, 'Verychillvibes': True, 'LesbianCatgirl': False, 'Legendofhub': True,
+    'Spectrov': True, '_YungGravy': False, 'wigner': True, 'U4BJ': True
+
+}
 
 situations = ["""bith_creative: I can’t seem to be able to do F7, I keep dying, could anyone give me some tips? 
 SoFestivePleasantt: sure
@@ -265,52 +263,52 @@ situationsans = [
 #                     #
 #######################
 
-reporte1 = discord.Embed(
+report_embed1 = discord.Embed(
     title='Reporting people',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
-reporte1.set_footer(text='SBU Rank Academy')
-reporte1.add_field(name="Belief", value=report, inline=False)
-reporte1.add_field(name="Against Rules", value=body1, inline=False)
-reporte1.add_field(name="Disclaimer", value=end, inline=False)
+report_embed1.set_footer(text='SBU Rank Academy')
+report_embed1.add_field(name="Belief", value=report, inline=False)
+report_embed1.add_field(name="Against Rules", value=body1, inline=False)
+report_embed1.add_field(name="Disclaimer", value=end, inline=False)
 
-reporte2 = discord.Embed(
+report_embed2_a = discord.Embed(
     title='Example 1',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
-reporte2.set_footer(text='SBU Rank Academy')
-reporte2.add_field(name="1.", value=report1, inline=False)
+report_embed2_a.set_footer(text='SBU Rank Academy')
+report_embed2_a.add_field(name="1.", value=report1, inline=False)
 
-reporte2a = discord.Embed(
+report_embed2_b = discord.Embed(
     title='Example 2',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
-reporte2a.set_footer(text='SBU Rank Academy')
-reporte2a.add_field(name="2.", value=report2, inline=False)
+report_embed2_b.set_footer(text='SBU Rank Academy')
+report_embed2_b.add_field(name="2.", value=report2, inline=False)
 
-reporte3 = discord.Embed(
+report_embed3 = discord.Embed(
     title='Example 3',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
-reporte3.set_footer(text='SBU Rank Academy')
-reporte3.add_field(name="3.", value=report3, inline=False)
+report_embed3.set_footer(text='SBU Rank Academy')
+report_embed3.add_field(name="3.", value=report3, inline=False)
 
-reporte4 = discord.Embed(
+report_embed4 = discord.Embed(
     title='Example 4',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
-reporte4.set_footer(text='SBU Rank Academy')
-reporte4.add_field(name="4.", value=report4, inline=False)
+report_embed4.set_footer(text='SBU Rank Academy')
+report_embed4.add_field(name="4.", value=report4, inline=False)
 
 kindness1 = discord.Embed(
     title='Kindness Academy',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
 kindness1.set_footer(text='SBU Rank Academy')
 kindness1.add_field(name="Why Kindness Academy?", value=kindness, inline=False)
@@ -321,42 +319,48 @@ kindness1.add_field(name="The end for Seniors", value=end1, inline=False)
 helper1 = discord.Embed(
     title='Helper Academy',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
 helper1.set_footer(text='SBU Rank Academy')
 helper1.add_field(name="Rank Requirements", value=body4, inline=False)
 
-guildc = discord.Embed(
+guild_check = discord.Embed(
     title='Guild Checking academy',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
-guildc.set_footer(text='SBU Rank Academy')
-guildc.add_field(name="#1 Use bots to check scammer lists", value=guildchecking1, inline=False)
-guildc.set_image(
+guild_check.set_footer(text='SBU Rank Academy')
+guild_check.add_field(name="#1 Use bots to check scammer lists", value=guildchecking1, inline=False)
+guild_check.set_image(
     url="https://cdn-longterm.mee6.xyz/plugins/commands/images/764326796736856066/98245433fe5c01c4e8b26c4334319e6334b154542c09d943bad6c8f0e2e58b52.gif")
 
-guildc1 = discord.Embed(
+guild_checl1 = discord.Embed(
     title='Guild Checking academy',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
-guildc1.add_field(name="#2 Use discord's search bar to search and make sure they are not in our #banned-list",
-                  value=guildchecking2, inline=False)
-guildc1.set_image(
+guild_checl1.add_field(name="#2 Use discord's search bar to search and make sure they are not in our #banned-list",
+                       value=guildchecking2, inline=False)
+guild_checl1.set_image(
     url="https://cdn-longterm.mee6.xyz/plugins/commands/images/764326796736856066/2c1d1c042343c75852863d3018df07f9737a06b0b2b67d63a84477d35d4ce6ee.gif")
 
-guildc2 = discord.Embed(
+guild_check2 = discord.Embed(
     title='Guild Checking academy',
     description='',
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
-guildc2.add_field(name="Notes", value=guildchecking3, inline=False)
+guild_check2.add_field(name="Notes", value=guildchecking3, inline=False)
+
+bridge_disclaimer = discord.Embed(
+    title='Bridge Access',
+    description=bridges,
+    color=config['colors']['primary']
+)
 
 end = discord.Embed(
     title="The end",
     description=done1,
-    colour=discord.Colour.blue()
+    color=config['colors']['primary']
 )
 
 
@@ -382,40 +386,42 @@ class HA(commands.Cog):
             return m.content.lower() == '-done' and m.channel == channel
 
         await self.bot.wait_for('message', check=check)
-        await ctx.send(embed=reporte1)
+        await ctx.send(embed=report_embed1)
         await self.bot.wait_for('message', check=check)
-        await ctx.send(embed=reporte2)
+        await ctx.send(embed=report_embed2_a)
         await self.bot.wait_for('message', check=check)
-        await ctx.send(embed=reporte2a)
+        await ctx.send(embed=report_embed2_b)
         await self.bot.wait_for('message', check=check)
-        await ctx.send(embed=reporte3)
+        await ctx.send(embed=report_embed3)
         await self.bot.wait_for('message', check=check)
-        await ctx.send(embed=reporte4)
+        await ctx.send(embed=report_embed4)
         await self.bot.wait_for('message', check=check)
         await ctx.send(embed=kindness1)
         await self.bot.wait_for('message', check=check)
-        await ctx.send(embed=guildc)
-        await ctx.send(embed=guildc1)
-        await ctx.send(embed=guildc2)
+        await ctx.send(embed=guild_check)
+        await ctx.send(embed=guild_checl1)
+        await ctx.send(embed=guild_check2)
+        await self.bot.wait_for('message', check=check)
+        await ctx.send(embed=bridge_disclaimer)
         await self.bot.wait_for('message', check=check)
         await ctx.send(embed=end)
 
     @commands.command(name='lookupsection')
     @commands.has_role(config['mod_role_id'])
     async def lookup_section(self, ctx):
-        length = len(lookuplist)
+        length = len(lookup)
         random_list = random.sample(range(0, length), 9)
         channel = self.bot.get_channel(config['helper_academy']['ticket_commands_channel_id'])
 
         questions = discord.Embed(
             title='Lookup Section',
             description='',
-            colour=discord.Colour.blue()
+            color=config['colors']['primary']
         )
         answers = discord.Embed(
             title=f'Lookup Section Answers',
             description='',
-            colour=discord.Colour.red()
+            color=config['colors']['secondary']
         )
         questions.set_footer(text='SBU Rank Academy Questions')
         questions.add_field(name="What to do.",
@@ -424,8 +430,8 @@ class HA(commands.Cog):
         answers.set_footer(text='SBU Rank Academy Answers')
         temp_list = ""
         for banned in random_list:
-            answers.add_field(name=lookuplist[banned], value=lookuplistans[banned], inline=False)
-            temp_list = temp_list + "\n" + lookuplist[banned]
+            answers.add_field(name=list(lookup.keys())[banned], value=list(lookup.values())[banned], inline=False)
+            temp_list = temp_list + "\n" + list(lookup.keys())[banned]
         questions.add_field(name="Lookup: ", value=temp_list, inline=False)
         await channel.send(f"Lookup Section Answers for <#{ctx.channel.id}>")
         await ctx.send(embed=questions)
