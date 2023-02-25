@@ -221,30 +221,31 @@ class TasksCog(commands.Cog):
     async def weekly_tatsu(self):
         cursor: aiosqlite.Cursor = await self.db.cursor()
         await cursor.execute(User.select_top_tatsu())
+        user = User.dict_from_tuple((await cursor.fetchone())[0])
         users = await cursor.fetchall()
 
         guild = self.bot.get_guild(config["server_id"])
         role = guild.get_role(config["gtatsu"]["top_active_role_id"])
         for member in role.members:
             await member.remove_roles(role)
-        
-        user = User.dict_from_tuple(users[0])
+
+        max_tatsu = user
 
         for user in users:
             user = User.dict_from_tuple(user)
             weekly_tatsu = user['tatsu_score'] - user['weekly_tatsu_score']
-            if weekly_tatsu > max_tatsu['tatsu']:
-                max_tatsu['tatsu'] = weekly_tatsu
-                max_tatsu['id'] = user['discord_id']
+            if weekly_tatsu > max_tatsu['tatsu_score']:
+                max_tatsu['tatsu_score'] = weekly_tatsu
+                max_tatsu['discord_id'] = user['discord_id']
                 max_tatsu['ign'] = user['ign']
             await self.db.execute(User.set_last_week_tatsu(user["ign"], user["tatsu_score"]))
 
-        if max_tatsu["id"] != 0:
+        if max_tatsu["discord_id"] != 0:
             guild = self.bot.get_guild(config['server_id'])
             role = guild.get_role(config['gtatsu']['top_active_role_id'])
             for member in role.members:
                 await member.remove_roles(role)
-            member = guild.get_member(max_tatsu["id"])
+            member = guild.get_member(max_tatsu["discord_id"])
             await member.add_roles(role)
         
         await self.db.execute(User.set_last_week_tatsu_all())
