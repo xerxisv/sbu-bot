@@ -2,7 +2,6 @@ import random
 
 import discord
 from discord.ext import commands
-from discord.utils import get
 
 from utils.config.config import ConfigHandler
 
@@ -375,10 +374,7 @@ class HA(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def helperacademy(self, ctx):
-        member = ctx.message.author
-        role = get(member.guild.roles, name="HA Applicant")
-        await member.add_roles(role)
+    async def helperacademy(self, ctx: commands.Context):
         message = await ctx.send(embed=helper1)
         channel = message.channel
 
