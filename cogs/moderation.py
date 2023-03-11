@@ -16,16 +16,45 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.has_role(config['mod_role_id'])
-    async def ban(self, ctx: commands.Context, user: discord.User, *, reason=None):
+    async def bandm(self, ctx: commands.Context, user: discord.User, *, reason=None):
         if ctx.guild.get_member(user.id):
             try:  # DM user if banning was successful
                 await user.send("You have been banned from SBU for " + str(reason))
-                await user.send(r"Appeal at https://discord.gg/mn6kJrJuVB")
+                await user.send(r"Appeal at https://discord.gg/RSXsTzhB")
             except discord.HTTPException:
                 await ctx.send("User cannot be dmed")
             except Exception as exception:
                 await log_error(ctx, exception)
 
+        try:  # Check for any permission errors
+            await ctx.guild.ban(user=user, delete_message_days=0, reason=reason)
+        except discord.Forbidden:
+            embed = discord.Embed(
+                title='Error',
+                description='Bot does not have permission to ban this member.',
+                color=config['colors']['error']
+            )
+            await ctx.reply(embed=embed)
+            return
+
+        # Send to action log
+        channel = ctx.guild.get_channel(config['moderation']['action_log_channel_id'])
+        author = ctx.message.author.id
+
+        message = f"Moderator: <@{author}> \n User: <@{user.id}> | {user} \n Action: Ban \n Reason: {reason}"
+        await channel.send(message)
+
+        # Send confirmation
+        embed = discord.Embed(
+            description=f"Moderator: <@{author}> \nUser: {user} "
+                        f"\nAction: Ban \nReason: {reason}",
+            color=config['colors']['secondary']
+        )
+        await ctx.reply(embed=embed)
+
+    @commands.command()
+    @commands.has_role(config['mod_role_id'])
+    async def ban(self, ctx: commands.Context, user: discord.User, *, reason=None):
         try:  # Check for any permission errors
             await ctx.guild.ban(user=user, delete_message_days=0, reason=reason)
         except discord.Forbidden:
