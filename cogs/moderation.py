@@ -52,6 +52,16 @@ class Moderation(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
+    @bandm.error
+    async def bandm_error(self, ctx: commands.Context, exception: Exception):
+        if isinstance(exception, (commands.BadArgument, commands.MissingRequiredArgument)):
+            embed = discord.Embed(
+                title='Error',
+                description='Invalid format. Use `+bandm <@mention | ID> [reason]`',
+                color=config['colors']['error']
+            )
+            await ctx.reply(embed=embed)
+
     @commands.command()
     @commands.has_role(config['mod_role_id'])
     async def ban(self, ctx: commands.Context, user: discord.User, *, reason=None):
