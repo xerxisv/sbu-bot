@@ -100,13 +100,13 @@ class Master(commands.Cog):
         dungeon_req = True
         weight_req = True
 
-        if dungeon_lvl < 28:
+        if dungeon_lvl < 30:
             dungeon_req = False
             passed_reqs -= 1
-        if slayer_xp < 500000:
+        if slayer_xp < 1000000:
             slayer_req = False
             passed_reqs -= 1
-        if weight < 3500:
+        if weight < 4200:
             weight_req = False
             passed_reqs -= 1
 
@@ -135,11 +135,11 @@ class Master(commands.Cog):
         p = "**Passed**"
         np = "**Not Passed**"
 
-        embed.add_field(name="Your Stats", value=f"Slayer Req: 500000 xp | "
+        embed.add_field(name="Your Stats", value=f"Slayer Req: 1000000 xp | "
                                                  f"Your Slayers: **{slayer_xp}** | {p if slayer_req else np} \n"
-                                                 f"Cata req: level 28 | "
+                                                 f"Cata req: level 30 | "
                                                  f"Your Cata: **{dungeon_lvl}** | {p if dungeon_req else np} \n"
-                                                 f"Weight req: 3500 senither weight | "
+                                                 f"Weight req: 4200 senither weight | "
                                                  f"Your Weight: {weight} | {p if weight_req else np}", inline=False)
         embed.set_footer(text=f'{ign} | {selected_profile["cute_name"]}')
 
