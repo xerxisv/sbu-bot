@@ -112,21 +112,21 @@ class Master(commands.Cog):
 
         if passed_reqs != 0 and passed_reqs != 3:
             embed = discord.Embed(
-                title='Masters Junoir Requirements',
+                title='Masters Requirements',
                 description='',
                 color=discord.Colour.purple()
             )
             embed.add_field(name="Hold Up", value=f"You meet {passed_reqs}/3 of the requirements.", inline=False)
         elif passed_reqs == 0:
             embed = discord.Embed(
-                title='Masters Junoir Requirements',
+                title='Masters Requirements',
                 description='',
                 color=discord.Colour.red()
             )
             embed.add_field(name="No requirements met", value="You dont meet any of the requirements", inline=False)
         else:
             embed = discord.Embed(
-                title='Masters Junoir Requirements',
+                title='Masters Requirements',
                 description='',
                 color=discord.Colour.blue()
             )
@@ -256,21 +256,21 @@ class Master(commands.Cog):
 
         if passed_reqs != 0 and passed_reqs != 3:
             embed = discord.Embed(
-                title='Masters Junoir Requirements',
+                title='Masters Junior Requirements',
                 description='',
                 color=discord.Colour.purple()
             )
             embed.add_field(name="Hold Up", value=f"You meet {passed_reqs}/3 of the requirements.", inline=False)
         elif passed_reqs == 0:
             embed = discord.Embed(
-                title='Masters Junoir Requirements',
+                title='Masters Junior Requirements',
                 description='',
                 color=discord.Colour.red()
             )
             embed.add_field(name="No requirements met", value="You dont meet any of the requirements", inline=False)
         else:
             embed = discord.Embed(
-                title='Masters Junoir Requirements',
+                title='Masters Junior Requirements',
                 description='',
                 color=discord.Colour.blue()
             )
